@@ -72,6 +72,38 @@ GetLineNumberOfString::usage = "GetLineNumberOfString  "
 
 GetLineNumberOfPos::usage = "GetLineNumberOfPos  "
 
+CreateReloadFunctionForDirectory::usage = "CreateReloadFunctionForDirectory  "
+
+ComputeDependencyGraph::usage = "ComputeDependencyGraph  "
+
+StringStartsWith::usage = "StringStartsWith  "
+
+CreateHeldVarIfNull::usage = "CreateHeldVarIfNull  "
+
+NewHeldVar::usage = "NewHeldVar  "
+
+SetHeldVar::usage = "SetHeldVar  "
+
+GetPackageName::usage = "GetPackageName  "
+
+WLSymbolPattern::usage = "WLSymbolPattern  "
+
+Memoized::usage = "Memoized  "
+
+ReadListFileHeld::usage = "ReadListFileHeld  "
+
+ProcessFileDependencies::usage = "ProcessFileDependencies  "
+
+PreReloadFile::usage = "PreReloadFile  "
+
+ModificationAgeInMinutes::usage = "ModificationAgeInMinutes  "
+
+FileToContext::usage = "FileToContext  "
+
+PostReloadFile::usage = "PostReloadFile  "
+
+StringTakeByDelim::usage = "StringTakeByDelim  "
+
 Begin["`Private`"]
 
 With[{package = "WUtils`"},
@@ -760,7 +792,12 @@ DeleteNesetedSpans[spansIn_] :=
 	\maintainer danielb
 *)
 CopyFunction::cgs = "Couldn't get the source code for function `1` from `2`";
-CopyFunction[func_, sourceFile_, destFile_] :=
+Clear[CopyFunction];
+Options[CopyFunction] =
+{
+	"DestContext" -> Null			(*< The destination context. Probabably would have been better to make CopyFunction take this as its argument rather than 'destFile'. *)
+};
+CopyFunction[func_, sourceFile_, destFile_, OptionsPattern[]] :=
 	Block[{funcSourceCode, fileSource, exportedFunctionQ},
 		
 		If [!FileExistsQ[sourceFile], Message[CopyFunction::noopen, sourceFile]; Return[$Failed]];
@@ -772,6 +809,11 @@ CopyFunction[func_, sourceFile_, destFile_] :=
 		If [!StringQ[funcSourceCode],
 			Message[CopyFunction::cgs, func, sourceFile];
 			Return[$Failed];
+		];
+		
+		(* If the full context occurs anywhere, then replace it. *)
+		If [OptionValue["DestContext"] =!= Null,
+			funcSourceCode = StringReplace[funcSourceCode, Context[func] :> OptionValue["DestContext"]];
 		];
 		
 		InsertStringInFile[
@@ -1380,7 +1422,7 @@ NextNewlineChar[str_String, pos_Integer] :=
 CopyFunctionUI::cfdc = "Couldn't find file `1` for symbol `2` with context `3`";
 CopyFunctionUI::cffdc = "Couldn't find destination file `1` for context `2`";
 CopyFunctionUI[func_, destContext_] :=
-	Block[{destFile, file, dependencies, otherFuncs, context},
+	Block[{destFile, file, dependencies, otherFuncs, context, destContext2},
 		
 		destFile = FindFile[StringReplace[destContext, "Private`" ~~ EndOfString :> ""]];
 		If [destFile === $Failed, Message[CopyFunctionUI::cfdc, file, destContext]; Return[$Failed, Block]];
@@ -1396,7 +1438,14 @@ CopyFunctionUI[func_, destContext_] :=
 				context = StringReplace[context, "Private`" ~~ EndOfString :> ""];
 				file = FindFile[context];
 				If [file === $Failed, Message[CopyFunctionUI::cfdc, file, sym, context]; Return[$Failed, Block]];
-				<|"Symbol" -> dependency, "File" -> file|>
+				destContext2 = destContext;
+				If [StringMatchQ[Context[sym], __ ~~ "`Private`" ~~ EndOfString], destContext2 = destContext2 <> "Private`"];
+				If [Names[destContext2 <> SymbolName[sym]] =!= {},
+					Print["Skipped: ", SymbolName[sym]];
+					Sequence @@ {}
+					,
+					<|"Symbol" -> dependency, "File" -> file|>
+				]
 			]
 		] /@ dependencies;
 		
@@ -1413,15 +1462,28 @@ CopyFunctionUI[func_, destContext_] :=
 						{
 						dependency["File"],
 						"",
-						Button[
-							"Copy",
-							CopyFunction[dependency["Symbol"], dependency["File"], destFile2];
-							With[{sym = dependency["Symbol"]},
-								OpenFileInWorkbench[destFile2, "Substring" -> SymbolName[sym] ~~ "[" ~~ Except[{"\n", "\r"}].. ~~ ":="];
+						Row[
+							{
+							Button[
+								"Copy",
+								With[{sym = dependency["Symbol"]},
+									destContext2 = destContext;
+									If [StringMatchQ[Context[sym], __ ~~ "`Private`" ~~ EndOfString], destContext2 = destContext2 <> "Private`"];
+									CopyFunction[dependency["Symbol"], dependency["File"], destFile2, "DestContext" -> destContext];
+									OpenFileInWorkbench[destFile2, "Substring" -> SymbolName[sym] ~~ "[" ~~ Except[{"\n", "\r"}].. ~~ ":="];
+								],
+								ImageSize -> {100, 34}
 							],
-							ImageSize -> {100, 34}
-						]
-						,
+							" ",
+							Button[
+								"Source",
+								With[{sym = dependency["Symbol"], sourceFile = dependency["File"]},
+									OpenFileInWorkbench[sourceFile, "Substring" -> SymbolName[sym] ~~ "[" ~~ Except[{"\n", "\r"}].. ~~ ":="]
+								],
+								ImageSize -> {100, 34}
+							]
+							}
+						],
 						"",
 						GetFunctionSource[dependency["Symbol"], "File" -> dependency["File"]]
 						}
@@ -1787,174 +1849,1206 @@ ProcessOneByOne[list_List, OptionsPattern[]] :=
 	]
 
 (*!
-    \function OpenFileInWorkbench
-    
-    \calltable
-        OpenFileInWorkbench[file] '' given a file, opens it in Workbench. The file must be in a project defined in Global`$WorkbenchProjects.
-    
-    This requires that the "Workbench Helpers" Eclipse plugin has been installed.
-    
-    Examples:
-    
-    OpenFileInWorkbench[FindFile["WUtils`WUtils`"]]
-    
-    \maintainer danielb
+	\function OpenFileInWorkbench
+	
+	\calltable
+		OpenFileInWorkbench[file] '' given a file, opens it in Workbench. The file must be in a project defined in Global`$WorkbenchProjects.
+	
+	This requires that the "Workbench Helpers" Eclipse plugin has been installed.
+	
+	Examples:
+	
+	OpenFileInWorkbench[FindFile["WUtils`WUtils`"]]
+	
+	\maintainer danielb
 *)
 Clear[OpenFileInWorkbench];
 Options[OpenFileInWorkbench] =
 {
-    "Line" -> Automatic,    (*< what line number to place the cursor at. *)
-    "Substring" -> None     (*< can specify either a substring or pattern to try and locate in the file. *)
+	"Line" -> Automatic,	(*< what line number to place the cursor at. *)
+	"Substring" -> None	 (*< can specify either a substring or pattern to try and locate in the file. *)
 };
 $workbenchHelpersPluginUrl = "http://127.0.0.1:8193/go";
 OpenFileInWorkbench[fileIn_, OptionsPattern[]] :=
-    Module[{response, url, file = fileIn, line = OptionValue["Line"]},
-        
-        If [line === Automatic && OptionValue["Substring"] =!= None,
-            line = GetLineNumberOfStringInFile[OptionValue["Substring"], file];
-            
-            If [line === None,
-                Print["OpenFileInWorkbench: Couldn't find ", ToString[OptionValue["Substring"], InputForm], " in file ", file];
-                Return[$Failed];
-            ];
-        ];        
-        
-        file = getPathRelativeToWorkbenchProjects[file];
-        
-        If [file === $Failed, Print["OpenFileInWorkbench: Couldn't make path relative to known Workbench projects."]; Return[$Failed]];
-        
-        url = $workbenchHelpersPluginUrl <> "?command=open&file=" <> file;
-        
-        If [line =!= Automatic,
-            url = url <> "&line=" <> ToString[line];
-        ];
-        
-        response = Import[url, "String"];
-        If [!StringQ[response] || (response =!= "OK" && StringFreeQ[response, "Done"]),
-            Print["OpenFileInWorkbench: Unexpected response from " <> url <> ": ", response];
-            $Failed
-            ,
-            Null
-        ]
-    ]
+	Module[{response, url, file = fileIn, line = OptionValue["Line"]},
+		
+		If [line === Automatic && OptionValue["Substring"] =!= None,
+			line = GetLineNumberOfStringInFile[OptionValue["Substring"], file];
+			
+			If [line === None,
+				Print["OpenFileInWorkbench: Couldn't find ", ToString[OptionValue["Substring"], InputForm], " in file ", file];
+				Return[$Failed];
+			];
+		];		
+		
+		file = getPathRelativeToWorkbenchProjects[file];
+		
+		If [file === $Failed, Print["OpenFileInWorkbench: Couldn't make path relative to known Workbench projects."]; Return[$Failed]];
+		
+		url = $workbenchHelpersPluginUrl <> "?command=open&file=" <> file;
+		
+		If [line =!= Automatic,
+			url = url <> "&line=" <> ToString[line];
+		];
+		
+		response = Import[url, "String"];
+		If [!StringQ[response] || (response =!= "OK" && StringFreeQ[response, "Done"]),
+			Print["OpenFileInWorkbench: Unexpected response from " <> url <> ": ", response];
+			$Failed
+			,
+			Null
+		]
+	]
 
 (*!
-    \function GetLineNumberOfStringInFile
-    
-    \calltable
-        GetLineNumberOfStringInFile[str, file] '' given a string (or string pattern), returns the line number in the given file that it occurs on, or None if not found.
-    
-    Examples:
-    
-    GetLineNumberOfStringInFile[
-        StartOfLine ~~ "GetLineNumberOfStringInFile[",
-        SymbolToFile[GetLineNumberOfStringInFile]
-    ]
-    
-    \related 'GetLineNumberOfString 'OpenFileInWorkbench
-    
-    \maintainer danielb
+	\function GetLineNumberOfStringInFile
+	
+	\calltable
+		GetLineNumberOfStringInFile[str, file] '' given a string (or string pattern), returns the line number in the given file that it occurs on, or None if not found.
+	
+	Examples:
+	
+	GetLineNumberOfStringInFile[
+		StartOfLine ~~ "GetLineNumberOfStringInFile[",
+		SymbolToFile[GetLineNumberOfStringInFile]
+	]
+	
+	\related 'GetLineNumberOfString 'OpenFileInWorkbench
+	
+	\maintainer danielb
 *)
 GetLineNumberOfStringInFile[str_, file_] :=
-    Module[{},
-        
-        If [!FileExistsQ[file], Print["Missing file: " <> file]; Return[$Failed]];
-        
-        GetLineNumberOfString[
-            Import[file, "String"],
-            str
-        ]
-    ]
+	Module[{},
+		
+		If [!FileExistsQ[file], Print["Missing file: " <> file]; Return[$Failed]];
+		
+		GetLineNumberOfString[
+			Import[file, "String"],
+			str
+		]
+	]
 
 (*!
-    \function GetLineNumberOfString
-    
-    \calltable
-        GetLineNumberOfString[str, substring] '' given a string and a substring, returns the line number of the substring. The substring can also be a string pattern. Returns None if no matches.
-    
-    Examples:
-    
-    GetLineNumber["abc\ndef", "e"] === 2
+	\function GetLineNumberOfString
+	
+	\calltable
+		GetLineNumberOfString[str, substring] '' given a string and a substring, returns the line number of the substring. The substring can also be a string pattern. Returns None if no matches.
+	
+	Examples:
+	
+	GetLineNumber["abc\ndef", "e"] === 2
 
-    Unit tests:
+	Unit tests:
 
-    RunUnitTests[GetLineNumberOfString]
+	RunUnitTests[GetLineNumberOfString]
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 GetLineNumberOfString[str_String, substring_] :=
-    Module[{pos},
-        pos = StringPosition[str, substring, 1];
-        
-        If [pos === {},
-            None
-            ,
-            GetLineNumberOfPos[str, pos[[1, 1]]]
-        ]
-    ]
+	Module[{pos},
+		pos = StringPosition[str, substring, 1];
+		
+		If [pos === {},
+			None
+			,
+			GetLineNumberOfPos[str, pos[[1, 1]]]
+		]
+	]
 
 (*!
-    \function GetLineNumberOfPos
-    
-    \calltable
-        GetLineNumberOfPos[str, pos] '' given a string and a position, returns the line number of the position in the string.
-    
-    Examples:
-    
-    GetLineNumber["abc\ndef", 5] === 2
+	\function GetLineNumberOfPos
+	
+	\calltable
+		GetLineNumberOfPos[str, pos] '' given a string and a position, returns the line number of the position in the string.
+	
+	Examples:
+	
+	GetLineNumber["abc\ndef", 5] === 2
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 GetLineNumberOfPos[str_String, pos_Integer] :=
-    Length[
-        StringCases[
-            StringTake[str, {1, pos}],
-            "\n"
-        ]
-    ]
+	Length[
+		StringCases[
+			StringTake[str, {1, pos}],
+			"\n"
+		]
+	]
 
 (*!
-    \function getPathRelativeToWorkbenchProjects
-    
-    \calltable
-        getPathRelativeToWorkbenchProjects[path] '' given a path to a file, make it relative to the Wolfram Workbench projects. The file must be in a project defined in Global`$WorkbenchProjects.
+	\function getPathRelativeToWorkbenchProjects
+	
+	\calltable
+		getPathRelativeToWorkbenchProjects[path] '' given a path to a file, make it relative to the Wolfram Workbench projects. The file must be in a project defined in Global`$WorkbenchProjects.
 
-    Unit tests: getPathRelativeToWorkbenchProjects.mt
+	Unit tests: getPathRelativeToWorkbenchProjects.mt
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 getPathRelativeToWorkbenchProjects[pathIn_] :=
-    Module[{path = pathIn, rest, res = $Failed, projectPath, projectName},
-        
-        If [ListQ[Global`$WorkbenchProjects],
-            Function[{project},
-                
-                If [MatchQ[project, _Rule],
-                    projectPath = project[[1]];
-                    projectName = project[[2]];
-                    ,
-                    projectPath = project;
-                    projectName = FileNameTake[projectPath, -1];
-                ];
-                If [StringMatchQ[path, projectPath ~~ __],
-                	If [StringMatchQ[projectPath, __ ~~ ("/" | "\\")],
-                		projectPath = StringTake[projectPath, {1, -2}];
-                	];
-                    rest = StringTake[path, StringLength[projectPath] + 2 ;;];
-                    rest = StringReplace[rest, StartOfString ~~ $PathnameSeparator.. :> ""];
-                    res = "/" <> projectName <> "/" <> rest;
-                    (* Jump out of the inner function back into the main function/module. *)
-                    Return[];
-                ];
-            ] /@ Global`$WorkbenchProjects;
-        ];
-        
-        If [res =!= $Failed,
-            StringReplace[res, "\\" :> "/"]
-            ,
-            res
-        ]
-    ]
+	Module[{path = pathIn, rest, res = $Failed, projectPath, projectName},
+		
+		If [ListQ[Global`$WorkbenchProjects],
+			Function[{project},
+				
+				If [MatchQ[project, _Rule],
+					projectPath = project[[1]];
+					projectName = project[[2]];
+					,
+					projectPath = project;
+					projectName = FileNameTake[projectPath, -1];
+				];
+				If [StringMatchQ[path, projectPath ~~ __],
+					If [StringMatchQ[projectPath, __ ~~ ("/" | "\\")],
+						projectPath = StringTake[projectPath, {1, -2}];
+					];
+					rest = StringTake[path, StringLength[projectPath] + 2 ;;];
+					rest = StringReplace[rest, StartOfString ~~ $PathnameSeparator.. :> ""];
+					res = "/" <> projectName <> "/" <> rest;
+					(* Jump out of the inner function back into the main function/module. *)
+					Return[];
+				];
+			] /@ Global`$WorkbenchProjects;
+		];
+		
+		If [res =!= $Failed,
+			StringReplace[res, "\\" :> "/"]
+			,
+			res
+		]
+	]
+
+(*!
+	\function CreateReloadFunctionForDirectory
+	
+	\calltable
+		CreateReloadFunctionForDirectory[dir] '' given a directory containing .m files, creates and returns a reload function that can be run to reload changes to those .m files. Running the function only reloads files if they have changed since the last time the function was run.
+
+	- Scan for .m files.
+	- Compute dependencies betweeen .m files.
+	- Produce and return a function that can be used as a function to reload
+	  any changes to files.
+
+	Examples:
+	
+	myReloadFunc =
+	CreateReloadFunctionForDirectory[
+		FileNameDrop[FindFile["CalculateParse`Prototype`VirtualAssistant`Utility`"], -1]
+	];
+	myReloadFunc[]
+	
+	\related 'ComputeDependencyGraph
+	
+	\maintainer danielb
+*)
+Clear[CreateReloadFunctionForDirectory];
+Options[CreateReloadFunctionForDirectory] =
+{
+	"MaxDepth" -> 1,								(*< how many directories deep to look for .m files? *)
+	"LoadFileFunction" -> Get,					  (*< the function used to load a .m file. For the new package format, GeneralUtilities`GetFragment would be used here. *)
+	"AutoExportDirectoryReloadFunction" -> None,	(*< the MachineLearning package doesn't yet support adding new exported or packaged scoped symbols and then calling GetFragment, so we support calling a reload function that is a bigger hammer in those cases. *)
+	"AdditionalDependencies" -> {}					(*< in addition to scanning the directory for dependencies, a list of custom dependencies can be passed in. *)
+};
+CreateReloadFunctionForDirectory[dir_, OptionsPattern[]] :=
+	Module[{mFiles, dependencies, memoizationFunc = CreateMemoizationFunction[],
+			files, prevReloadTimestamp, reloadFunc,
+			maxDepth = OptionValue["MaxDepth"], prevFiles,
+			reloadFunctionCreationTimestamp, modifiedFiles, exports,
+			reloadFunctionToSendToAutoExport,
+			additionalDependencies = OptionValue["AdditionalDependencies"]},
+		
+		mFiles = FileNames["*.m", dir, maxDepth];
+		
+		dependencies =
+			ComputeDependencyGraph[
+				mFiles,
+				"Directories" -> {dir},
+				(* Use memoization so that if we need to make
+				   calls to things such as FindFile again, we
+				   won't have to recompute. *)
+				"Memoization" -> memoizationFunc,
+				"Files" -> True
+			];
+			
+		dependencies = Join[dependencies, additionalDependencies];
+		
+		reloadFunctionCreationTimestamp = Date[];
+		
+		With[{loadFileFunction = OptionValue["LoadFileFunction"]},
+		
+		reloadFunc =
+		Function[
+			
+			(* Re-scan for .m files. It's possible that new files were created. *)
+				
+			files = FileNames["*.m", dir, maxDepth];
+			files = Join[files, Cases[additionalDependencies, _String, 2]];
+			
+			If [ListQ[prevFiles] && files =!= prevFiles,
+
+				(* New filese detected. *)
+				Print["New files detected. Recomputing dependencies..."];
+				
+				memoizationFunc = CreateMemoizationFunction[];
+				
+				dependencies =
+					ComputeDependencyGraph[
+						files,
+						"Directories" -> {dir},
+						(* Use memoization so that if we need to make
+						   calls to things such as FindFile again, we
+						   won't have to recompute. *)
+						"Memoization" -> memoizationFunc,
+						"Files" -> True
+					];
+				
+				dependencies = Join[dependencies, additionalDependencies];
+			];
+			
+			prevFiles = files;
+			
+			(* Only load those files that have changed since we last loaded them. *)
+			modifiedFiles =
+				Flatten[Reap[
+					Function[{file},
+						If [(* We will only reload a file if it was altered AFTER this reload
+							   function was generated. That will prevent the initial run of
+							   the reload function from reloading everything. *)
+							(DateDifference[reloadFunctionCreationTimestamp, FileDate[file, "Modification"]] /. Quantity[d_, "Days"] :> d) > 0 &&
+							(
+								(* Either not yet reloaded. *)
+								!MatchQ[prevReloadTimestamp[file], _DateObject | _List] ||
+								(* Or reloaded, but prior to the last modification. *)
+								(DateDifference[prevReloadTimestamp[file], FileDate[file, "Modification"]] /. Quantity[d_, "Days"] :> d) > 0
+							),
+							
+							Sow[file]
+						]
+					] /@ files;
+				][[2]], 1];
+			
+			(* Some of the modified files may not have yet been
+			   loaded, and if not, we probably shouldn't load
+			   them, since we're advertising ourselves as a
+			   "reloading" function. (?)
+			   
+			   On the flip side if someone modifies a file, what
+			   are the chances they DON'T want it reloaded, even
+			   if they have yet to load it manually? hmm. I suppose
+			   for now we'll leave this unimplemented.
+			   
+			   Yet to be hooked up. If we wanted to look it up,
+			   we'd need more code to use modifiedFilesThatAppearToHaveBeenPreviouslyLoaded
+			   appropriately. *)
+			(*
+			modifiedFilesThatAppearToHaveBeenPreviouslyLoaded =
+				Select[
+					modifiedFiles,
+					Memoized[
+						AppearsToBePreviouslyLoadedMFile[#],
+						memoizationFunc
+					] &
+				];
+			*)
+			
+			(* Expand the file list wrt dependencies, and order properly wrt
+			   dependencies. *)
+			With[{expandedFilesList = ProcessFileDependencies[modifiedFiles, dependencies]},
+				(* But we only really need to reload a dependant file
+				   if the dependant was changed. Be careful to maintain
+				   the order, since that's the core value proposition of
+				   ProcessFileDependencies. *)
+				modifiedFiles =
+					Select[
+						expandedFilesList,
+						MemberQ[modifiedFiles, #] &
+					]
+			];
+			
+			reloadFunctionToSendToAutoExport =
+				If [OptionValue["AutoExportDirectoryReloadFunction"] =!= None,
+					None
+					,
+					loadFileFunction
+				];
+			
+			(* Reload the files. *)
+			exports = Flatten[Reap[
+			Function[{file},
+				
+				Monitor[			
+					PreReloadFile[file];
+					
+					Quiet[
+						loadFileFunction[file],
+						(* Dec 2015: Quiet the messages that result from GetFragment until Tali can hopefully resolve them. *)
+						Attributes::notfound
+					];
+					
+					PostReloadFile[file, reloadFunctionToSendToAutoExport];
+					,
+					Framed[
+						Style[
+							Row[{"Reloading ", FileNameTake[file, -1]}],
+							FontFamily -> "Arial"
+						],
+						Background -> RGBColor[247/255, 247/255, 251/255],
+						FrameMargins -> 15,
+						FrameStyle -> Directive[GrayLevel[0.7]]
+					]
+				];
+				
+				(* Update the timestamp AFTER PostReloadFile, since
+				   PostReloadFile may perform an AutoExport, thereby
+				   modifying the file again and reloading it. *)
+				prevReloadTimestamp[file] = FileDate[file, "Modification"];
+				
+			] /@ modifiedFiles;,
+			"AutoExportedFunction"][[2]], 1];
+			
+			If [exports =!= {} && OptionValue["AutoExportDirectoryReloadFunction"] =!= None,
+				ReleaseHold[OptionValue["AutoExportDirectoryReloadFunction"]];
+			];
+		];
+		
+		];
+		
+		reloadFunc
+	]
+
+(*!
+	\function ComputeDependencyGraph
+	
+	\calltable
+		ComputeDependencyGraph[file] '' given a WL file, analyzes uses of Needs/Get to compute a dependency graph. Recursive. If the .m file isn't a WL package, returns $Failed.
+
+	Examples:
+	
+	ComputeDependencyGraph[FindFile["CalculateParse`GeneralLibrary`"]]
+	
+	===
+	
+	{
+		"CalculateParse`GeneralLibrary`" -> "CalculateUtilities`GraphUtilities`",
+		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Lists`",
+		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Predicates`",
+		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Adverbs`",
+		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Language`",
+		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Patterns`",
+		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Strings`",
+		"DataScience`Utils`Lists`" -> "DataScience`Utils`Predicates`",
+		"DataScience`Utils`Lists`" -> "DataScience`Utils`Language`",
+		"DataScience`Utils`Language`" -> "DataScience`Utils`Predicates`",
+		"DataScience`Utils`Adverbs`" -> "DataScience`Utils`Language`",
+		"DataScience`Utils`Patterns`" -> "DataScience`Utils`Lists`",
+		"DataScience`Utils`Strings`" -> "DataScience`Utils`Predicates`",
+		"DataScience`Utils`Strings`" -> "DataScience`Utils`Language`",
+		"DataScience`Utils`Strings`" -> "DataScience`Utils`Adverbs`",
+		"DataScience`Utils`Strings`" -> "DataScience`Utils`Lists`"
+	}
+	
+	\related 'ComputeDependencyGraphForPackage
+	
+	\maintainer danielb
+*)
+Clear[ComputeDependencyGraph];
+Options[ComputeDependencyGraph] =
+{
+	"Directories" -> All,		   (*< a list can be specified that means that only packages that are within one of the directories should be considered. (subdirectories are allowed) *)
+	"Memoization" -> None,		  (*< can be set to a symbol to turn on memoization. Used in combination with the listable down value of ComputeDependencyGraph to avoid duplicate processing of files. *)
+	"Files" -> False				(*< return dependencies in terms of files, rather than packages. *)
+};
+ComputeDependencyGraph[file_String, OptionsPattern[]] :=
+	Module[{res},
+		res =
+		Memoized[
+			computeDependencyGraphHelper[
+				file,
+				"Directories" -> OptionValue["Directories"],
+				"Memoization" -> OptionValue["Memoization"]
+			],
+			OptionValue["Memoization"],
+			"MemoizationKey" -> {"computeDependencyGraphHelper", file}
+		];
+		
+		If [TrueQ[OptionValue["Files"]],
+			replacePackagesWithFiles[res, OptionValue["Memoization"]]
+			,
+			res
+		]
+	]
+
+ComputeDependencyGraph[files_List, OptionsPattern[]] :=
+	Module[{
+				res,
+				memoizationFunc =
+					If[OptionValue["Memoization"] === None,
+						CreateMemoizationFunction[]
+						,
+						OptionValue["Memoization"]
+					]
+		   },
+		
+		res =
+		DeleteDuplicates[
+			DeleteCases[
+				Flatten[
+					Map[
+						Function[
+							ComputeDependencyGraph[
+								#,
+								"Memoization" -> memoizationFunc,
+								"Directories" -> OptionValue["Directories"]
+							]
+						],
+						files
+					]
+				],
+				(* If any of the .m files weren't actually packages, then
+				   they'll result in $Failed items. *)
+				$Failed
+			]
+		];
+		
+		If [TrueQ[OptionValue["Files"]],
+			replacePackagesWithFiles[res, memoizationFunc]
+			,
+			res
+		]
+	]
+
+(*!
+	\function computeDependencyGraphHelper
+	
+	\calltable
+		computeDependencyGraphHelper[file] '' given a WL file, analyzes uses of Needs/Get to compute a dependency graph. Recursive. If the .m file isn't a WL package, returns $Failed.
+
+	Examples:
+	
+	computeDependencyGraphHelper[FindFile["CalculateParse`GeneralLibrary`"]] === TODO
+	
+	\related 'computeDependencyGraphHelperForPackage
+	
+	\maintainer danielb
+*)
+Clear[computeDependencyGraphHelper];
+Options[computeDependencyGraphHelper] =
+{
+	"FilesAlreadyProcessed" -> Null,		(*< a held variable can be passed in to keep track of which files have been visited already. *)
+	"Directories" -> All,				   (*< a list can be specified that means that only packages that are within one of the directories should be considered. (subdirectories are allowed) *)
+	"Memoization" -> None				   (*< can be set to a symbol to turn on memoization. Used in combination with the listable down value of ComputeDependencyGraph to avoid duplicate processing of files. *)
+};
+computeDependencyGraphHelper[file_, opts:OptionsPattern[]] :=
+	Module[{needsUses, package, dependencies, filesAlreadyProcessed, dataStr, readListData},
+		
+		(* If a list of directories was given that we want to limit
+		   our search to be within, then make sure we have't wandered
+		   outside. *)
+		If [OptionValue["Directories"] =!= All &&
+			!StringStartsWith[file, OptionValue["Directories"]],
+			Return[{}];
+		];
+		
+		(* Use a symbol to keep track of which files have
+		   been processed so that recursive calls don't
+		   process a .m file that has already been processed.
+		   ie. A dependency tree can have duplicate nodes
+		   which are in different branches. *)
+		filesAlreadyProcessed = CreateHeldVarIfNull[OptionValue["FilesAlreadyProcessed"], {}];
+		
+		(* If we've already processed this file, don't recurse. *)
+		If [MemberQ[ReleaseHold[filesAlreadyProcessed], file],
+			Return[{}];
+		];
+		
+		dataStr = Import[file, "Text"];
+		
+		(* Get the package name of this .m file, because we want to skip .m files
+		   that aren't actually packages. *)
+		package = GetPackageName[file, "DataString" -> dataStr];
+		If [package === None, Return[$Failed]];
+		
+		(* Read the .m file. *)
+		With[{readListData = readListData},
+			ReadListFileHeld[
+				StringToStream[dataStr],
+				needsUses = needsUsesHelper[readListData],
+				readListData,
+				"Package" -> package
+			];
+		];
+		
+		(* If we're only interested in files within certain directories, then
+		   limit the Needs statements to those ones. *)
+		If [OptionValue["Directories"] =!= All,
+			needsUses =
+				Select[
+					needsUses,
+					(
+						With[{
+								needsFilePath =
+									Memoized[
+										FindFile[#],
+										OptionValue["Memoization"]
+									]
+							 },
+							StringQ[needsFilePath] && StringStartsWith[needsFilePath, OptionValue["Directories"]]
+						]
+					) &
+				]
+		];
+		
+		dependencies = (package -> #) & /@ needsUses;
+		
+		(* Mark this file as having been processed. *)
+		SetHeldVar[
+			filesAlreadyProcessed,
+			Append[ReleaseHold[filesAlreadyProcessed], file]
+		];
+		
+		Flatten[
+			AppendTo[
+				dependencies,
+				Memoized[
+					computeDependencyGraphForPackageHelper[
+						#,
+						"FilesAlreadyProcessed" -> filesAlreadyProcessed,
+						"Directories" -> OptionValue["Directories"],
+						"Memoization" -> OptionValue["Memoization"]
+					],
+					OptionValue["Memoization"],
+					"MemoizationKey" -> {"computeDependencyGraphForPackageHelper", #}
+				] & /@ needsUses
+			]
+		]
+	]
+
+(*!
+	\function StringStartsWith
+	
+	\calltable
+		StringStartsWith[str, stringList] '' returns True if the given string starts with one of the strings in 'stringList'.
+
+	Examples:
+	
+	StringStartsWith["abcdef", {"abc"}] === True
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`StringStartsWith]
+
+	\maintainer danielb
+*)
+StringStartsWith[str_, stringList_] :=
+	Module[{strLen = StringLength[str]},
+		Function[{item},
+			If [strLen >= StringLength[item] &&
+				StringTake[str, StringLength[item]] === item,
+				Return[True, Module]
+			]
+		] /@ stringList;
+		
+		False
+	]
+
+(*!
+	\function CreateHeldVarIfNull
+	
+	\calltable
+		CreateHeldVarIfNull[val, defaultValue] '' if the argument passed in is Null, then a held var is created and returned. Otherwise, the argument is echoed. Useful for helper functions that can accept a held var as an option, but where the initial call would pass in Null by default.
+
+	Examples:
+	
+	CreateHeldVarIfNull[Null] === HoldComplete[CalculateParse`GeneralLibrary`Private`NewVar`heldVar1]
+	
+	CreateHeldVarIfNull[HoldComplete[CalculateParse`GeneralLibrary`Private`NewVar`heldVar2]] === HoldComplete[CalculateParse`GeneralLibrary`Private`NewVar`heldVar2]
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`CreateHeldVarIfNull]
+
+	\related 'NewHeldVar 'SetHeldVar
+	
+	\maintainer danielb
+*)
+CreateHeldVarIfNull[val_, defaultValue_:"$NotSpecified$"] :=
+	If [val === Null,
+		If [defaultValue =!= "$NotSpecified$",
+			With[{var = NewHeldVar["heldVar"]},
+				SetHeldVar[var, defaultValue];
+				var
+			]
+			,
+			NewHeldVar["heldVar"]
+		]
+		,
+		val
+	]
+
+(*!
+	\function NewHeldVar
+	
+	\calltable
+		NewHeldVariable[baseName] '' creates a new variable and wraps it in HoldComplete. This can act as a reference to that variable, rather than referring to its actual value.
+	
+	\related 'SetHeldVar
+	
+	\maintainer danielb
+*)
+NewHeldVar[baseName_] :=
+	With[{var = Unique["WUtils`WUtils`Private`NewVar`" <> baseName]},
+		HoldComplete[var]
+	]
+
+(*!
+	\function SetHeldVar
+	
+	\calltable
+		SetHeldVar[heldVar, value] '' update the value of the variable to the given value. The variable is held. This is a way to keep a reference to a variable as opposed to its value.
+	
+	Examples:
+	
+	SetHeldVar[HoldComplete[myVar], 1];
+	
+	myVar === 1
+	
+	\related 'DynamicOutputSectionVar
+	
+	\maintainer danielb
+*)
+SetHeldVar[heldVar_, value_] :=
+	Module[{},
+		heldVar /. HoldComplete[var_] :>
+			(
+			var = value;
+			)
+	]
+
+(*!
+	\function GetPackageName
+	
+	\calltable
+		GetPackageName[file] '' given some WL code, returns the name of the package used in the BeginPackage statement, or None if none.
+	
+	Because this is such an expensive operation, GetPackageName uses Memoization so that
+	subsequent calls are sure not to redo work.
+	
+	We would prefer to use ReadList to read the WL file as a list of HeldComplete expressions
+	and use Cases to find BeginPackage, but that appears to pollute the symbol namespace
+	because ReadList doesn't set $Context properly, and thus any symbols defined by the
+	file get put into Global`.
+	
+	Example:
+
+	GetPackageName["BeginPackage[\"WUtils`WUtils`\"];\n...\n"] === "WUtils`WUtils`"
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`Private`GetPackageName]
+
+	\maintainer danielb
+*)
+Clear[GetPackageName];
+Options[GetPackageName] = Options[getPackageNameHelper] =
+{
+	"DataString" -> Null,	   (*< the file's contents as a string. If not passed in, it will be read from disk. *)
+	"UseMemoization" -> True	(*< memoize results? *)
+};
+If [!ValueQ[$GetPackageNameMemoization],
+	$GetPackageNameMemoization = CreateMemoizationFunction[];
+];
+
+GetPackageName[file_, opts:OptionsPattern[]] :=
+	(
+	Memoized[
+		getPackageNameHelper[file, opts],
+		If [TrueQ[OptionValue["UseMemoization"]],
+			$GetPackageNameMemoization
+			,
+			None
+		],
+		"MemoizationKey" -> file
+	]
+	)
+
+(* String pattern for a WL symbol. *)
+WLSymbolPattern[] = WordBoundary ~~ ("$" | LetterCharacter) ~~ ("$" | "`" | LetterCharacter | DigitCharacter)... ~~ WordBoundary;
+
+(*!
+	\function ReadListFileHeld
+	
+	\calltable
+		ReadListFileHeld[fileOrStream, expr, listOfHeldExpressionsSymbol] '' given a file name or stream, reads the expressions in that file one by one and wraps them in HoldComplete, and then evalutes 'expr'. Cleans up any symbols that got inadvertantly defined. The listOfHeldExpressionsSymbol symbol is replaced within 'expr' with the data returned from ReadList before evaluating 'expr'.
+
+	See also:
+	
+	https://mail-archive.wolfram.com/archive/l-kernel/2015/Mar00/0018.html
+
+	Examples:
+	
+	With[{myVar = Unique["myVar"]},
+		ReadListFileHeld[
+			FindFile["WUtils`WUtils`"],
+			(* Code to be executed. *)
+			Print[thisVarWillHoldTheListOfHeldExpressions[[1;;5]] // Indent2],
+			thisVarWillHoldTheListOfHeldExpressions
+		]
+	]
+	
+	\related 'ReadList
+	
+	\maintainer danielb
+*)
+Attributes[ReadListFileHeld] = {HoldRest};
+Clear[ReadListFileHeld];
+Options[ReadListFileHeld] =
+{
+	"Package" -> Null		   (*< If known, $Context can be set to the package's context so that symbols get the right context. *)
+};
+ReadListFileHeld[fileOrStream_, expr_, listOfHeldExpressionsSymbol_, OptionsPattern[]] :=
+	Module[{newSymbols = {}, res},
+		
+		Block[{$Context =
+					If [OptionValue["Package"] =!= Null,
+						OptionValue["Package"] <> "`ReadListFileHeld`Private`"
+						,
+						$Context
+					]
+			  },
+		
+			newSymbols =
+				Flatten[
+					Reap[
+						Block[{$NewSymbol = (Sow[#]&), data},
+							
+							(* Quiet'ing this for now since it sometimes seems to
+							   result in shadow messages. The 'Remove' that we do
+							   removes any symbols that we inadvertantly create, so
+							   we're not particularily interested in shadow messages.
+							   Not sure how to turn off ONLY shadow messages, so doing
+							   a full Quiet, which seems a bit unfortunate. *)
+							Quiet[
+								data = ReadList[fileOrStream, HoldComplete[Expression]];
+							];
+							
+							res =
+							ReleaseHold[
+								Replace[
+									HoldComplete[
+										expr
+									],
+									listOfHeldExpressionsSymbol -> data,
+									Infinity
+								]
+							];
+						]
+					][[2]],
+				 1
+			];
+			 
+			Quiet[
+				Remove & /@ newSymbols,
+				(* I'm seeing some cases where symbols are reported as created,
+				   but when we remove them, M complains they don't exist. *)
+				Remove::rmnsm
+			];
+		];
+		
+		res
+	]
+
+(*!
+	\function ProcessFileDependencies
+	
+	\calltable
+		ProcessFileDependencies[files, dependencies] '' given a list of files to be reloaded, and a list of file dependencies, expand the list of files as necessary, and sort the list so that a dependent file is loaded prior to a depending file.
+	
+	Example:
+	
+	ProcessFileDependencies[
+		{
+			"C:\\Temp\\a.m",
+			"C:\\Temp\\b.m",
+			"C:\\Temp\\c.m"
+		},
+		{
+			"a.m" -> "b.m",
+			"b.m" -> "c.m"
+		}
+	]
+	
+	===
+	
+	{
+		"C:\\Temp\\c.m",
+		"C:\\Temp\\b.m",
+		"C:\\Temp\\a.m"
+	}
+	
+	\related 'dependenciesOfFile
+	
+	\maintainer danielb
+*)
+Clear[ProcessFileDependencies];
+ProcessFileDependencies[files_, dependencies_] :=
+	Module[{res, dependentList, isDependent},
+		
+		res = files;
+		
+		(* Get the dependencies of each file. *)
+		Function[{file},
+			dependentList = dependentsOfFile[file, dependencies];
+			(* Populate a isDependent function for use in sorting. *)
+			(isDependent[file, #] = True) & /@ dependentList;
+			
+			res = {res, dependentList};
+			
+			Function[{file2},
+				(isDependent[file2, #] = True) & /@ dependentsOfFile[file2, dependencies];
+			] /@ dependentList;
+			
+		] /@ files;
+		
+		res = DeleteDuplicates[Flatten[res]];
+		
+		isDependent[_, _] := False;
+		
+		(*Print[DownValues[isDependent] // Indent2];*)
+		
+		Sort[
+			res,
+			isDependent[#1, #2] &
+		]
+	]
+
+(*!
+	\function dependentsOfFile
+	
+	\calltable
+		dependentsOfFile[file, dependencies] '' given a file and known dependency relationships, return the dependents of the given file.
+	
+	Doesn't go beyond a max depth to somewhat protect against circular dependencies.
+	
+	Example:
+	
+	dependentsOfFile[
+		"C:\\Temp\\c.m"
+		,
+		{
+			"C:\\Temp\\a.m" -> "C:\\Temp\\b.m",
+			"C:\\Temp\\b.m" -> "C:\\Temp\\c.m"
+		}
+	]
+	
+	===
+	
+	{"C:\\Temp\\b.m", "C:\\Temp\\a.m"}
+	
+	\related 'ProcessFileDependencies
+	
+	\maintainer danielb
+*)
+Clear[dependentsOfFile];
+dependentsOfFile[file_, dependencies_, depth_:0] :=
+	Module[{res, foundDependents, nonDirectDependents = {}},
+		
+		If [depth > 15,
+			Return[{}];
+		];
+		
+		res = {};
+		
+		foundDependents = DeleteDuplicates[Select[dependencies, #[[2]] === file &][[All, 1]]];
+
+		(* Dependencies of dependencies *)
+		Function[{foundDependency},
+			nonDirectDependents = Join[nonDirectDependents, dependentsOfFile[foundDependency, dependencies, depth + 1]];
+		] /@ foundDependents;
+		
+		DeleteCases[Join[foundDependents, nonDirectDependents], file]
+	]
+
+(*!
+	\function PreReloadFile
+	
+	\calltable
+		PreReloadFile[file] '' called prior to reloading a file.
+		
+	Allows code to be run that wants to have the opportunity of
+	doing something prior to code reloads.
+	
+	\related 'PostReloadFile
+	
+	\maintainer danielb
+*)
+PreReloadFile[file_] :=
+	Module[{},
+		(* If enabled, record the symbol names in a file prior to
+		   reloading so that after reloading we can look for new
+		   function definitions that should be exported. *)
+		If [TrueQ[Global`$EnableAutoExport],
+			(* Only consider files modified recently. Ideally,
+			   we'd only like to perform this logic for files
+			   modified by the user (not by a cvs update), so
+			   this will help a bit. We also want to avoid
+			   performing this logic after an Alpha restart
+			   whereby there are files newer than the MX build
+			   date, but which we don't care to run this logic
+			   on upon reload. *)
+			If [ModificationAgeInMinutes[file] < 10,
+				With[{context = FileToContext[file, "PrivateContext" -> True]},
+					If [context =!= $Failed &&
+						(* Only bother to record the names if we
+						   haven't already done that, since upon
+						   PostReloadFile we updated this. *)
+						recordedContextNames[context] === Null,
+						(* Names seems to take on the order of 100 ms which
+						   seems much slower than I would have imagined. It's
+						   sad to add 100 ms to the speed of reloading
+						   a file. Hopefully the benefit of not having to manually
+						   export functions is worth it. (and of course this is
+						   only enabled if someone sets Global`$EnableAutoExport = True. *)
+						recordedContextNames[context] = Names[context <> "*"];
+					];
+				];
+			]; 
+		];
+	]
+
+(*!
+	\function ModificationAgeInMinutes
+	
+	\calltable
+		ModificationAgeInMinutes[file] '' given a file, returns how long ago it was last modified, in seconds.
+	
+	Examples:
+	
+	ModificationAgeInMinutes[FindFile["WUtils`WUtils`"]]
+	
+	\maintainer danielb
+*)
+ModificationAgeInMinutes[file_] := DateDifference[FileDate[file, "Modification"], Date[], "Minute"]
+
+(*!
+	\function FileToContext
+	
+	\calltable
+		FileToContext[file] '' given a file, returns its expected context.
+	
+	Note: Slow because it reads the whole file.
+	
+	Examples:
+	
+	FileToContext[FindFile["WUtils`WUtils`"]]
+	
+	===
+	
+	"WUtils`WUtils`"
+	
+	\maintainer danielb
+*)
+Clear[FileToContext];
+Options[FileToContext] =
+{
+	"PrivateContext" -> False	   (*< If True, returns the private context for the file. *)
+};
+Clear[fileToContextCache];
+FileToContext[file_, OptionsPattern[]] :=
+	Module[{context = $Failed, private = TrueQ[OptionValue["PrivateContext"]]},
+		
+		(* Rather than re-reading a file each time FileToContext is called, we'll
+		   cache the result. *)
+		With[{cachedRes = fileToContextCache[file, private]},
+			If [cachedRes =!= Null,
+				Return[cachedRes];
+			];
+		];
+		
+		If [!FileExistsQ[file], Print["Missing file: " <> file]; Return[$Failed]];
+		
+		context = GetPackageName[file, "DataString" -> Import[file, "Text"]];
+		If [context === None, Return[None]];
+		
+		If [private,
+			If [NewPackageFormatQ[file],
+				(* But this doesn't always appear to be correct. For example,
+				   in MachineLearning, the intermediate context path is
+				   of the form "file$..." or something. *)
+				context = context <> FileBaseName[file] <> "`PackagePrivate`";
+				,
+				context = context <> "Private`";
+			];
+		];
+		
+		fileToContextCache[file, private] = context;
+		
+		context
+	]
+
+(* Rather than re-reading a file each time FileToContext is called, we'll
+   cache the result. *)
+fileToContextCache[_, _] := Null;
+
+recordedContextNames[_] := Null;
+
+(*!
+	\function PostReloadFile
+	
+	\calltable
+		PostReloadFile[file, reloadFunction] '' called after reloading a file.
+		
+	Allows code to be run that wants to have the opportunity of
+	doing something after code reloads.
+	
+	\related 'PreReloadFile
+	
+	\maintainer danielb
+*)
+Clear[PostReloadFile];
+PostReloadFile[file_, reloadFunction_:Get] :=
+	Module[{},
+		
+		(* If enabled, look for new function definitions that should be exported. *)
+		If [TrueQ[Global`$EnableAutoExport],
+			(* Only consider files modified recently. Ideally,
+			   we'd only like to perform this logic for files
+			   modified by the user (not by a cvs update), so
+			   this will help a bit. *)
+			If [ModificationAgeInMinutes[file] < 10,
+				With[{context = FileToContext[file, "PrivateContext" -> True]},
+					If [context =!= $Failed,
+						With[{prevNames = recordedContextNames[context]},
+							If [ListQ[prevNames],
+								With[{names = Names[context <> "*"]},
+									
+									(* Update our cache since we did the work
+									   of calling Names, which is expensive.
+									   This avoids PreReloadFile from needing
+									   to refresh the cache each time. *)
+									recordedContextNames[context] = names;
+									
+									With[{newNames = Complement[names, prevNames]},
+										processNewlyDefinedPrivateSymbols[newNames, file, reloadFunction];
+									]
+								]
+							]
+						]
+					]
+				]
+			]; 
+		];
+		
+	]
+
+(*!
+	\function processNewlyDefinedPrivateSymbols
+	
+	\calltable
+		processNewlyDefinedPrivateSymbols[newNames, file, reloadFunction] '' given a list of newly defined private symbol names, looks for newly defined functions that start with a capital letter, and adds Exports for them.
+	
+	Examples:
+	
+	processNewlyDefinedPrivateSymbols[
+		{
+		"WUtils`WUtils`MyNewFunc",
+		"WUtils`WUtils`$1322"
+		},
+		"MyFile.m",
+		Get
+	]
+	
+	\related 'PostReloadFile
+	
+	\maintainer danielb
+*)
+processNewlyDefinedPrivateSymbols[newNames_, file_, reloadFunction_] :=
+	Module[{symbolsToExport},
+		
+		symbolsToExport = nameListToExportedSymbolList[newNames];
+			
+		Function[{symbol},
+			Print["AutoExport: ", SymbolName[symbol]];
+			
+			ExportSymbol[symbol, file];
+			
+			(* Not sure whether I should do SymbolToFile[symbol], or use
+			   the 'file' passed in. Unclear whether the new package format
+			   likes it when you reload indidivual non-main files, or whether
+			   it wants to reload the whole package at once. *)
+			reloadFunction[file];
+			
+			(* Signal the reload function that something was AutoExported. *)
+			Sow[True, "AutoExportedFunction"];
+			
+			(*Get[SymbolToFile[symbol]];*)
+		] /@ symbolsToExport
+	]
+
+(*!
+	\function nameListToExportedSymbolList
+	
+	\calltable
+		nameListToExportedSymbolList[names] '' given a list of names, return the ones that look like they are intended to be exported functions.
+	
+	Examples:
+	
+	(* Note that this would only return the given value if
+	   WUtils`WUtils`ModificationAgeInMinutes were
+	   actually defined and had DownValues. *)
+	
+	nameListToExportedSymbolList[
+		{
+		"WUtils`WUtils`ModificationAgeInMinutes",
+		"WUtils`WUtils`nameListToExportedSymbolList"
+		}
+	]
+	
+	===
+	
+	{
+		WUtils`WUtils`ModificationAgeInMinutes
+	}
+	
+	\related 'processNewlyDefinedPrivateSymbols
+	
+	\maintainer danielb
+*)
+nameListToExportedSymbolList[names_] :=
+	ToExpression /@
+		Select[
+			names,
+			With[{name = #},
+				With[{symbolName = StringTakeByDelim[name, "`", -1]},
+					With[{expression = ToExpression[name, StandardForm, HoldComplete]},
+						MatchQ[expression, HoldComplete[_Symbol]] &&
+						(* Starts with a capital letter? *)
+						StringMatchQ[symbolName, firstLetter:LetterCharacter ~~ (LetterCharacter | DigitCharacter)... /; UpperCaseQ[firstLetter]] &&
+						(* First check that there aren't any OwnValues. We don't want
+						   symbols that have OwnValues. *)
+						(expression /. HoldComplete[symbol_] :> OwnValues[symbol]) === {} &&
+						(* Check for DownValues. If it's a function, it should have some. *)
+						With[{symbol = ReleaseHold[expression]}, DownValues[symbol] =!= {}] &&
+						(* Exported symbol of the same name doesn't yet exist? *)
+						Names[StringReplace[name,  "`PackagePrivate" | "`Private" :> ""]] === {}
+					]
+				]
+			] &
+		]
+
+(*!
+	\function StringTakeByDelim
+	
+	\calltable
+		StringTakeByDelim[str, delim, n] '' StringTake, but by portions demarkated by a delimiter.
+	
+	Example:
+	
+	StringTakeByDelim["WUtils`WUtils`Private`MyNewFunc", "`", -1] === "MyNewFunc"
+	
+	\maintainer danielb
+*)
+StringTakeByDelim[str_, delim_, n_] :=
+	StringJoin[Riffle[Take[StringSplit[str, delim], n], delim]]
 
 End[]
 
