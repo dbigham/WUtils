@@ -364,6 +364,8 @@ KeyValueSet::usage = "KeyValueSet  "
 
 Sett::usage = "Sett  "
 
+RemoveIndentation::usage = "RemoveIndentation  "
+
 Begin["`Private`"]
 
 (* Note: This code needs to come after the function definitions in this file, since
@@ -7264,7 +7266,7 @@ Options[CreateIssueNotebook] =
 CreateIssueNotebook[opts:OptionsPattern[]] :=
 	Module[{name = OptionValue["Name"],
 			type = OptionValue["Type"],
-			typeArg, clipboard, templateFile,
+			typeArg, clipboard,
 			contents = Automatic,
 			dir = Automatic,
 			createSubDirectory = True, dockedContents, nb, dynamicOutputVar, path, title},
@@ -7338,15 +7340,8 @@ CreateIssueNotebook[opts:OptionsPattern[]] :=
 		
 		typeArg = Sequence[];
 		If [type =!= Automatic,
-			templateFile = ToFileName[$TemplateNotebookDir, type <> ".nb"];
-			If [FileExistsQ[templateFile],
-				(* For now we'll use the "Type" as the exact file name of the template notebook.
-				   We could introduce a user-defined mapping here if desirable. *)
-				typeArg = "TemplateNotebook" -> ToFileName[$TemplateNotebookDir, type <> ".nb"];
-				,
-				(* Otherwise, perhaps notebooks of this type are generated dynamically. *)
-				contents = NotebookGenerator[name, type, "DynamicOutputVar" -> dynamicOutputVar, Sequence @@ OptionValue["NotebookGeneratorArgs"]];
-			];
+			(* Otherwise, perhaps notebooks of this type are generated dynamically. *)
+			contents = NotebookGenerator[name, type, "DynamicOutputVar" -> dynamicOutputVar, Sequence @@ OptionValue["NotebookGeneratorArgs"]];
 		];
 		
 		If [contents === $Failed, Return[$Failed]];
@@ -9706,16 +9701,8 @@ CreateNotebook2[name_String, opts:OptionsPattern[]] :=
 							],
 							"DockedCell"
 						]
-					}
+					};
 				];
-				
-				If [TrueQ[OptionValue["CreateFile"]],
-					If [version =!= Automatic &&
-						version =!= ToString[Floor[$VersionNumber]],
-						NotebookClose[notebook];
-						Return@OpenNotebook[path];
-					]
-				]
 			]
 		];
 		
@@ -10936,6 +10923,38 @@ KeyValueSet[keyValues_, keyList_List -> value_] :=
 	]
 
 Sett = KeyValueSet
+
+(*!
+    \function RemoveIndentation
+    
+    \calltable
+        RemoveIndentation[str] '' given a string, remove any top-level indentation
+    
+    RemoveIndentation["   Blah[\n        1\n    ]"] === "Blah[\n    1\n]"
+    
+    \maintainer danielb
+*)
+RemoveIndentation[str_] :=
+    Module[{topLevelIndent},
+        topLevelIndent =
+	        StringReplace[
+	            StringCases[str, RegularExpression["^[ \t]*"]][[1]],
+	            (* 4 spaces per tab *)
+	            "\t" :> "    "
+	        ];
+            
+        If [topLevelIndent === "",
+            str
+            ,
+            StringTake[
+	            StringReplace[
+	                StringReplace[str, "\t" :> "    "],
+	                "\n" <> topLevelIndent :> "\n"
+	            ],
+	            {StringLength[topLevelIndent] + 1, -1}
+	        ]
+        ]
+    ]
 
 End[]
 
