@@ -1,7 +1,5 @@
 BeginPackage["WUtils`WUtils`"]
 
-Needs["CalculateParse`GeneralLibrary`"]; (* CreateReloadFunctionForDirectory, etc. *)
-
 ReloadWUtils::usage = "ReloadWUtils  "
 
 GetFunctionSource::usage = "GetFunctionSource  "
@@ -35,6 +33,14 @@ ExpandSpansToIncludeTrailingSemiColons::usage = "ExpandSpansToIncludeTrailingSem
 TestFun33::usage = "TestFun33  "
 
 DeleteNesetedSpans::usage = "DeleteNesetedSpans  "
+
+CopyFunction::usage = "CopyFunction  "
+
+InsertStringAfterMatch::usage = "InsertStringAfterMatch  "
+
+InsertStringBeforeMatch::usage = "InsertStringBeforeMatch  "
+
+InsertStringInFile::usage = "InsertStringInFile  "
 
 Begin["`Private`"]
 
@@ -409,11 +415,11 @@ FindOptionsCodeSections[str_, funcName_] :=
 
 	Examples:
 	
-    FindAttributesCodeSections["Attributes[Func] = {HoldFirst}", "Func"] === {{1, 30}}
+	FindAttributesCodeSections["Attributes[Func] = {HoldFirst}", "Func"] === {{1, 30}}
 
-    Unit tests: FindAttributesCodeSections.mt
+	Unit tests: FindAttributesCodeSections.mt
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 FindAttributesCodeSections[str_, funcName_] :=
 	Block[{},
@@ -441,18 +447,18 @@ FindAttributesCodeSections[str_, funcName_] :=
 
 	Examples:
 	
-    FindMathdocComments[
-        "(!\n\t\\function FindMathdocComments\n\t\n\t\\calltable\n\t\tFindMathdocComments[str, funcName] '' find top of function Mathdoc comments.\n\t\n\t\
+	FindMathdocComments[
+		"(!\n\t\\function FindMathdocComments\n\t\n\t\\calltable\n\t\tFindMathdocComments[str, funcName] '' find top of function Mathdoc comments.\n\t\n\t\
 
-    Unit tests: FindMathdocComments.mt
+	Unit tests: FindMathdocComments.mt
 
-    \maintainer danielb\n)\n",
-        "FindMathdocComments"
-    ]
+	\maintainer danielb\n)\n",
+		"FindMathdocComments"
+	]
 
-    ===
+	===
 
-    {}
+	{}
 
 	\maintainer danielb
 *)
@@ -481,11 +487,11 @@ FindMathdocComments[str_, funcName_] :=
 
 	Examples:
 	
-    GetFunctionCodeSections["MyFunc[] := Module[{}, 1]", "MyFunc"] === {{1, 25}}
+	GetFunctionCodeSections["MyFunc[] := Module[{}, 1]", "MyFunc"] === {{1, 25}}
 
-    Unit tests: GetFunctionCodeSections.mt
+	Unit tests: GetFunctionCodeSections.mt
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 Clear[GetFunctionCodeSections];
 GetFunctionCodeSections::cfn = "Couldn't find down value definition after ':='.";
@@ -569,11 +575,11 @@ GetFunctionCodeSections[str_String, funcName_String] :=
 
 	Examples:
 	
-    FindMessageDefinitions["Func::msg = \"Message text\"", "Func"] === {{1, 26}}
+	FindMessageDefinitions["Func::msg = \"Message text\"", "Func"] === {{1, 26}}
 
-    Unit tests: FindMessageDefinitions.mt
+	Unit tests: FindMessageDefinitions.mt
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 FindMessageDefinitions[str_, funcName_] :=
 	Block[{},
@@ -582,7 +588,7 @@ FindMessageDefinitions[str_, funcName_] :=
 			StartOfLine ~~
 			(" " | "	")... ~~
 			funcName ~~ "::" ~~
-			(LetterCharacter | DigitCharacter).. ~~
+			(messageName:((LetterCharacter | DigitCharacter)..) /; (messageName =!= "usage")) ~~
 			WhitespaceCharacter.. ~~
 			"=" ~~
 			WhitespaceCharacter.. ~~
@@ -600,11 +606,11 @@ FindMessageDefinitions[str_, funcName_] :=
 
 	Examples:
 	
-    FindCommentBeforeSpan["(* Comment *)\nFunc[] := 1", {15, -1}] === {{1, 13}}
+	FindCommentBeforeSpan["(* Comment *)\nFunc[] := 1", {15, -1}] === {{1, 13}}
 
-    Unit tests: FindCommentBeforeSpan.mt
+	Unit tests: FindCommentBeforeSpan.mt
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 FindCommentBeforeSpan[str_, span_] :=
 	Block[{priorString},
@@ -623,15 +629,15 @@ FindCommentBeforeSpan[str_, span_] :=
 
 	Examples:
 	
-    ExpandSpansToIncludeTrailingSemiColons["Func[]; Func2[];", {{1, 6}, {9, 15}}]
+	ExpandSpansToIncludeTrailingSemiColons["Func[]; Func2[];", {{1, 6}, {9, 15}}]
 
-    ===
+	===
 
-    {{1, 7}, {9, 16}}
+	{{1, 7}, {9, 16}}
 
-    Unit tests: ExpandSpansToIncludeTrailingSemiColons.mt
+	Unit tests: ExpandSpansToIncludeTrailingSemiColons.mt
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 ExpandSpansToIncludeTrailingSemiColons[str_, spans_] :=
 	Block[{stringLen = StringLength[str]},
@@ -654,11 +660,11 @@ ExpandSpansToIncludeTrailingSemiColons[str_, spans_] :=
 
 	Examples:
 	
-    DeleteNesetedSpans[{{1, 5}, {3, 5}, {4, 8}, {4, 4}, {8, 8}}] === {{1, 5}, {4, 8}}
+	DeleteNesetedSpans[{{1, 5}, {3, 5}, {4, 8}, {4, 4}, {8, 8}}] === {{1, 5}, {4, 8}}
 
-    Unit tests: DeleteNesetedSpans.mt
+	Unit tests: DeleteNesetedSpans.mt
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 DeleteNesetedSpans[spansIn_] :=
 	Block[{spans = spansIn, prevSpan},
@@ -683,6 +689,206 @@ DeleteNesetedSpans[spansIn_] :=
 			];
 		DeleteDuplicates[spans]
 	];
+
+(*!
+	\function CopyFunction
+	
+	\calltable
+		CopyFunction[func, sourceFile, destFile] '' copy the source code of a function from one file to another.
+
+	Examples:
+	
+	CopyFunction[func, sourceFile, destFile] === TODO
+	
+	\related '
+	
+	\maintainer danielb
+*)
+CopyFunction::cgs = "Couldn't get the source code for function `1` from `2`";
+CopyFunction[func_, sourceFile_, destFile_] :=
+	Block[{funcSourceCode, fileSource, exportedFunctionQ},
+		
+		If [!FileExistsQ[sourceFile], Message[CopyFunction::noopen, sourceFile]; Return[$Failed]];
+		If [!FileExistsQ[destFile], Message[CopyFunction::noopen, destFile]; Return[$Failed]];
+		
+		fileSource = Import[sourceFile, "Text"];
+		
+		funcSourceCode = GetFunctionSource[func, fileSource];
+		If [!StringQ[funcSourceCode],
+			Message[CopyFunction::cgs, func, sourceFile];
+			Return[$Failed];
+		];
+		
+		InsertStringInFile[
+			destFile,
+			funcSourceCode <> "\n\n",
+			StartOfLine ~~ "End[]",
+			(* Since some files, like GeneralLibrary.m have multiple instances of End[]. *)
+			"LastMatch" -> True
+		];
+		
+		exportedFunctionQ = !StringFreeQ[fileSource, SymbolName[func] <> "::usage"];
+		Print["exportedFunctionQ: ", exportedFunctionQ];
+		If [TrueQ[exportedFunctionQ],
+			ExportSymbol[func, destFile];
+		];
+	];
+	
+(*!
+	\function InsertStringAfterMatch
+	
+	\calltable
+		InsertStringAfterMatch[str, strToInsert, strToMatch] '' given a string, insert 'strToInsert' into it after the location of 'strToMatch'.
+	
+	Example:
+	
+	InsertStringAfterMatch["abc def ghi", " 123", "def"] === "abc def 123 ghi"
+
+	Unit tests:
+
+	RunUnitTests[CalculateParse`GeneralLibrary`InsertStringAfterMatch]
+
+	\related 'InsertStringInFile
+	
+	\maintainer danielb
+*)
+Options[InsertStringAfterMatch] =
+{
+	"LastMatch" -> False	(*< insert wrt the last match, rather than the first match. *)
+};
+InsertStringAfterMatch[str_, strToInsert_, strToMatch_, OptionsPattern[]] :=
+	Module[{pos, posToUse},
+		
+		pos =
+			StringPosition[
+				str,
+				strToMatch,
+				If [TrueQ[OptionValue["LastMatch"]],
+					Infinity
+					,
+					1
+				]
+			];
+			
+		If [pos === {},
+			$Failed
+			,
+			If [TrueQ[OptionValue["LastMatch"]],
+			   posToUse = pos[[-1]];
+			   ,
+			   posToUse = pos[[1]];
+			];
+			
+			StringInsert[str, strToInsert, posToUse[[2]] + 1]
+		]
+	]
+
+(*!
+	\function InsertStringBeforeMatch
+	
+	\calltable
+		InsertStringBeforeMatch[str, strToInsert, strToMatch] '' given a string, insert 'strToInsert' into it before the location of 'strToMatch'.
+	
+	Example:
+	
+	InsertStringBeforeMatch["abc def ghi", " 123", "def"] === "abc def 123 ghi"
+	
+	\related 'InsertStringInFile 'InsertStringAfterMatch
+	
+	\maintainer danielb
+*)
+Options[InsertStringBeforeMatch] =
+{
+	"LastMatch" -> False	(*< insert wrt the last match, rather than the first match. *)
+};
+InsertStringBeforeMatch[str_, strToInsert_, strToMatch_, OptionsPattern[]] :=
+	Module[{pos, posToUse},
+		
+		pos =
+			StringPosition[
+				str,
+				strToMatch,
+				If [TrueQ[OptionValue["LastMatch"]],
+					Infinity
+					,
+					1
+				]
+			];
+		
+		If [pos === {},
+			$Failed
+			,
+			
+			If [TrueQ[OptionValue["LastMatch"]],
+			   posToUse = pos[[-1, 1]];
+			   ,
+			   posToUse = pos[[1, 1]];
+			];
+			
+			StringInsert[str, strToInsert, posToUse]
+		]
+	]
+
+(*!
+	\function InsertStringInFile
+	
+	\calltable
+		InsertStringInFile[file, strToInsert, strToMatch] '' given a file, insert 'strToInsert' into it after the location of 'strToMatch'.
+	
+	Example:
+	
+	With[{file = FileNameJoin[{$TemporaryDirectory,"InsertStringInFile.m"}]},
+		Export[file, "line\nINSERT AFTER\nline", "String"];
+		InsertStringInFile[file, "\ninserted string", "INSERT AFTER", "AfterMatch" -> True];
+		With[{res = Import[file, "String"]},
+			DeleteFile[file];
+			res
+		]
+	]
+
+	Unit tests:
+
+	RunUnitTests[InsertStringInFile]
+
+	\related 'InsertStringAfterMatch
+	
+	\maintainer danielb
+*)
+Options[InsertStringInFile] =
+{
+	"AfterMatch" -> False,		(*< By default, this function inserts the string at the position of the match. If AfterMatch -> True, the insertion is performed at the end of the matched string. *)
+	"LastMatch" -> False,		(*< insert wrt the last match, rather than the first match. *)
+	"DataString" -> None		(*< If the file contents are already in memory, they can be passed in. In that case, they will be returned rather than written to disk. *)
+};
+InsertStringInFile::fi = "Failed insertion for file `1`";
+InsertStringInFile[file_, strToInsert_, strToMatch_, OptionsPattern[]] :=
+	Module[{data},
+		If [!FileExistsQ[file],
+			Message[InsertStringInFile::noopen, file];
+			Return[$Failed];
+			,
+			If [OptionValue["DataString"] =!= None,
+				data = OptionValue["DataString"];
+				,
+				data = Import[file, "Text"];
+			];
+			If [TrueQ[OptionValue["AfterMatch"]],
+				data = InsertStringAfterMatch[data, strToInsert, strToMatch, "LastMatch" -> OptionValue["LastMatch"]];
+				,
+				data = InsertStringBeforeMatch[data, strToInsert, strToMatch, "LastMatch" -> OptionValue["LastMatch"]];
+			];
+			If [data =!= $Failed,
+				If [OptionValue["DataString"] === None,
+					Export[file, data, "Text"];
+					,
+					data
+				]
+				,
+				Message[InsertStringInFile::fi, file];
+				$Failed
+			]
+		]
+	]
 
 End[]
 
