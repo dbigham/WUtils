@@ -64,6 +64,14 @@ ImmediateFunctionDependencies::usage = "ImmediateFunctionDependencies  "
 
 ProcessOneByOne::usage = "ProcessOneByOne  "
 
+OpenFileInWorkbench::usage = "OpenFileInWorkbench  "
+
+GetLineNumberOfStringInFile::usage = "GetLineNumberOfStringInFile  "
+
+GetLineNumberOfString::usage = "GetLineNumberOfString  "
+
+GetLineNumberOfPos::usage = "GetLineNumberOfPos  "
+
 Begin["`Private`"]
 
 With[{package = "WUtils`"},
@@ -1392,6 +1400,7 @@ CopyFunctionUI[func_, destContext_] :=
 			]
 		] /@ dependencies;
 		
+		With[{destFile2 = destFile},
 		ProcessOneByOne[
 			dependencies,
 			"TitleFunction" ->
@@ -1402,18 +1411,23 @@ CopyFunctionUI[func_, destContext_] :=
 				Function[{dependency},
 					Column[
 						{
-						With[{destFile = destFile},
-							Button[
-								"Copy",
-								CopyFunction[dependency["Symbol"], dependency["File"], destFile],
-								ImageSize -> {100, 34}
-							]
-						],
+						dependency["File"],
+						"",
+						Button[
+							"Copy",
+							CopyFunction[dependency["Symbol"], dependency["File"], destFile2];
+							With[{sym = dependency["Symbol"]},
+								OpenFileInWorkbench[destFile2, "Substring" -> SymbolName[sym] ~~ "[" ~~ Except[{"\n", "\r"}].. ~~ ":="];
+							],
+							ImageSize -> {100, 34}
+						]
+						,
 						"",
 						GetFunctionSource[dependency["Symbol"], "File" -> dependency["File"]]
 						}
 					]
 				]
+		]
 		]
 	];
 
@@ -1771,6 +1785,176 @@ ProcessOneByOne[list_List, OptionsPattern[]] :=
 			ImageSize -> {{800, 6000}, {10000, 100}}
 		]
 	]
+
+(*!
+    \function OpenFileInWorkbench
+    
+    \calltable
+        OpenFileInWorkbench[file] '' given a file, opens it in Workbench. The file must be in a project defined in Global`$WorkbenchProjects.
+    
+    This requires that the "Workbench Helpers" Eclipse plugin has been installed.
+    
+    Examples:
+    
+    OpenFileInWorkbench[FindFile["WUtils`WUtils`"]]
+    
+    \maintainer danielb
+*)
+Clear[OpenFileInWorkbench];
+Options[OpenFileInWorkbench] =
+{
+    "Line" -> Automatic,    (*< what line number to place the cursor at. *)
+    "Substring" -> None     (*< can specify either a substring or pattern to try and locate in the file. *)
+};
+$workbenchHelpersPluginUrl = "http://127.0.0.1:8193/go";
+OpenFileInWorkbench[fileIn_, OptionsPattern[]] :=
+    Module[{response, url, file = fileIn, line = OptionValue["Line"]},
+        
+        If [line === Automatic && OptionValue["Substring"] =!= None,
+            line = GetLineNumberOfStringInFile[OptionValue["Substring"], file];
+            
+            If [line === None,
+                Print["OpenFileInWorkbench: Couldn't find ", ToString[OptionValue["Substring"], InputForm], " in file ", file];
+                Return[$Failed];
+            ];
+        ];        
+        
+        file = getPathRelativeToWorkbenchProjects[file];
+        
+        If [file === $Failed, Print["OpenFileInWorkbench: Couldn't make path relative to known Workbench projects."]; Return[$Failed]];
+        
+        url = $workbenchHelpersPluginUrl <> "?command=open&file=" <> file;
+        
+        If [line =!= Automatic,
+            url = url <> "&line=" <> ToString[line];
+        ];
+        
+        response = Import[url, "String"];
+        If [!StringQ[response] || (response =!= "OK" && StringFreeQ[response, "Done"]),
+            Print["OpenFileInWorkbench: Unexpected response from " <> url <> ": ", response];
+            $Failed
+            ,
+            Null
+        ]
+    ]
+
+(*!
+    \function GetLineNumberOfStringInFile
+    
+    \calltable
+        GetLineNumberOfStringInFile[str, file] '' given a string (or string pattern), returns the line number in the given file that it occurs on, or None if not found.
+    
+    Examples:
+    
+    GetLineNumberOfStringInFile[
+        StartOfLine ~~ "GetLineNumberOfStringInFile[",
+        SymbolToFile[GetLineNumberOfStringInFile]
+    ]
+    
+    \related 'GetLineNumberOfString 'OpenFileInWorkbench
+    
+    \maintainer danielb
+*)
+GetLineNumberOfStringInFile[str_, file_] :=
+    Module[{},
+        
+        If [!FileExistsQ[file], Print["Missing file: " <> file]; Return[$Failed]];
+        
+        GetLineNumberOfString[
+            Import[file, "String"],
+            str
+        ]
+    ]
+
+(*!
+    \function GetLineNumberOfString
+    
+    \calltable
+        GetLineNumberOfString[str, substring] '' given a string and a substring, returns the line number of the substring. The substring can also be a string pattern. Returns None if no matches.
+    
+    Examples:
+    
+    GetLineNumber["abc\ndef", "e"] === 2
+
+    Unit tests:
+
+    RunUnitTests[GetLineNumberOfString]
+
+    \maintainer danielb
+*)
+GetLineNumberOfString[str_String, substring_] :=
+    Module[{pos},
+        pos = StringPosition[str, substring, 1];
+        
+        If [pos === {},
+            None
+            ,
+            GetLineNumberOfPos[str, pos[[1, 1]]]
+        ]
+    ]
+
+(*!
+    \function GetLineNumberOfPos
+    
+    \calltable
+        GetLineNumberOfPos[str, pos] '' given a string and a position, returns the line number of the position in the string.
+    
+    Examples:
+    
+    GetLineNumber["abc\ndef", 5] === 2
+
+    \maintainer danielb
+*)
+GetLineNumberOfPos[str_String, pos_Integer] :=
+    Length[
+        StringCases[
+            StringTake[str, {1, pos}],
+            "\n"
+        ]
+    ]
+
+(*!
+    \function getPathRelativeToWorkbenchProjects
+    
+    \calltable
+        getPathRelativeToWorkbenchProjects[path] '' given a path to a file, make it relative to the Wolfram Workbench projects. The file must be in a project defined in Global`$WorkbenchProjects.
+
+    Unit tests: getPathRelativeToWorkbenchProjects.mt
+
+    \maintainer danielb
+*)
+getPathRelativeToWorkbenchProjects[pathIn_] :=
+    Module[{path = pathIn, rest, res = $Failed, projectPath, projectName},
+        
+        If [ListQ[Global`$WorkbenchProjects],
+            Function[{project},
+                
+                If [MatchQ[project, _Rule],
+                    projectPath = project[[1]];
+                    projectName = project[[2]];
+                    ,
+                    projectPath = project;
+                    projectName = FileNameTake[projectPath, -1];
+                ];
+                If [StringMatchQ[path, projectPath ~~ __],
+                	If [StringMatchQ[projectPath, __ ~~ ("/" | "\\")],
+                		projectPath = StringTake[projectPath, {1, -2}];
+                	];
+                    rest = StringTake[path, StringLength[projectPath] + 2 ;;];
+                    rest = StringReplace[rest, StartOfString ~~ $PathnameSeparator.. :> ""];
+                    res = "/" <> projectName <> "/" <> rest;
+                    (* Jump out of the inner function back into the main function/module. *)
+                    Return[];
+                ];
+            ] /@ Global`$WorkbenchProjects;
+        ];
+        
+        If [res =!= $Failed,
+            StringReplace[res, "\\" :> "/"]
+            ,
+            res
+        ]
+    ]
 
 End[]
 
