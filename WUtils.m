@@ -6,8 +6,6 @@ GetFunctionSource::usage = "GetFunctionSource  "
 
 FindMatchingBracket::usage = "FindMatchingBracket  "
 
-DoubleQuotedStringPattern::usage = "DoubleQuotedStringPattern  "
-
 XPrint::usage = "XPrint  "
 
 FindFirstBracketNotInComment::usage = "FindFirstBracketNotInComment  "
@@ -106,10 +104,12 @@ StringTakeByDelim::usage = "StringTakeByDelim  "
 
 Begin["`Private`"]
 
+(* Note: This code needs to come after the function definitions in this file, since
+   otherwise things like CreateReloadFunctionForDirectory won't yet be defined. *)
 With[{package = "WUtils`"},
 With[{dir = DirectoryName[DirectoryName[FindFile[package]]]},
 	WUtils`WUtils`Private`$ReloadFunction = ReloadWUtils;
-	CalculateParse`GeneralLibrary`TabsOrSpaces[package] = "Tabs";
+	WUtils`TabsOrSpaces[package] = "Tabs";
 	If [!ValueQ[$reloadWUtils],
 		$reloadWUtils =
 			CreateReloadFunctionForDirectory[
@@ -117,7 +117,7 @@ With[{dir = DirectoryName[DirectoryName[FindFile[package]]]},
 			];
 	];
 	WUtils`$UnitTestDir = FileNameJoin[{DirectoryName[DirectoryName[FindFile[package]]], "Tests"}];
-	CalculateParse`Prototype`VirtualAssistant`Utility`NotebookTypeToDirectory[package] = FileNameJoin[{dir, "Notebooks"}];
+	Lui`NotebookTypeToDirectory[package] = FileNameJoin[{dir, "Notebooks"}];
 ];
 ];
 
@@ -840,7 +840,7 @@ CopyFunction[func_, sourceFile_, destFile_, OptionsPattern[]] :=
 	Examples:
 	
 	ExportSymbol[
-		CalculateParse`GeneralLibrary`Private`MyNewFunc
+		WUtils`WUtils`Private`MyNewFunc
 	]
 	
 	\related 'processNewlyDefinedPrivateSymbols 'PostReloadFile
@@ -970,7 +970,7 @@ ExportSymbol[symbol_Symbol, file_] :=
 
 	Unit tests:
 
-	RunUnitTests[CalculateParse`GeneralLibrary`InsertStringAfterMatch]
+	RunUnitTests[WUtils`WUtils`InsertStringAfterMatch]
 
 	\related 'InsertStringInFile
 	
@@ -1142,7 +1142,7 @@ CreateMemoizationFunction[] :=
 
 	Unit tests:
 
-	RunUnitTests[CalculateParse`GeneralLibrary`NewPackageFormatQ]
+	RunUnitTests[WUtils`WUtils`NewPackageFormatQ]
 
 	\maintainer danielb
 *)
@@ -1203,9 +1203,9 @@ newPackageFormatQHelper[file_] :=
 	
 	With[{memoizationSymbol = CreateMemoizationFunction[]},
 		{
-			AbsoluteTiming[Memoized[FindFile["CalculateParse`GeneralLibrary`"], memoizationSymbol]][[1]],
-			AbsoluteTiming[Memoized[FindFile["CalculateParse`GeneralLibrary`"], memoizationSymbol]][[1]],
-			AbsoluteTiming[Memoized[FindFile["CalculateParse`GeneralLibrary`"], memoizationSymbol]][[1]],
+			AbsoluteTiming[Memoized[FindFile["WUtils`WUtils`"], memoizationSymbol]][[1]],
+			AbsoluteTiming[Memoized[FindFile["WUtils`WUtils`"], memoizationSymbol]][[1]],
+			AbsoluteTiming[Memoized[FindFile["WUtils`WUtils`"], memoizationSymbol]][[1]],
 		}
 	]
 	
@@ -1440,7 +1440,9 @@ CopyFunctionUI[func_, destContext_] :=
 				If [file === $Failed, Message[CopyFunctionUI::cfdc, file, sym, context]; Return[$Failed, Block]];
 				destContext2 = destContext;
 				If [StringMatchQ[Context[sym], __ ~~ "`Private`" ~~ EndOfString], destContext2 = destContext2 <> "Private`"];
-				If [Names[destContext2 <> SymbolName[sym]] =!= {},
+				If [Names[destContext2 <> SymbolName[sym]] =!= {} &&
+					With[{sym2 = ToExpression[destContext2 <> SymbolName[sym]]}, DownValues[sym2] =!= {}],
+					
 					Print["Skipped: ", SymbolName[sym]];
 					Sequence @@ {}
 					,
@@ -2224,28 +2226,7 @@ CreateReloadFunctionForDirectory[dir_, OptionsPattern[]] :=
 
 	Examples:
 	
-	ComputeDependencyGraph[FindFile["CalculateParse`GeneralLibrary`"]]
-	
-	===
-	
-	{
-		"CalculateParse`GeneralLibrary`" -> "CalculateUtilities`GraphUtilities`",
-		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Lists`",
-		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Predicates`",
-		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Adverbs`",
-		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Language`",
-		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Patterns`",
-		"CalculateParse`GeneralLibrary`" -> "DataScience`Utils`Strings`",
-		"DataScience`Utils`Lists`" -> "DataScience`Utils`Predicates`",
-		"DataScience`Utils`Lists`" -> "DataScience`Utils`Language`",
-		"DataScience`Utils`Language`" -> "DataScience`Utils`Predicates`",
-		"DataScience`Utils`Adverbs`" -> "DataScience`Utils`Language`",
-		"DataScience`Utils`Patterns`" -> "DataScience`Utils`Lists`",
-		"DataScience`Utils`Strings`" -> "DataScience`Utils`Predicates`",
-		"DataScience`Utils`Strings`" -> "DataScience`Utils`Language`",
-		"DataScience`Utils`Strings`" -> "DataScience`Utils`Adverbs`",
-		"DataScience`Utils`Strings`" -> "DataScience`Utils`Lists`"
-	}
+	ComputeDependencyGraph[FindFile["WUtils`WUtils`"]]
 	
 	\related 'ComputeDependencyGraphForPackage
 	
@@ -2322,10 +2303,6 @@ ComputeDependencyGraph[files_List, OptionsPattern[]] :=
 	
 	\calltable
 		computeDependencyGraphHelper[file] '' given a WL file, analyzes uses of Needs/Get to compute a dependency graph. Recursive. If the .m file isn't a WL package, returns $Failed.
-
-	Examples:
-	
-	computeDependencyGraphHelper[FindFile["CalculateParse`GeneralLibrary`"]] === TODO
 	
 	\related 'computeDependencyGraphHelperForPackage
 	
@@ -2459,9 +2436,9 @@ StringStartsWith[str_, stringList_] :=
 
 	Examples:
 	
-	CreateHeldVarIfNull[Null] === HoldComplete[CalculateParse`GeneralLibrary`Private`NewVar`heldVar1]
+	CreateHeldVarIfNull[Null] === HoldComplete[WUtils`WUtils`Private`NewVar`heldVar1]
 	
-	CreateHeldVarIfNull[HoldComplete[CalculateParse`GeneralLibrary`Private`NewVar`heldVar2]] === HoldComplete[CalculateParse`GeneralLibrary`Private`NewVar`heldVar2]
+	CreateHeldVarIfNull[HoldComplete[WUtils`WUtils`Private`NewVar`heldVar2]] === HoldComplete[WUtils`WUtils`Private`NewVar`heldVar2]
 
 	Unit tests:
 
@@ -2570,6 +2547,39 @@ GetPackageName[file_, opts:OptionsPattern[]] :=
 		"MemoizationKey" -> file
 	]
 	)
+
+getPackageNameHelper[file_, OptionsPattern[]] :=
+	Module[{matches, dataStr},
+		
+		If [OptionValue["DataString"] =!= Null,
+			dataStr = OptionValue["DataString"];
+			,
+			dataStr = Import[file, "Text"];
+		];
+		
+		matches =
+			ToExpression /@
+			Select[
+				StringCases[
+					dataStr,
+					("BeginPackage" | "Package") ~~ WhitespaceCharacter... ~~
+					"[" ~~ WhitespaceCharacter... ~~
+					package:doubleQuotedStringPattern[] ~~ WhitespaceCharacter... ~~
+					"]" :>
+					   package
+				],
+				StringMatchQ[
+					#,
+					"\"" ~~ Repeated[WLSymbolPattern[] ~~ "`"] ~~ "\""
+				] &
+			];
+			
+		If [matches === {},
+			None
+			,
+			matches[[1]]
+		]
+	]
 
 (* String pattern for a WL symbol. *)
 WLSymbolPattern[] = WordBoundary ~~ ("$" | LetterCharacter) ~~ ("$" | "`" | LetterCharacter | DigitCharacter)... ~~ WordBoundary;
@@ -3049,6 +3059,109 @@ nameListToExportedSymbolList[names_] :=
 *)
 StringTakeByDelim[str_, delim_, n_] :=
 	StringJoin[Riffle[Take[StringSplit[str, delim], n], delim]]
+
+(*!
+	\function replacePackagesWithFiles
+	
+	\calltable
+		replacePackagesWithFiles[e, memoizationFunc] '' given an expression, replaces all strings, which are each assumed to be a package name, with the corresponding file name. If the memoizationFunc is not None, then it is used to avoid duplicate calls to FindFile, and can re-use previously done calls to FindFile associated with the memoizationFunc.
+
+	Examples:
+	
+	`Private`replacePackagesWithFiles[
+		{
+			"WUtils`WUtils`",
+			"NewContext`"
+		},
+		None
+	]
+	
+	\related 'ComputeDependencyGraph
+	
+	\maintainer danielb
+*)
+replacePackagesWithFiles[e_, memoizationFunc_] :=
+	e /. package_String :>
+		Memoized[
+			FindFile[package],
+			memoizationFunc
+		]
+
+(*!
+	\function needsUsesHelper
+	
+	\calltable
+		needsUsesHelper[heldExpressions] '' given some WL code, finds all uses of Needs and returns the corresponding list of packages.
+
+	Examples:
+	
+	WUtils`WUtils`Private`needsUsesHelper[
+		{
+		HoldComplete[Needs["MyPackage`"]]
+		}
+	]
+	
+	===
+	
+	{"MyPackage`"}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`Private`needsUsesHelper]
+
+	\maintainer danielb
+*)
+needsUsesHelper[heldExpressions_] :=
+	DeleteDuplicates[
+		Cases[
+			heldExpressions,
+			HoldPattern[Needs | Global`PackageImport][package_String] :> package,
+			(* Only consider top-level uses of Needs to avoid Needs if they
+			   are within an If, for example. That underscores a limitation of
+			   this function, which is that loading a package normally can
+			   dynamically choose which of its Needs to to evaluate, whereas
+			   we've decided to ignore dynamically choosen Needs statements. *)
+			(* The reason we use {2, 3} and not {1} is that each expression is
+			   wrapped in HoldComplete, and sometimes within CompoundExpression if
+			   there is a semi-colon after the Needs. *)
+			{2, 3}
+		]
+	]
+
+(*!
+	\function computeDependencyGraphForPackageHelper
+	
+	\calltable
+		computeDependencyGraphForPackageHelper[package] '' given a WL package, analyzes uses of Needs/Get to compute a dependency graph. Recursive. If the .m file can't be found, or if the .m file isn't a WL package, returns $Failed.
+	
+	\related 'ComputeDependencyGraph
+	
+	\maintainer danielb
+*)
+Clear[computeDependencyGraphForPackageHelper];
+Options[computeDependencyGraphForPackageHelper] =
+{
+	"FilesAlreadyProcessed" -> Null,		(*< a held variable can be passed in to keep track of which files have been visited already. *)
+	"Directories" -> All,				   (*< a list can be specified that means that only packages that are within one of the directories should be considered. (subdirectories are allowed) *)
+	"Memoization" -> None				   (*< can be set to a symbol to turn on memoization. Used in combination with the listable down value of ComputeDependencyGraph to avoid duplicate processing of files. *)
+};
+computeDependencyGraphForPackageHelper[package_, opts:OptionsPattern[]] :=
+	Module[{file},
+		
+		file = Memoized[FindFile[package], OptionValue["Memoization"]];
+		
+		If [file === $Failed,
+			Print["Couldn't find the file for package: ", InputForm[package]];
+			Return[$Failed]
+		];
+		
+		Memoized[
+			computeDependencyGraphHelper[file, opts],
+			OptionValue["Memoization"],
+			"MemoizationKey" -> {"computeDependencyGraphHelper", file}
+		]
+		
+	]
 
 End[]
 
