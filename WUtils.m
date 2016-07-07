@@ -30,8 +30,6 @@ FindCommentBeforeSpan::usage = "FindCommentBeforeSpan  "
 
 ExpandSpansToIncludeTrailingSemiColons::usage = "ExpandSpansToIncludeTrailingSemiColons  "
 
-TestFun33::usage = "TestFun33  "
-
 DeleteNesetedSpans::usage = "DeleteNesetedSpans  "
 
 CopyFunction::usage = "CopyFunction  "
@@ -41,6 +39,20 @@ InsertStringAfterMatch::usage = "InsertStringAfterMatch  "
 InsertStringBeforeMatch::usage = "InsertStringBeforeMatch  "
 
 InsertStringInFile::usage = "InsertStringInFile  "
+
+NewPackageFormatQ::usage = "NewPackageFormatQ  "
+
+GetMaxStringPos::usage = "GetMaxStringPos  "
+
+GetMinStringPos::usage = "GetMinStringPos  "
+
+PreviousNewlineChar::usage = "PreviousNewlineChar  "
+
+ExportSymbol::usage = "ExportSymbol  "
+
+NextNewlineChar::usage = "NextNewlineChar  "
+
+CreateMemoizationFunction::usage = "CreateMemoizationFunction  "
 
 Begin["`Private`"]
 
@@ -80,6 +92,13 @@ Attributes[XPrint] = {HoldAllComplete};
 		GetFunctionSource[func, source] '' given a function and the source code file's contents, returns the source code of the function.
 	
 	NOTE: This doesn't currently grab the line that exports the symbol if it's exported.
+	
+	Known issues:
+	
+	- This function doesn't work if a down value's value has a top-level
+	  infix operator. ex. MyFunc[] := "(" | ")"
+	- That said, it would be easy to fix the case where the infix operator
+	  occurs on the same line as ':='. (TODO)
 	
 	Examples:
 	
@@ -144,6 +163,24 @@ GetFunctionSource[func_Symbol, src_String] :=
 		spans = DeleteNesetedSpans[spans];
 		
 		spans = Sort[spans];
+		
+		(* For now I'm going to create a single span that goes from
+		   the start of the first span to the end of the last span
+		   so that, for example, we don't miss definitions of
+		   global variables that might happen after the top-of-function
+		   Mathdoc comment but before the down value definition.
+		   This is dangerous though because:
+		   1) There might be things in between our spans that we don't
+			  want.
+		   2) If a function doesn't have a Mathdoc comment, or if it
+			  has necessary globals defined prior to that comment,
+			  or below the last down value definition, then those
+			  code sections will be missed. (but creating a single span
+			  doesn't cause that -- it just doesn't do anything to
+			  protect us against that) *)
+		If [Length[spans] > 0,
+			spans = {{spans[[1, 1]], spans[[-1, 2]]}};
+		];
 		
 		StringJoin[Riffle[StringTake[src, #] & /@ spans, "\n"]]
 	];
@@ -733,7 +770,134 @@ CopyFunction[func_, sourceFile_, destFile_] :=
 			ExportSymbol[func, destFile];
 		];
 	];
+
+(*!
+	\function ExportSymbol
 	
+	\calltable
+		ExportSymbol[symbol] '' given a currently Private symbol, modify its source file so that it is exported.
+	
+	Examples:
+	
+	ExportSymbol[
+		CalculateParse`GeneralLibrary`Private`MyNewFunc
+	]
+	
+	\related 'processNewlyDefinedPrivateSymbols 'PostReloadFile
+	
+	\maintainer danielb
+*)
+ExportSymbol[symbol_Symbol, file_] :=
+	Module[{check, contents, targetPos, symbolName, found, insertionPos,
+			insertOnPreviousLine, insertionStr, exportType},
+
+		If [!FileExistsQ[file], Print["ExportSymbol: Missing file: " <> file]; Return[$Failed]];
+		
+		check = Check[contents = Import[file, "Text"], $Failed];
+		
+		If [check === $Failed,
+			Print["ExportSymbol: Messages while reading: ", file, ". Replacement not performed on that file."];
+			,
+			check =
+				Check[
+					
+					symbolName = SymbolName[symbol];
+					
+					If [!NewPackageFormatQ[file],
+						
+						targetPos = GetMaxStringPos[contents, symbolName <> "::usage"];
+						
+						(* Ensure the usage isn't already there. *)
+						If [targetPos === None,
+						
+							targetPos = GetMaxStringPos[contents, StartOfLine ~~ LetterCharacter ~~ (LetterCharacter ~~ DigitCharacter)... ~~ "::usage"];
+							If [targetPos =!= None,
+								found = True;
+								insertOnPreviousLine = False;
+								,
+								targetPos = GetMinStringPos[contents, StartOfLine ~~ "Begin" ~~ WhitespaceCharacter... ~~ "[" ~~ WhitespaceCharacter... ~~ "\"`Private`\"" ~~ WhitespaceCharacter... ~~ "]"];
+								If [targetPos =!= None,
+									found = True;
+									insertOnPreviousLine = True;
+								];
+							];
+							
+							If [TrueQ[found],
+							
+								insertionStr = symbolName <> "::usage = \"" <> symbolName <> "  \"";
+								
+								If [TrueQ[insertOnPreviousLine],
+									insertionPos = PreviousNewlineChar[contents, targetPos];
+									contents = StringInsert[contents, "\n" <> insertionStr <> "\n", insertionPos];
+									,
+									insertionPos = NextNewlineChar[contents, targetPos];
+									contents = StringInsert[contents, "\n\n" <> insertionStr, insertionPos];
+								]
+								,
+								Print["ExportSymbol: Couldn't find insertion point for file: ", file];
+								Return[$Failed];
+							];
+						];
+						,
+						targetPos = GetMaxStringPos[contents, StartOfLine ~~ ("PackageExport[" | "PackageScope[") ~~ WhitespaceCharacter... ~~ ToString[symbolName, InputForm]];
+						
+						(* See VaActions.m CreateFunctionInFile for comments on $PackageScopeFlag. *)
+						If [TrueQ[$PackageScopeFlag],
+							exportType = "PackageScope[";
+							,
+							If [Length[StringPosition[contents, "PackageScope["]] > 0,
+								(* We'll guess they want PackageScope *)
+								exportType = "PackageScope[";
+								,
+								(* We'll guess they want PackageExport *)
+								exportType = "PackageExport[";
+							];
+						];
+						
+						(* Ensure the usage isn't already there. *)
+						If [targetPos === None,
+						
+							targetPos = GetMaxStringPos[contents, StartOfLine ~~ WhitespaceCharacter... ~~ exportType];
+							If [targetPos =!= None,
+								found = True;
+								insertOnPreviousLine = False;
+								,
+								targetPos = GetMinStringPos[contents, StartOfLine ~~ WhitespaceCharacter... ~~ "Package["];
+								If [targetPos =!= None,
+									found = True;
+									insertOnPreviousLine = False;
+								];
+							];
+							
+							If [TrueQ[found],
+							
+								insertionStr = exportType <> ToString[symbolName, InputForm] <> "]";
+								
+								If [TrueQ[insertOnPreviousLine],
+									insertionPos = PreviousNewlineChar[contents, targetPos];
+									contents = StringInsert[contents, "\n" <> insertionStr <> "\n", insertionPos];
+									,
+									insertionPos = NextNewlineChar[contents, targetPos];
+									contents = StringInsert[contents, "\n\n" <> insertionStr, insertionPos];
+								]
+								,
+								Print["ExportSymbol: Couldn't find insertion point for file: ", file];
+								Return[$Failed];
+							];
+						];
+					]
+					,
+					$Failed
+				];
+				
+			If [check === $Failed,
+				Print["ExportSymbol: Messages while performing file modifications: ", file, ". Aborted."];
+				,
+				Export[file, contents, "Text"];
+			];
+		];
+	]
+
 (*!
 	\function InsertStringAfterMatch
 	
@@ -888,6 +1052,297 @@ InsertStringInFile[file_, strToInsert_, strToMatch_, OptionsPattern[]] :=
 				$Failed
 			]
 		]
+	]
+
+(*!
+	\function CreateMemoizationFunction
+	
+	\calltable
+		CreateMemoizationFunction[] '' returns a symbol who's default DownValue is a predictable String that specifies memoization has not been set. When used with Memoized, the symbol can be used to remember previous computations.
+	
+	\related 'Memoized
+	
+	\maintainer danielb
+*)
+CreateMemoizationFunction[] :=
+	Module[{memoizationSymbol},
+		memoizationSymbol[args___] := "CreateMemoizationFunction:NotSet";
+		memoizationSymbol
+	]
+
+(*!
+	\function NewPackageFormatQ
+	
+	\calltable
+		NewPackageFormatQ[file] '' given a file, returns True if it appears to use the new package format.
+
+	Examples:
+	
+	NewPackageFormatQ["C:\\Temp\\MyFile.m", "UseMemoization" -> False] === True
+
+	Unit tests:
+
+	RunUnitTests[CalculateParse`GeneralLibrary`NewPackageFormatQ]
+
+	\maintainer danielb
+*)
+(*Clear[NewPackageFormatQ];*) (* Don't clear this incase we need to override it for certain files. *)
+Options[NewPackageFormatQ] =
+{
+	"UseMemoization" -> True	(*< memoize results? *)
+};
+If [!ValueQ[$newPackageFormatQMemoization],
+	(* WARNING: CreateMemoizationFunction[] must be defined in this file prior to this point. *)
+	$newPackageFormatQMemoization = CreateMemoizationFunction[];
+];
+NewPackageFormatQ[file_, OptionsPattern[]] :=
+	Module[{},
+		Memoized[
+			newPackageFormatQHelper[file],
+			If [TrueQ[OptionValue["UseMemoization"]],
+				$newPackageFormatQMemoization
+				,
+				None
+			],
+			"MemoizationKey" -> file
+		]
+	];
+
+(*!
+	\function newPackageFormatQHelper
+	
+	\calltable
+		newPackageFormatQHelper[file] '' given a file, returns True if it appears to use the new package format.
+	
+	\maintainer danielb
+*)
+newPackageFormatQHelper[file_] :=
+	Module[{definedPackage},
+		
+		definedPackage =
+			StringCases[
+				Import[file, "Text"],
+				(WhitespaceCharacter | StartOfLine) ~~
+				"Package" ~~ WhitespaceCharacter... ~~
+				"[" ~~ WhitespaceCharacter... ~~
+				package:doubleQuotedStringPattern[] ~~ WhitespaceCharacter... ~~
+				"]" :>
+				   package
+			];
+		
+		ListQ[definedPackage] && Length[definedPackage] > 0
+	];
+
+(*!
+	\function Memoized
+	
+	\calltable
+		Memoized[e, memoizationSymbol] '' evaluates the given expression and remembers its result so that subsequent calls with the same arguments return fast. If the memoizationSymbol is None, then the computation is performed without memoization. The memoization symbol would typically be created with CreateMemoizationFunction.
+
+	Examples:
+	
+	With[{memoizationSymbol = CreateMemoizationFunction[]},
+		{
+			AbsoluteTiming[Memoized[FindFile["CalculateParse`GeneralLibrary`"], memoizationSymbol]][[1]],
+			AbsoluteTiming[Memoized[FindFile["CalculateParse`GeneralLibrary`"], memoizationSymbol]][[1]],
+			AbsoluteTiming[Memoized[FindFile["CalculateParse`GeneralLibrary`"], memoizationSymbol]][[1]],
+		}
+	]
+	
+	===
+	
+	{0.014502, 0., 0.}
+	
+	\related 'CreateMemoizationFunction
+	
+	\maintainer danielb
+*)
+Clear[Memoized];
+Attributes[Memoized] = {HoldFirst};
+Options[Memoized] =
+{
+	"MemoizationKey" -> Automatic,		  (*< the key used to refer to a unique computation. *)
+	"AbortIfMessages" -> False			  (*< if this is True, we will only store the result if there weren't messages. *)
+};
+Memoized[e_, memoizationSymbol_, OptionsPattern[]] :=
+	Module[{failureFlag, evaluatedRes},
+		If [memoizationSymbol === None,
+			e
+			,
+			With[{strKey =
+					If [OptionValue["MemoizationKey"] === Automatic,
+						ToString[HoldComplete[e], InputForm]
+						,
+						OptionValue["MemoizationKey"]
+					]
+				 },
+				With[{memoizedRes = memoizationSymbol[strKey]},
+					If [memoizedRes =!= "CreateMemoizationFunction:NotSet",
+						memoizedRes
+						,
+						failureFlag =
+						   Check[
+								evaluatedRes = e;
+								,
+								"Memoized:MessagesDetected"
+						   ];
+						   
+						If [evaluatedRes =!= "Memoized:MessagesDetected" || OptionValue["AbortIfMessages"] === False,
+							memoizationSymbol[strKey] = evaluatedRes;
+						];
+						
+						evaluatedRes
+					]
+				]
+			]
+		]
+	]
+
+(*!
+	\function GetMaxStringPos
+	
+	\calltable
+		GetMaxStringPos[str, substringList] '' given a string and a list of substrings to look for, returns the minimum position in the string of a match, or None if none.
+	
+	Examples:
+	
+	GetMaxStringPos["abcdefg", {"g", "d"}] === 7
+	
+	\maintainer danielb
+*)
+GetMaxStringPos[str_, substringList_] :=
+	Module[{maxPos = None, positions, startPos},
+		
+		Function[{substring},
+			positions = StringPosition[str, substring];
+			
+			If [positions =!= {},
+				startPos = positions[[-1, 1]];
+				
+				If [maxPos === None || startPos < maxPos,
+					maxPos = startPos;
+				];
+			];
+			
+		] /@ Flatten[{substringList}];
+		
+		maxPos
+	]
+
+(*!
+	\function GetMinStringPos
+	
+	\calltable
+		GetMinStringPos[str, substringList] '' given a string and a list of substrings to look for, returns the minimum position in the string of a match, or None if none.
+	
+	Examples:
+	
+	GetMinStringPos["abcdefg", {"g", "d"}] === 4
+	
+	\maintainer danielb
+*)
+GetMinStringPos[str_, substringList_] :=
+	Module[{minPos = None, positions, startPos},
+		
+		Function[{substring},
+			positions = StringPosition[str, substring];
+			
+			If [positions =!= {},
+				startPos = positions[[1, 1]];
+				
+				If [minPos === None || startPos < minPos,
+					minPos = startPos;
+				];
+			];
+			
+		] /@ Flatten[{substringList}];
+		
+		minPos
+	]
+
+(*!
+	\function GetMinStringPos
+	
+	\calltable
+		GetMinStringPos[str, substringList] '' given a string and a list of substrings to look for, returns the minimum position in the string of a match, or None if none.
+	
+	Examples:
+	
+	GetMinStringPos["abcdefg", {"g", "d"}] === 4
+	
+	\maintainer danielb
+*)
+GetMinStringPos[str_, substringList_] :=
+	Module[{minPos = None, positions, startPos},
+		
+		Function[{substring},
+			positions = StringPosition[str, substring];
+			
+			If [positions =!= {},
+				startPos = positions[[1, 1]];
+				
+				If [minPos === None || startPos < minPos,
+					minPos = startPos;
+				];
+			];
+			
+		] /@ Flatten[{substringList}];
+		
+		minPos
+	]
+
+(*!
+	\function PreviousNewlineChar
+	
+	\calltable
+		PreviousNewlineChar[str_String, pos_Integer] '' given a string and a position in that string, returns the previous newline character's position, or None if none.
+	
+	Example:
+
+	PreviousNewlineChar["abc\ndef ", 7] === 4
+	
+	\maintainer danielb
+*)
+PreviousNewlineChar[str_String, pos_Integer] :=
+	Module[{retVal = None},
+		Do[
+			With[{char = StringTake[str, {i}]},
+				If [StringMatchQ[char, RegularExpression["[\n\r]"]],
+					retVal = i;
+					Return[];
+				];
+			]
+			,
+			{i, pos - 1, 1, -1}
+		];
+		retVal
+	]
+
+(*!
+	\function NextNewlineChar
+	
+	\calltable
+		NextNewlineChar[str_String, pos_Integer] '' given a string and a position in that string, returns the next newline character's position, or None if none.
+	
+	Example:
+
+	NextNewlineChar["abc\ndef ", 1] === 4
+	
+	\maintainer danielb
+*)
+NextNewlineChar[str_String, pos_Integer] :=
+	Module[{retVal = None},
+		Do[
+			With[{char = StringTake[str, {i}]},
+				If [StringMatchQ[char, RegularExpression["[\n\r]"]],
+					retVal = i;
+					Return[];
+				];
+			]
+			,
+			{i, pos + 1, StringLength[str]}
+		];
+		retVal
 	]
 
 End[]
