@@ -30,6 +30,10 @@ FindMathdocComments::usage = "FindMathdocComments  "
 
 GetFunctionCodeSections::usage = "GetFunctionCodeSections  "
 
+FindMessageDefinitions::usage = "FindMessageDefinitions  "
+
+FindCommentBeforeSpan::usage = "FindCommentBeforeSpan  "
+
 Begin["`Private`"]
 
 With[{package = "WUtils`"},
@@ -110,13 +114,20 @@ GetFunctionSource[func_Symbol, src_String] :=
 			Return[$Failed];
 		];
 		
+		positions = Join[positions, FindMessageDefinitions[src, funcName]];
 		positions = Join[positions, FindOptionsCodeSections[src, funcName]];
 		positions = Join[positions, FindAttributesCodeSections[src, funcName]];
 		positions = Join[positions, FindMathdocComments[src, funcName]];
 		
+		positions =
+			Join[
+				positions,
+				Flatten[DeleteCases[(FindCommentBeforeSpan[src, #1] & ) /@ positions, {}], 1]
+			];
+		
 		positions = Sort[positions];
 		
-		StringJoin[Riffle[StringTake[src, #] & /@ positions, "\n\n"]]
+		StringJoin[Riffle[StringTake[src, #] & /@ positions, "\n"]]
 	];
 
 bracketPattern["[" | "]"] := "[" | "]";
@@ -536,6 +547,60 @@ GetFunctionCodeSections[str_String, funcName_String] :=
 				]
 			]
 		] /@ positions
+	];
+
+(*!
+	\function FindMessageDefinitions
+	
+	\calltable
+		FindMessageDefinitions[str, funcName] '' finds message definitions for the given function.
+
+	Examples:
+	
+    FindMessageDefinitions["Func::msg = \"Message text\"", "Func"] === {{1, 26}}
+
+    Unit tests: FindMessageDefinitions.mt
+
+    \maintainer danielb
+*)
+FindMessageDefinitions[str_, funcName_] :=
+	Block[{},
+		FindCodeSections[
+			str,
+			StartOfLine ~~
+			(" " | "	")... ~~
+			funcName ~~ "::" ~~
+			(LetterCharacter | DigitCharacter).. ~~
+			WhitespaceCharacter.. ~~
+			"=" ~~
+			WhitespaceCharacter.. ~~
+			"\"",
+			"\"",
+			1
+		] 
+	];
+
+(*!
+	\function FindCommentBeforeSpan
+	
+	\calltable
+		FindCommentBeforeSpan[str, span] '' returns the span of a comment if there is one that immediately precedes the given span.
+
+	Examples:
+	
+    FindCommentBeforeSpan["(* Comment *)\nFunc[] := 1", {15, -1}] === {{1, 13}}
+
+    Unit tests: FindCommentBeforeSpan.mt
+
+    \maintainer danielb
+*)
+FindCommentBeforeSpan[str_, span_] :=
+	Block[{priorString},
+		priorString = StringTake[str, {1, span[[1]] - 1}];
+		StringPosition[
+			priorString,
+			RegularExpression["\\(\\*.*?\\*\\)(?=\\s*$)"]
+		]
 	];
 
 End[]

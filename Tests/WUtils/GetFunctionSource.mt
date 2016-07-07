@@ -88,14 +88,14 @@ Test[
 ]
 
 Test[
-	WUtils`WUtils`GetFunctionSource[
-		MyFunc,
-		"MyFunc[] := Module[{}, 1]\nMyFunc[str_String] := Module[{}, str]"
-	]
-	,
-	"MyFunc[] := Module[{}, 1]\n\nMyFunc[str_String] := Module[{}, str]"
-	,
-	TestID -> "GetFunctionSource-20160706-HV592U"
+    WUtils`WUtils`GetFunctionSource[
+        MyFunc,
+        "MyFunc[] := Module[{}, 1]\nMyFunc[str_String] := Module[{}, str]"
+    ]
+    ,
+    "MyFunc[] := Module[{}, 1]\nMyFunc[str_String] := Module[{}, str]"
+    ,
+    TestID -> "GetFunctionSource-20160706-HV592U"
 ]
 
 Test[
@@ -112,6 +112,9 @@ Test[
 *)
 Options[MyFunc] = {\"MyOptions\" -> Automatic}
 Attributes[MyFunc] = {HoldAllComplete}
+(* Another comment *)
+MyFunc::msg = \"Message text\"
+MyFunc::msg2 = \"Message text\"
 MyFunc[OptionsPattern[]] :=\n\t(* Comment *)\n\tModule[{},\n\t\t1\n\t]"
 	]
 	,
@@ -123,11 +126,11 @@ MyFunc[OptionsPattern[]] :=\n\t(* Comment *)\n\tModule[{},\n\t\t1\n\t]"
 
 	\\maintainer danielb
 *)
-
 Options[MyFunc] = {\"MyOptions\" -> Automatic}
-
 Attributes[MyFunc] = {HoldAllComplete}
-
+(* Another comment *)
+MyFunc::msg = \"Message text\"
+MyFunc::msg2 = \"Message text\"
 MyFunc[OptionsPattern[]] :=
 	(* Comment *)
 	Module[{},
