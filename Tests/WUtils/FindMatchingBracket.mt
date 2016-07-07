@@ -146,3 +146,12 @@ Test[
 	,
 	TestID -> "FindMatchingBracket-20160706-O63GQ1"
 ]
+
+(* Regression test. The empty string ("") was causing issues. *)
+Test[
+    WUtils`WUtils`FindMatchingBracket["Module[{}, str = \"\";]", "[", 7, 0]
+    ,
+    21
+    ,
+    TestID -> "FindMatchingBracket-20160707-K9BECH"
+]
