@@ -54,6 +54,16 @@ NextNewlineChar::usage = "NextNewlineChar  "
 
 CreateMemoizationFunction::usage = "CreateMemoizationFunction  "
 
+CopyFunctionUI::usage = "CopyFunctionUI  "
+
+FunctionDependencies::usage = "FunctionDependencies  "
+
+FilterOptions::usage = "FilterOptions  "
+
+ImmediateFunctionDependencies::usage = "ImmediateFunctionDependencies  "
+
+ProcessOneByOne::usage = "ProcessOneByOne  "
+
 Begin["`Private`"]
 
 With[{package = "WUtils`"},
@@ -765,7 +775,7 @@ CopyFunction[func_, sourceFile_, destFile_] :=
 		];
 		
 		exportedFunctionQ = !StringFreeQ[fileSource, SymbolName[func] <> "::usage"];
-		Print["exportedFunctionQ: ", exportedFunctionQ];
+		
 		If [TrueQ[exportedFunctionQ],
 			ExportSymbol[func, destFile];
 		];
@@ -1343,6 +1353,423 @@ NextNewlineChar[str_String, pos_Integer] :=
 			{i, pos + 1, StringLength[str]}
 		];
 		retVal
+	]
+
+(*!
+	\function CopyFunctionUI
+	
+	\calltable
+		CopyFunctionUI[func, destContext] '' user interface for copying a function and any of its dependencies to a destination context/file.
+
+	Examples:
+	
+	CopyFunctionUI[func, destContext] === TODO
+	
+	\related '
+	
+	\maintainer danielb
+*)
+CopyFunctionUI::cfdc = "Couldn't find file `1` for symbol `2` with context `3`";
+CopyFunctionUI::cffdc = "Couldn't find destination file `1` for context `2`";
+CopyFunctionUI[func_, destContext_] :=
+	Block[{destFile, file, dependencies, otherFuncs, context},
+		
+		destFile = FindFile[StringReplace[destContext, "Private`" ~~ EndOfString :> ""]];
+		If [destFile === $Failed, Message[CopyFunctionUI::cfdc, file, destContext]; Return[$Failed, Block]];
+		
+		dependencies = FunctionDependencies[func];
+		dependencies = DeleteDuplicates[Prepend[dependencies[[All, 2]], func]];
+		
+		(* For each dependency, look up its file. *)
+		dependencies =
+		Function[{dependency},
+			With[{sym = dependency},
+				context = Context[sym];
+				context = StringReplace[context, "Private`" ~~ EndOfString :> ""];
+				file = FindFile[context];
+				If [file === $Failed, Message[CopyFunctionUI::cfdc, file, sym, context]; Return[$Failed, Block]];
+				<|"Symbol" -> dependency, "File" -> file|>
+			]
+		] /@ dependencies;
+		
+		ProcessOneByOne[
+			dependencies,
+			"TitleFunction" ->
+				Function[{dependency},
+					ToString[dependency["Symbol"]]
+				],
+			"Function" ->
+				Function[{dependency},
+					Column[
+						{
+						With[{destFile = destFile},
+							Button[
+								"Copy",
+								CopyFunction[dependency["Symbol"], dependency["File"], destFile],
+								ImageSize -> {100, 34}
+							]
+						],
+						"",
+						GetFunctionSource[dependency["Symbol"], "File" -> dependency["File"]]
+						}
+					]
+				]
+		]
+	];
+
+(*!
+	\function FunctionDependencies
+	
+	\calltable
+		FunctionDependencies[funcSymbol] '' given a function symbol, returns a list of rules that represent the functions it calls, and then in turn the functions they call.
+	
+	\maintainer danielb
+*)
+Attributes[FunctionDependencies] = {HoldFirst};
+Clear[FunctionDependencies];
+Options[FunctionDependencies] =
+{
+	"MaxDepth" -> Infinity,	 (*< The maximum dependency depth to explore. *)
+	"CurrentDepth" -> 1,		(*< The current depth being explored. Would be better as an option of a helper function. *)
+	"BasicContextsToPrune" ->   (*< Some contexts like JLink` are essentially system contexts that we typically don't want to probe into. *)
+		{
+			"JLink`",
+			"NETLink`"
+		},
+	"ContextsToPrune" ->		(*< Like "BasicContextsToPrune", but user specified. *)
+		{
+		},
+	"LimitToContext" -> None,   (*< Can be used to limit the search within a certain context. *)
+	"AlreadyExplored" -> {}	 (*< Functions already explored. Don't re-explore. *)
+};
+FunctionDependencies[funcSymbol_, opts:OptionsPattern[]] :=
+	Block[{$functionDependenciesConsidered = Append[OptionValue["AlreadyExplored"], {funcSymbol}]},
+		functionDependenciesHelper[funcSymbol, opts]
+	];
+
+Options[functionDependenciesHelper] = Options[FunctionDependencies];
+functionDependenciesHelper[funcSymbol_, opts:OptionsPattern[]] :=
+	Module[{immediateDependencies, dependencies, innerDependencies,
+			contextsToPrune = Join[OptionValue["ContextsToPrune"], OptionValue["BasicContextsToPrune"]]},
+		
+		$functionDependenciesConsidered = Append[$functionDependenciesConsidered, funcSymbol];
+		
+		If [OptionValue["CurrentDepth"] > OptionValue["MaxDepth"],
+			Return[{}, Module];
+		];
+		
+		immediateDependencies =
+			ImmediateFunctionDependencies[
+				funcSymbol,
+				FilterOptions[ImmediateFunctionDependencies, opts]
+			];
+			
+		(* Drop any symbols with a context that matches the OptionValue["ContextsToPrune"],
+		   or symbols that don't match OptionValue["LimitToContext"]. *)
+		immediateDependencies =
+			Select[
+				immediateDependencies,
+				Function[
+					With[
+						{sym = #1},
+						(OptionValue["LimitToContext"] === None || StringStartsQ[Context[sym], OptionValue["LimitToContext"]]) &&
+						And @@ ( !StringStartsQ[Context[sym], #1] & ) /@ contextsToPrune
+					]
+				]
+			];
+			
+		dependencies =
+			Function[{dependency},
+				
+				If [MemberQ[$functionDependenciesConsidered, dependency],
+					innerDependencies = Sequence @@ {};
+					,
+					innerDependencies =
+						functionDependenciesHelper[
+							dependency,
+							"CurrentDepth" -> OptionValue["CurrentDepth"] + 1,
+							Sequence @@
+								DeleteCases[{opts}, HoldPattern[Rule]["CurrentDepth", _]]
+						];
+				];
+						
+				{
+					funcSymbol -> dependency,
+					innerDependencies
+				}
+			] /@ immediateDependencies;
+			
+		DeleteDuplicates[
+			Flatten[dependencies]
+		]
+	];
+
+FilterOptions[head_Symbol, opts___] := Sequence @@ FilterRules[{opts}, Options[head]];
+
+(*!
+	\function ImmediateFunctionDependencies
+	
+	\calltable
+		ImmediateFunctionDependencies[funcSymbol] '' given a function symbol, returns a list of rules that represent the functions it calls.
+
+	NOTE: This function is quite brittle because it avoid treating any reference to
+		  a symbol-with-downvalues as a function call. The reason it avoids that is
+		  that it isn't uncommon to use function symbols in other ways, such as
+		  Throw[$Failed, myFuncSymbol], which aren't actually function calls.
+		  This function tries to make up for it by explicitly looking for
+		  uses of Map, Apply, etc, which consititute function calls, but that
+		  will always be a brittle approach.
+
+	Examples:
+	
+	ImmediateFunctionDependencies[GetVariablePossiblyFromParentPackage] === {ContextContainsSymbol}
+	
+	\maintainer danielb
+*)
+Attributes[ImmediateFunctionDependencies] = {HoldFirst};
+Clear[ImmediateFunctionDependencies];
+Options[ImmediateFunctionDependencies] =
+{
+	"BasicContextsToPrune" ->   (*< Some contexts like JLink` are essentially system contexts that we typically don't want to probe into. *)
+		{
+			"JLink`",
+			"NETLink`"
+		},
+	"ContextsToPrune" ->		(*< Like "BasicContextsToPrune", but user specified. *)
+		{
+		},
+	"LimitToContext" -> None	(*< Can be used to limit the search within a certain context. *)
+};
+ImmediateFunctionDependencies[funcSymbol_, opts:OptionsPattern[]] :=
+	Module[{downValues, symbols, res,
+			contextsToPrune = Join[OptionValue["ContextsToPrune"], OptionValue["BasicContextsToPrune"]]},
+		
+		downValues =
+			Replace[
+				(* Some symbols are read-protected, so if that's the case,
+				   quiet the message and return {}. *)
+				Check[Quiet[DownValues[funcSymbol]], {}],
+				HoldPattern[RuleDelayed][_, rhs_] :> HoldComplete[rhs],
+				{1}
+			];
+		
+		symbols =
+			Cases[
+				downValues,
+				(sym_Symbol)[___] |
+				HoldPattern[Map | Scan | Apply | MapThread | Inner | Outer | Operate | Nest | NestWhile | NestWhileList | NestList | NestGraph][sym_Symbol, ___] |
+				HoldPattern[Inner][_, _, _, sym_Symbol] |
+				HoldPattern[Distribute | Through][__, sym_Symbol, ___] |
+				HoldPattern[Through][_[___, sym_Symbol, ___][_]] |
+				HoldPattern[Level][_, _, sym_Symbol]
+					(* Get rid of things like Symbol["blah" <> ToString[myInteger]],
+					   which aren't actually instances of symbols but rather code
+					   that can produce a symbol. *)
+					/; !MatchQ[HoldComplete[sym], HoldComplete[Symbol[_]] | Symbol] :>
+						HoldComplete[sym],
+				Infinity,
+				Heads -> True
+			];
+			
+		symbols = DeleteDuplicates[symbols];
+		
+		res =
+		ReleaseHold /@
+			DeleteDuplicates @
+			Select[
+				symbols,
+				(
+					# /. HoldComplete[sym_] :>
+						(
+							Context[sym] =!= "System`" && 
+							(OptionValue["LimitToContext"] === None || StringStartsQ[Context[sym], OptionValue["LimitToContext"]]) &&
+							And @@ ( !StringStartsQ[Context[sym], #1] & ) /@ contextsToPrune &&
+							DownValues[sym] =!= {}
+						)
+				) &
+			];
+			
+		(* If a function recurses on itself, let's not report that explicitly. *)
+		res =
+		DeleteCases[
+			res,
+			funcSymbol
+		];
+		
+		res
+	];
+
+(*!
+	\function ProcessOneByOne
+	
+	\calltable
+		ProcessOneByOne[list_List] '' creates a simple UI that can be used to process a list of items one by one. Updates the global variable Global`$item with the next item.
+	
+	Example:
+	
+	ProcessOneByOne[{"one", "two", "three"}]
+	
+	\maintainer danielb
+*)
+Options[ProcessOneByOne] =
+{
+	"Function" -> None,				(*< A function that will be run for each time. *)
+	"TitleFunction" -> None,		   (*< A function that will be given an item and is expected to produce a title. *)
+	"StartIndex" -> Automatic		  (*< The item to start at, or the file that should be used to store/retrieve the start index. *)
+};
+ProcessOneByOne[list_List, OptionsPattern[]] :=
+	DynamicModule[{startIndex, startIndexFile = None},
+		
+		If [OptionValue["StartIndex"] =!= Automatic,
+			startIndex = OptionValue["StartIndex"];
+			If [StringQ[startIndex],
+				(* We were given a file name instead. *)
+				startIndexFile = OptionValue["StartIndex"];
+				startIndex = If [FileExistsQ[startIndexFile], Get[startIndexFile], 1];
+				(* Incase the file was bad. *)
+				If [!IntegerQ[startIndex], startIndex = 1];
+			];
+			If [startIndex > Length[list],
+				startIndex = Length[list];
+			];
+			,
+			(* If a start index wasn't provided, then see if we can guess what
+			   the start index was the last time this list of inputs was passed
+			   to us. *)
+			If [IntegerQ[Global`$itemIndex] &&
+				ListQ[$prevProcessOneByOneInputs] &&
+				Length[$prevProcessOneByOneInputs] >= 3 &&
+				Length[list] >= 3 &&
+				$prevProcessOneByOneInputs[[1;;3]] === list[[1;;3]],
+				
+				startIndex = Global`$itemIndex;
+				,
+				startIndex = 1;
+			];
+		];
+		
+		$prevProcessOneByOneInputs = list;
+		
+		If [Length[list] === 0,
+			Print["No items in list."];
+			Return[$Failed];
+		];
+		
+		Global`$itemIndex = startIndex;
+		
+		Global`$item = list[[Global`$itemIndex]];
+		
+		Framed[
+			Column[
+				{
+					Dynamic[
+						Style[
+							If [OptionValue["TitleFunction"] === None,
+								If [ListQ[list[[Global`$itemIndex]]],
+									Column[DeleteCases[list[[Global`$itemIndex]], HoldPattern[Rule][_, _] | {}]],
+									list[[Global`$itemIndex]]
+								],
+								OptionValue["TitleFunction"][list[[Global`$itemIndex]]]
+							],
+							{"Text", FontSize -> 20}
+						]
+						,
+						TrackedSymbols :> {Global`$itemIndex}
+					]
+					,
+					Column[
+						{
+							Row[
+								{
+								Button[
+									"<<",
+									(
+										Global`$itemIndex = 1;
+										Global`$item = list[[Global`$itemIndex]];
+									)
+									,
+									ImageSize -> {40, 36}
+								]
+								,
+								" "
+								,
+								Button[
+									"Prev",
+									(
+										If [Global`$itemIndex > 1,
+											--Global`$itemIndex;
+											Global`$item = list[[Global`$itemIndex]];
+											,
+											Print["At first item."];
+										];
+									)
+									,
+									ImageSize -> {100, 36}
+								]
+								
+								,
+								" "
+								,
+								Button[
+									"Next",
+									(
+										If [Global`$itemIndex < Length[list],
+											++Global`$itemIndex;
+											Global`$item = list[[Global`$itemIndex]];
+											,
+											Print["No more items."];
+										];
+									)
+									,
+									ImageSize -> {200, 36}
+								]
+								,
+								" "
+								,
+								
+								Button[
+									">>",
+									(
+										Global`$itemIndex = Length[list];
+										Global`$item = list[[Global`$itemIndex]];
+									)
+									,
+									ImageSize -> {40, 36}
+								]
+								}
+							]
+							,
+							Dynamic[
+								(* Save the item index. We piggy back on the UI code that listens for changes to Global`$itemIndex. *)
+								If [startIndexFile =!= None,
+									Put[Global`$itemIndex, startIndexFile];
+								];
+								Framed[#, FrameStyle -> None, FrameMargins -> Medium] & @
+								Row[{ProgressIndicator[Global`$itemIndex / Length[list]], " (", ToString[Global`$itemIndex], "/", Length[list], ")"}]
+								,
+								TrackedSymbols :> {Global`$itemIndex}
+							]
+							,
+							Dynamic[
+								If [OptionValue["Function"] === None,
+									""
+									,
+									Column[{"", OptionValue["Function"][list[[Global`$itemIndex]], "InputNum" -> Global`$itemIndex]}]
+								]
+								,
+								TrackedSymbols :> {Global`$itemIndex}
+							]
+						}
+					]
+				}
+				,
+				Spacings -> {2, 2}
+			]
+			,
+			FrameMargins -> 16
+			,
+			ImageSize -> {{800, 6000}, {10000, 100}}
+		]
 	]
 
 End[]
