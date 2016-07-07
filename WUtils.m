@@ -356,6 +356,14 @@ SelectFileInExplorer::usage = "SelectFileInExplorer  "
 
 GetSymbolPackage::usage = "GetSymbolPackage  "
 
+KeyValueGet::usage = "KeyValueGet  "
+
+Gett::usage = "Gett  "
+
+KeyValueSet::usage = "KeyValueSet  "
+
+Sett::usage = "Sett  "
+
 Begin["`Private`"]
 
 (* Note: This code needs to come after the function definitions in this file, since
@@ -9093,6 +9101,7 @@ NotebookX[] :=
 		{notebookWidth, notebookHeight} = notebookWidthHeight[];
 		
 		windowMargins = Gett[Options[InputNotebook[]], WindowMargins];
+		
 		windowMarginsX = windowMargins[[1]];
 		
 		Which[
@@ -9135,7 +9144,7 @@ notebookWidthHeight[] = Gett[Options[InputNotebook[]], WindowSize]
 	
 	\maintainer danielb
 *)
-getWindowWidth[] := CurrentValue[InputNotebook[], WindowSize]
+getWindowWidth[] := CurrentValue[InputNotebook[], WindowSize][[1]]
 
 (*!
 	\function moveNotebookHelper
@@ -9248,7 +9257,7 @@ notebookXInUnitsOfScreenWidth[windowX_, windowWidth_, screenWidth_] :=
 			If [debugFlag, Print["screenWidthLessWindowWidth: ", screenWidthLessWindowWidth]];
 			If [debugFlag, Print["windowXAsRatioOfGap: ", N[windowXAsRatioOfGap]]];
 			
-			Which [
+			Which[
 				(windowXRelativeToScreen / screenWidth) >= 0.95,
 				(* Window is just left of the left border of screen. *)
 				If [debugFlag, Print["Case A"]];
@@ -10814,6 +10823,119 @@ SetCellMetadata[cellObjectOrNotebook_, key_ -> value_] :=
 				]
 		]
 	]
+
+(*!
+	\function KeyValueGet
+	
+	\calltable
+		KeyValueGet[keyValues_, key_] '' given either a list of key/value pairs (as rules), or key/value pairs with a non-List head (ex. Subparse["MyKey" -> "MyVal", ...]), and given a key, return the value. If the key is not defined, return Missing[].
+	
+	Example:
+	
+	KeyValueGet[{"a" -> "b", "c" -> "d"}, "a"] = "b"
+	
+	\related 'KeyValueSet
+	
+	\maintainer danielb
+*)
+KeyValueGet[keyValues_, key_, defaultValue_:Missing[]] :=
+	With[{res = key /. List@@Cases[keyValues, _Rule]},
+		If [res === key,
+			defaultValue
+			,
+			res
+		]
+	]
+	
+KeyValueGet[keyValues_, keyList_List, defaultValue_:Missing[]] :=
+	Module[{val},
+		val = keyValues;
+		Function[{key},
+			val = KeyValueGet[val, key, defaultValue];
+		] /@ keyList;
+		val
+	]
+
+(*!
+	\function KeyValueGet
+	
+	\calltable
+		KeyValueGet[keyValues_, key_] '' given either a list of key/value pairs (as rules), or key/value pairs with a non-List head (ex. Subparse["MyKey" -> "MyVal", ...]), and given a key, return the value. If the key is not defined, return Missing[].
+	
+	Example:
+	
+	KeyValueGet[{"a" -> "b", "c" -> "d"}, "a"] = "b"
+	
+	\related 'KeyValueSet
+	
+	\maintainer danielb
+*)
+KeyValueGet[keyValues_, key_, defaultValue_:Missing[]] :=
+	With[{res = key /. List@@Cases[keyValues, _Rule]},
+		If [res === key,
+			defaultValue
+			,
+			res
+		]
+	]
+
+KeyValueGet[keyValues_, keyList_List, defaultValue_:Missing[]] :=
+	Module[{val},
+		val = keyValues;
+		Function[{key},
+			val = KeyValueGet[val, key, defaultValue];
+		] /@ keyList;
+		val
+	]
+	
+Gett = KeyValueGet;
+
+(*!
+	\function KeyValueSet
+	
+	\calltable
+		KeyValueSet[keyValues_, key_ -> value_] '' given either a list of key/value pairs (as rules), or key/value pairs with a non-List head (ex. Subparse["MyKey" -> "MyVal", ...]), and given a key + value, return the key value pairs with the given key set to the given value.
+		KeyValueSet[keyValuesIn_, keyValueList_List] '' as bove, but setting multiple key/value pairs.
+		KeyValueSet[keyValuesIn_, keyList_List -> value_] '' allows a list of keys to be specified, which are interpreted as a hierarchy.
+	
+	Example:
+	
+	KeyValueSet[{"a" -> "b", "c" -> "d"}, "a" -> "x"] = {"a" -> "x", "c" -> "d"}
+	KeyValueSet[{"a" -> "b", "c" -> "d"}, {"a" -> "x", "b" -> "e"}] = {"a" -> "x", "c" -> "d", "b" -> "e"}
+	KeyValueSet[{"a" -> 1, "b" -> {"c" -> 2}}, {"b", "c"} -> 3] = {"a" -> 1, "b" -> {"c" -> 3}}
+	
+	\related 'KeyValueGet
+	
+	\maintainer danielb
+*)
+Clear[KeyValueSet];
+KeyValueSet[keyValues_, key_ -> value_] :=
+	With[{pos = Position[keyValues, key, {2}]},
+		If [pos === {},
+			Append[keyValues, key -> value]
+			,
+			ReplacePart[keyValues, pos[[1, 1]] -> (key -> value)]
+		]
+	]
+	
+KeyValueSet[keyValuesIn_, keyValueList_List] :=
+	Module[{keyValues = keyValuesIn},
+		Function[{keyValue},
+			keyValues = KeyValueSet[keyValues, keyValue]
+		] /@ keyValueList;
+		
+		keyValues
+	]
+	
+KeyValueSet[keyValues_, keyList_List -> value_] :=
+	KeyValueSet[
+		keyValues,
+		With[{remainderKeyList = keyList[[2;;]], prev = KeyValueGet[keyValues, First[keyList]]},
+			First[keyList] -> KeyValueSet[If [prev =!= Missing[], prev, {}], If [Length[remainderKeyList] === 1, First[remainderKeyList], remainderKeyList] -> value]
+		]
+	]
+
+Sett = KeyValueSet
 
 End[]
 
