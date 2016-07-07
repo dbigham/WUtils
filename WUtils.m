@@ -1505,23 +1505,51 @@ CopyFunctionUI[func_, destContext_] :=
 *)
 Attributes[FunctionDependencies] = {HoldFirst};
 Clear[FunctionDependencies];
+$contextsToPruneByDefault =
+	{
+		"JLink`",
+		"NETLink`",
+		"FrontEnd`",
+		"DataPaclets`",
+		"CalculateScan`",
+		"GeneralUtilities`",
+		"CalculateParse`Expr`",
+		"CalculateParse`GrammarSyntax`",
+		"CalculateParse`TemplateParser4`",
+		"CalculateParse`Content`",
+		"CalculateParse`ParseTabularInput`",
+		"CalculateParse`ParseTIUtils`",
+		"CalculateParse`JavaTokenizer`",
+		"CalculateParse`GlobalParseData`",
+		"CalculateParse`ExportedFunctions`",
+		"CalculateParse`Preprocessor1`",
+		"CalculateParse`Private`",
+		"CalculateParse`Parser1`",
+		"CalculateParse`PLI`",
+		"CalculateParse`Prototype`VirtualAssistant`FastGrammar`",
+		"CalculateParse`Prototype`VirtualAssistant`VaSemantics`",
+		"CalculateLoader`",
+		"Tests`Utilities`ParserTestingTools`",
+		"CalculateUtilities`",
+		"DataScience`Utils`",
+		"MUnit`",
+		"Compile`"
+	};
 Options[FunctionDependencies] =
 {
-	"MaxDepth" -> Infinity,	 (*< The maximum dependency depth to explore. *)
+	"MaxDepth" -> Infinity,		(*< The maximum dependency depth to explore. *)
 	"CurrentDepth" -> 1,		(*< The current depth being explored. Would be better as an option of a helper function. *)
-	"BasicContextsToPrune" ->   (*< Some contexts like JLink` are essentially system contexts that we typically don't want to probe into. *)
-		{
-			"JLink`",
-			"NETLink`"
-		},
+	"BasicContextsToPrune" ->	(*< Some contexts like JLink` are essentially system contexts that we typically don't want to probe into. *)
+		$contextsToPruneByDefault,
 	"ContextsToPrune" ->		(*< Like "BasicContextsToPrune", but user specified. *)
 		{
 		},
-	"LimitToContext" -> None,   (*< Can be used to limit the search within a certain context. *)
-	"AlreadyExplored" -> {}	 (*< Functions already explored. Don't re-explore. *)
+	"LimitToContext" -> None,	(*< Can be used to limit the search within a certain context. *)
+	"AlreadyExplored" -> {}		(*< Functions already explored. Don't re-explore. *)
 };
 FunctionDependencies[funcSymbol_, opts:OptionsPattern[]] :=
 	Block[{$functionDependenciesConsidered = Append[OptionValue["AlreadyExplored"], {funcSymbol}]},
+		Global`djb = {};
 		functionDependenciesHelper[funcSymbol, opts]
 	];
 
@@ -1531,7 +1559,7 @@ functionDependenciesHelper[funcSymbol_, opts:OptionsPattern[]] :=
 			contextsToPrune = Join[OptionValue["ContextsToPrune"], OptionValue["BasicContextsToPrune"]]},
 		
 		$functionDependenciesConsidered = Append[$functionDependenciesConsidered, funcSymbol];
-		
+		Global`djb = DeleteDuplicates[Append[Global`djb, Context[funcSymbol]]];
 		If [OptionValue["CurrentDepth"] > OptionValue["MaxDepth"],
 			Return[{}, Module];
 		];
@@ -1541,7 +1569,7 @@ functionDependenciesHelper[funcSymbol_, opts:OptionsPattern[]] :=
 				funcSymbol,
 				FilterOptions[ImmediateFunctionDependencies, opts]
 			];
-			
+		
 		(* Drop any symbols with a context that matches the OptionValue["ContextsToPrune"],
 		   or symbols that don't match OptionValue["LimitToContext"]. *)
 		immediateDependencies =
@@ -1608,11 +1636,8 @@ Attributes[ImmediateFunctionDependencies] = {HoldFirst};
 Clear[ImmediateFunctionDependencies];
 Options[ImmediateFunctionDependencies] =
 {
-	"BasicContextsToPrune" ->   (*< Some contexts like JLink` are essentially system contexts that we typically don't want to probe into. *)
-		{
-			"JLink`",
-			"NETLink`"
-		},
+	"BasicContextsToPrune" ->	(*< Some contexts like JLink` are essentially system contexts that we typically don't want to probe into. *)
+		$contextsToPruneByDefault,
 	"ContextsToPrune" ->		(*< Like "BasicContextsToPrune", but user specified. *)
 		{
 		},
@@ -1661,7 +1686,12 @@ ImmediateFunctionDependencies[funcSymbol_, opts:OptionsPattern[]] :=
 						(
 							Context[sym] =!= "System`" && 
 							(OptionValue["LimitToContext"] === None || StringStartsQ[Context[sym], OptionValue["LimitToContext"]]) &&
-							And @@ ( !StringStartsQ[Context[sym], #1] & ) /@ contextsToPrune &&
+							With[{tmp = And @@ ( !StringStartsQ[Context[sym], #1] & ) /@ contextsToPrune},
+								If [!TrueQ[tmp] && DownValues[sym] =!= {},
+									Print["Skipping: ", sym];
+								];
+								tmp
+							] &&
 							DownValues[sym] =!= {}
 						)
 				) &
