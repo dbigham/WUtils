@@ -248,6 +248,108 @@ DynamicOutputSection::usage = "DynamicOutputSection  "
 
 Indent2::usage = "Indent2  "
 
+CreateIssueNotebook::usage = "CreateIssueNotebook  "
+
+GetClipboard::usage = "GetClipboard  "
+
+ResolveIssueNotebook::usage = "ResolveIssueNotebook  "
+
+IssuesDirectoryDefined::usage = "IssuesDirectoryDefined  "
+
+AlternateNotebookDirectories::usage = "AlternateNotebookDirectories  "
+
+DownValuesToList::usage = "DownValuesToList  "
+
+GetSymbolContext::usage = "GetSymbolContext  "
+
+StringDropByDelimiter::usage = "StringDropByDelimiter  "
+
+NotebookDirectoryForFunction::usage = "NotebookDirectoryForFunction  "
+
+NotebookDirectoryForContext::usage = "NotebookDirectoryForContext  "
+
+DownValuesToRules::usage = "DownValuesToRules  "
+
+NotebookTypeToDirectory::usage = "NotebookTypeToDirectory  "
+
+OpenNotebook::usage = "OpenNotebook  "
+
+CouldBeWLSymbolQ::usage = "CouldBeWLSymbolQ  "
+
+ExtractUsesOfFunction::usage = "ExtractUsesOfFunction  "
+
+FindMatchingBrace::usage = "FindMatchingBrace  "
+
+GetLeftWhitespace::usage = "GetLeftWhitespace  "
+
+GetReloadLine::usage = "GetReloadLine  "
+
+ReloadFunction::usage = "ReloadFunction  "
+
+GetFunctionArgumentNames::usage = "GetFunctionArgumentNames  "
+
+FunctionCaptureButton::usage = "FunctionCaptureButton  "
+
+EnableFunctionCapture::usage = "EnableFunctionCapture  "
+
+ArgListToBindingList::usage = "ArgListToBindingList  "
+
+CaptureFunctionCall::usage = "CaptureFunctionCall  "
+
+CreateCapturedFunctionCell::usage = "CreateCapturedFunctionCell  "
+
+GetFunctionCaptureNotebook::usage = "GetFunctionCaptureNotebook  "
+
+ReplaceSymbolsUsingPatterns::usage = "ReplaceSymbolsUsingPatterns  "
+
+HeldExpressionToString::usage = "HeldExpressionToString  "
+
+RegisterFunctionCaptureNotebook::usage = "RegisterFunctionCaptureNotebook  "
+
+DisableFunctionCapture::usage = "DisableFunctionCapture  "
+
+EditFunction::usage = "EditFunction  "
+
+GetLineNumber::usage = "GetLineNumber  "
+
+EditUnitTests::usage = "EditUnitTests  "
+
+NewFunctionCell::usage = "NewFunctionCell  "
+
+MoveNotebook::usage = "MoveNotebook  "
+
+NotebookX::usage = "NotebookX  "
+
+GetScreenDimensions::usage = "GetScreenDimensions  "
+
+EnsureDefined::usage = "EnsureDefined  "
+
+DockedToolbar::usage = "DockedToolbar  "
+
+ContextDirectory::usage = "ContextDirectory  "
+
+InsertCodeCell::usage = "InsertCodeCell  "
+
+CreateNotebookItem::usage = "CreateNotebookItem  "
+
+ExtractedDockedContents::usage = "ExtractedDockedContents  "
+
+CreateNotebook2::usage = "CreateNotebook2  "
+
+DeCamelCase::usage = "DeCamelCase  "
+
+CamelCaseQ::usage = "CamelCaseQ  "
+
+CreateWorkingNotebook::usage = "CreateWorkingNotebook  "
+
+ReplaceSymbols::usage = "ReplaceSymbols  "
+
+HeldSymbolName::usage = "HeldSymbolName  "
+
+RenderHeldListOfCodeLines::usage = "RenderHeldListOfCodeLines  "
+
+SetCellMetadata::usage = "SetCellMetadata  "
+
 Begin["`Private`"]
 
 (* Note: This code needs to come after the function definitions in this file, since
@@ -1581,7 +1683,7 @@ CopyFunctionUI[func_, destContext_, OptionsPattern[]] :=
 		destFile = FindFile[StringReplace[destContext, "Private`" ~~ EndOfString :> ""]];
 		If [destFile === $Failed, Message[CopyFunctionUI::cfdc, file, destContext]; Return[$Failed, Block]];
 		
-		dependencies = FunctionDependencies[func];
+		dependencies = FunctionDependencies[func, "SymbolsToPrune" -> OptionValue["SymbolsToPrune"]];
 		dependencies = DeleteDuplicates[Prepend[dependencies[[All, 2]], func]];
 		
 		(* For each dependency, look up its file. *)
@@ -1661,6 +1763,7 @@ Attributes[FunctionDependencies] = {HoldFirst};
 Clear[FunctionDependencies];
 $contextsToPruneByDefault =
 	{
+		"Global`",
 		"JLink`",
 		"NETLink`",
 		"FrontEnd`",
@@ -2045,7 +2148,7 @@ ProcessOneByOne[list_List, OptionsPattern[]] :=
 			,
 			FrameMargins -> 16
 			,
-			ImageSize -> {{800, 6000}, {10000, 100}}
+			ImageSize -> {{800, 6000}, {100000, 100}}
 		]
 	]
 
@@ -2234,7 +2337,7 @@ getPathRelativeToWorkbenchProjects[pathIn_] :=
 	
 	myReloadFunc =
 	CreateReloadFunctionForDirectory[
-		FileNameDrop[FindFile["CalculateParse`Prototype`VirtualAssistant`Utility`"], -1]
+		FileNameDrop[FindFile["WUtils`WUtils`"], -1]
 	];
 	myReloadFunc[]
 	
@@ -4459,7 +4562,7 @@ DistributeHeldCompoundExpressions[e_] :=
 
 	Unit tests:
 
-	RunUnitTests[CalculateParse`Prototype`VirtualAssistant`VaActions`GetFunctionUsesFromNotebookHelper]
+	Unit tests: GetFunctionUsesFromNotebookHelper.mt
 
 	\related 'GetFunctionUsesFromNotebook
 	
@@ -4766,7 +4869,7 @@ StringDropByDelim[str_, delim_, n_] :=
 	there, we progressively check higher and higher level contexts to see whether
 	any of them define $UnitTestDir.
 	
-	That allows a package such as CalculateParse` to define a unit test directory,
+	That allows a package such as WUtils` to define a unit test directory,
 	and allows sub-contexts to override that directory.
 	
 	Returns Missing[] if the default unit test directory isn't defined.
@@ -4929,11 +5032,9 @@ EnsureUnitTestFileExists[funcSymbol_, file_] :=
 	\maintainer danielb
 *)
 UnitTestTemplate[funcSymbol_, file_] :=
-	Module[{relativePath, insideCalculateParse},
+	Module[{relativePath},
 		
 		relativePath = MakePathRelativeToPaths[file];
-		
-		insideCalculateParse = !StringFreeQ[Context[funcSymbol], "CalculateParse"];
 		
 		If [!StringQ[relativePath],
 			Print["UnitTestTemplate: Couldn't determine path relative to Alpha for file: " <> file];
@@ -4942,39 +5043,7 @@ UnitTestTemplate[funcSymbol_, file_] :=
 
 "(* Tests for: " <> Context[funcSymbol] <> Last[StringSplit[ToString[funcSymbol], "`"]] <> "
 
-   Author: " <> Username[] <>
-If [insideCalculateParse,
-	"
-	
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-	   FindFile[" <> ToString[relativePath, InputForm] <> "]
-   ]
-*)
-
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-	If[TrueQ[Quiet[Get[\"CalculateTestEnvironment.m\"]]===$Failed],
-		Get[
-		StringCases[$CurrentFile,
-		inputfile:(StartOfString~~___~~$PathnameSeparator~~\"Tests\"~~$PathnameSeparator)~~___
-		:> inputfile<>\"Utilities\"<>$PathnameSeparator<>\"CalculateTestEnvironment.m\"][[1]]
-		]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << \"CalculateLoader`\"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-"
-,
-"
-*)"
-]
-	(* Doesn't seem to work, so we'll use fully qualified symbols. *)
-	(* Needs[" <> ToString[Context[funcSymbol], InputForm] <> "]; *)
+   Author: " <> Username[] <> "\n*)"
 	]
 
 (*!
@@ -4990,10 +5059,6 @@ MakePathRelativeToPaths[path_] :=
 		
 		paths = Select[$Path, StringMatchQ[path, # ~~ __] &];
 		
-		(* Take the longest, so that, for example, we get
-		   a relative path like CalculateParse/Prototype/VirtualAssistant
-		   even if we also had a path on $Path that could have
-		   resulted in Source/CalculateParse/Prototype/VirtualAssistant. *)
 		paths = Reverse[SortBy[paths, StringLength[#] &]];
 		
 		If [Length[paths] > 0,
@@ -6544,12 +6609,7 @@ EditFunctionMathdoc[funcSymbol_Symbol, testExpression_, testExpectedExpression_,
 			EditFunctionMathdocHelper[
 				newMathdoc,
 				Block[{$Context = "Global`", $ContextPath = {"Global`", "System`"}},
-					If [!StringFreeQ[ToString[funcSymbol], "CalculateParse`"],
-						"	Unit tests:\n\n	RunUnitTests[" <> ToString[funcSymbol] <> "]\n\n"
-						,
-						(* RunUnitTests only exists in CalculateParse for now. *)
-						"	Unit tests: " <> SymbolName[funcSymbol] <> ".mt\n\n"
-					]
+					"	Unit tests:\n\n	RunUnitTests[" <> ToString[funcSymbol] <> "]\n\n"
 				],
 				{
 					"\\maintainer",
@@ -7164,6 +7224,4287 @@ CodeCellObjectToExpression[cellObject_] :=
 			DeleteCases[e, HoldComplete[Null]]
 			,
 			e
+		]
+	]
+
+(*!
+	\function CreateIssueNotebook
+	
+	\calltable
+		CreateIssueNotebook[] '' creates a notebook. The name of the notebook is gotten from the clipboard if it isn't specified explicitly.
+	
+	\related 'CreateNotebook
+	
+	\maintainer danielb
+*)
+Clear[CreateIssueNotebook];
+Options[CreateIssueNotebook] =
+{
+	"Name" -> Automatic,					(*< the name of the notebook. If Automatic, the clipboard will be considered. *)
+	"Type" -> Automatic,					(*< the type of notebook to create. *)
+	"CreateFile" -> True,				   (*< actually create the notebook? Otherwise, just creates the notebook but doesn't actually save it. *)
+	"ReplaceInputCellWithNotebookLinkUponLinguisticsBeingDefined" -> False,
+											(*< If the user enters a linguistic like "new nb 'My Notebook'", and they then define linguistics for that notebook, should we replace the cell of the notebook that prompted the creation of the notebook with a new Mini VA UI that has the linguistic for that notebook? *)
+	"NotebookGeneratorArgs" -> {}			(*< Arguments for the particular type of notebook. *)
+};
+CreateIssueNotebook[opts:OptionsPattern[]] :=
+	Module[{name = OptionValue["Name"],
+			type = OptionValue["Type"],
+			typeArg, clipboard, templateFile,
+			contents = Automatic,
+			dir = Automatic,
+			createSubDirectory = True, dockedContents, nb, dynamicOutputVar, path, title},
+		
+		(* TODO: Consider reloading files automatically here. *)
+		
+		If [name === Automatic,
+			clipboard = GetClipboard[];
+			If [StringQ[clipboard] && StringLength[clipboard] >= 1 && StringLength[clipboard] <= 80,
+				name = clipboard;
+				,
+				respond["Please copy the notebook name to your clipboard first."];
+				Return[$Failed, Module];
+			];
+		];
+		
+		If [!StringFreeQ[name, " "],
+			(* If there are spaces in the name, set the title of the notebook
+			   explicitly to that, and set the name to be a camel cased version. *)
+			title = name;
+			name = toCamelCase[title];
+			,
+			title = Automatic;
+		];
+		
+		(* Can be used to redirect output (ex. generated when clicking a button) to a particular place in the notebook. *)
+		dynamicOutputVar = DynamicOutputSectionVar[];
+		
+		Switch[type,
+			"Sub",
+			(* A 'sub' notebook of the current notebook. *)
+			dir = NotebookDirectory[InputNotebook[]];
+			createSubDirectory = True;
+			,
+			"Function",
+			With[{resolvedNotebook = ResolveIssueNotebook[name]},
+				If [StringQ[resolvedNotebook],
+					dir = DirectoryName[resolvedNotebook];
+					,
+					With[{notebookGeneratorArgs = OptionValue["NotebookGeneratorArgs"]},
+						With[{funcName = If [!MissingQ[Lookup[notebookGeneratorArgs, "Function"]], ToString[Lookup[notebookGeneratorArgs, "Function"]], name]},
+							dir = NotebookDirectoryForFunction[ToExpression[GetSymbolContext[funcName] <> funcName]];
+						];
+					]
+				]
+			]
+		];
+		
+		If [dir === Automatic,
+			dir = NotebookTypeToDirectory[type];
+		];
+		
+		(* If they specified an actual file name with extension as the notebook name,
+		   remove the extension, because it will be added back on later. *)
+		If [StringMatchQ[name, __ ~~ ".nb"],
+			name = StringTake[name, {1, -4}];
+		];
+		
+
+		If [dir === Automatic,
+			If [!IssuesDirectoryDefined[], Return[$Failed]];
+			dir = Global`$IssuesDirectory;
+		];
+		
+		path = ToFileName[{dir}, name <> ".nb"];
+		
+		If [FileExistsQ[path],
+			(* The notebook already exists in the main issues directory. Open it instead. *)
+			Return[OpenNotebook[path]];
+		];
+		
+		typeArg = Sequence[];
+		If [type =!= Automatic,
+			templateFile = ToFileName[$TemplateNotebookDir, type <> ".nb"];
+			If [FileExistsQ[templateFile],
+				(* For now we'll use the "Type" as the exact file name of the template notebook.
+				   We could introduce a user-defined mapping here if desirable. *)
+				typeArg = "TemplateNotebook" -> ToFileName[$TemplateNotebookDir, type <> ".nb"];
+				,
+				(* Otherwise, perhaps notebooks of this type are generated dynamically. *)
+				contents = NotebookGenerator[name, type, "DynamicOutputVar" -> dynamicOutputVar, Sequence @@ OptionValue["NotebookGeneratorArgs"]];
+			];
+		];
+		
+		If [contents === $Failed, Return[$Failed]];
+		
+		(* The default notebook contents if the notebook type isn't something like
+		   "bug notebook" or "function notebook". *)
+		If [contents === Automatic,
+			contents =
+				{
+					defaultNotebookButtons[dynamicOutputVar]
+					(* TODO: UI for specifying linguistics for this notebook *)
+				};
+		];
+		
+		{contents, dockedContents} = ExtractedDockedContents[contents];
+		
+		If [TrueQ[OptionValue["ReplaceInputCellWithNotebookLinkUponLinguisticsBeingDefined"]],
+			SelectionMove[FrontEndExecute[FrontEndToken["FindEvaluatingCell"]], All, Cell];
+			
+			NotebookDelete[First[SelectedCells[]]];
+			
+			(* TODO: Display a linguistic UI *)
+			
+			SelectionMove[InputNotebook[], All, Cell];
+			$MiniVaUiCell = First[SelectedCells[]];
+		];
+		
+		nb =
+			CreateNotebook2[
+				name,
+				typeArg,
+				"Title" -> title,
+				"Type" -> OptionValue["Type"],
+				"Directory" -> dir,
+				"CreateSubDirectory" -> createSubDirectory,
+				"DockedContents" -> dockedContents,
+				"Contents" -> contents,
+				"CreateFile" -> OptionValue["CreateFile"]
+			];
+						
+		If [TrueQ[OptionValue["CreateFile"]],
+			path = NotebookFileName[nb];
+			(* TODO: Set context to represent that we just created a notebook. *)
+		];
+		 
+		SetCellMetadata[nb, "CreateIssueNotebookArgs" -> {opts}];
+			
+		nb
+	];
+
+(* NOTE: I think I've observed an issue whereby this can seeminly hang sometimes. (if the clipboard doesn't contain simple text, perhaps?) *)
+GetClipboard[] :=
+	With[{clipboard = PrototypeMisc`getClipboard[]},
+		If [True,
+			Print["TODO: Implement GetClipboard"];
+			,
+			(* For now we'll strip double quotes if they are present, such 
+			   as copying an M string into the clipboard and wanting the
+			   contents of the string to be used, not the literal string. *)
+			LoadJavaClass["com.danielbigham.util.GetClipboard"];
+			If [StringMatchQ[clipboard, "\"" ~~ ___ ~~ "\""],
+				ToExpression[clipboard]
+				,
+				clipboard
+			]
+		]
+	]
+
+(*!
+	\function toCamelCase
+	
+	\calltable
+		toCamelCase[str] '' converts a string to camel case by removing spaces and upper casing the appropriate letters.
+
+	Examples:
+	
+	toCamelCase["just testing"] === "JustTesting"
+	
+	\maintainer danielb
+*)
+toCamelCase[str_] := StringReplace[str,  StartOfString | Whitespace .. ~~ a_ :> ToUpperCase[a]]
+
+(*!
+	\function ResolveIssueNotebook
+	
+	\calltable
+		ResolveIssueNotebook[name] '' given a notebook name, try and resolve the file's path. If a directory contains multiple matching notebooks, a list is returned. If the notebook can't be found, $Failed is returned.
+	
+	Examples:
+	
+	ResolveIssueNotebook["MyNotebook"]
+	
+	\related 'OpenIssueNotebook
+	
+	\maintainer danielb
+*)
+ResolveIssueNotebook[nameIn_] :=
+	Module[{dir, dir2, name = nameIn, file, nameWithoutExtension},
+		
+		If [!IssuesDirectoryDefined[], Return[$Failed]];
+		dir = Global`$IssuesDirectory;
+
+		If [!StringMatchQ[name, __ ~~ ".nb"],
+			nameWithoutExtension = name;
+			name = name <> ".nb";
+			,
+			nameWithoutExtension = StringReplace[name, s__ ~~ ".nb" ~~ EndOfString :> s];
+		];
+		
+		(* Consider whether this is a sub-notebook. ie. A notebook that is
+		   within a subdirectory of the current notebook. *)
+		If [InputNotebook[] =!= $Failed,
+			dir2 = Quiet[NotebookDirectory[InputNotebook[]], NotebookDirectory::nosv];
+			If [dir2 =!= $Failed,
+				file = FileNameJoin[{dir2, nameWithoutExtension, name}];
+				If [!FileExistsQ[file],
+					file = FileNameJoin[{dir2, name}];
+				];
+			];
+		];
+		
+		If [!StringQ[file] || !FileExistsQ[file],
+			(* Check the issues directory. *)
+			file = ToFileName[{dir}, name];
+		];
+		
+		(* If that doesn't exist, try inside of a directory of the same name
+		   as the notebook. *)
+		If [!FileExistsQ[file] || DirectoryQ[file],
+			dir = ToFileName[{dir, nameWithoutExtension}];
+			file = ToFileName[dir, name];
+		];
+		
+		If [!FileExistsQ[file],
+			(* If there is a single notebook in the directory, open it. *)
+			With[{notebooks = FileNames["*.nb", dir]},
+				If [Length[notebooks] === 1,
+					file = notebooks[[1]];
+					,
+					If [Length[notebooks] > 1,
+						file = notebooks;
+					];
+				];
+			];
+		];
+		
+		If [!FileExistsQ[file],
+			
+			(* Inspect NotebookTypeToDirectory for other directories that
+			   notebooks might be in. *)
+			Block[{},
+				Function[{dir2},
+					
+					(* First check the issues directory. *)
+					file = ToFileName[{dir2}, name];
+					
+					If [FileExistsQ[file],
+						Return[Null, Block];
+					];
+					
+					dir = ToFileName[{dir2}, nameWithoutExtension];
+					
+					(* If that doesn't exist, try inside of a directory of the same name
+					   as the notebook. *)
+					If [DirectoryQ[dir],
+						dir = ToFileName[{dir2, nameWithoutExtension}];
+						file = ToFileName[dir, name];
+						If [FileExistsQ[file],
+							Return[Null, Block];
+						];
+					];
+					
+				] /@ AlternateNotebookDirectories[];
+			]
+		];
+		
+		If [FileExistsQ[file] || ListQ[file],
+			Return[file]
+			,
+			$Failed
+		]
+	]
+
+(*!
+	\function IssuesDirectoryDefined
+	
+	\calltable
+		IssuesDirectoryDefined[] '' ensure the $IssuesDirectory is defined, exists, and is a directory.
+	
+	This global variable defines where we should create new working notebooks.
+	(and the directories that contain them)
+		
+	\maintainer danielb
+*)
+IssuesDirectoryDefined[] :=
+	If [!StringQ[Global`$IssuesDirectory],
+		Print["$IssuesDirectory must be defined. It specifies where new notebooks/directories should be created."];
+		False
+		,
+		If [!FileExistsQ[Global`$IssuesDirectory],
+			Print["$IssuesDirectory does not exist. (" <> Global`$IssuesDirectory <> ")"];
+			False
+			,
+			If [!DirectoryQ[Global`$IssuesDirectory],
+				Print["$IssuesDirectory exists but is not a directory. (" <> Global`$IssuesDirectory <> ")"];
+				False
+				,
+				True
+			]
+		]
+	];
+
+(*!
+	\function AlternateNotebookDirectories
+	
+	\calltable
+		AlternateNotebookDirectories[] '' returns the list of notebook directories implied by NotebookTypeToDirectory. ie. What directories might a notebook be in if it were created by the "new <type> notebook ..." linguistic?
+	
+	\related 'CreateIssueNotebook 'OpenIssueNotebook
+	
+	\maintainer danielb
+*)
+AlternateNotebookDirectories[] :=
+	Append[
+		Cases[
+			Join[
+				DownValuesToList[NotebookTypeToDirectory][[All, 2]],
+				DownValuesToList[NotebookDirectoryForContext][[All, 2]]
+			],
+			_String
+		],
+		"E:\\Users\\Daniel\\Desktop\\NotebooksWithLinguistics"
+	];
+
+(*!
+	\function DownValuesToList
+	\maintainer danielb 
+	
+	\calltable
+		DownValuesToList[symbol_, selector_] '' given a symbol that has down values, this function converts the down values into lists of pairs. Each pair consists of a key and a value. Optionally, a function can be passed in that selects which key/value pairs to export.
+*)
+Clear[DownValuesToList];
+Options[DownValuesToList] =
+{
+	"Selector" -> ((#[[1]] =!= Blank[])&),	  (*< a function that, given a key/value pair, returns true if it should be included. *)
+	"Transform" -> Identity					 (*< a function that is passed a key/value pair and modifies it before storage. ex. Rounding off decimal places. *)
+};
+DownValuesToList[symbol_, OptionsPattern[]] :=
+	Sort[
+		OptionValue["Transform"] /@
+			(
+			{#[[1]], ReleaseHold[#[[2]]]} & /@
+				Select[
+					(* Get the key as a list. *)
+					Flatten[
+						With[{rawKey = Replace[#[[1]], a_[b_[x___]] :> List[x]]},
+							(* If the key is a list of size one (ie. one arg to the down value),
+							   then don't store the key as a list. *)
+							Function[{thisRawKey},
+								With[{key = If [Length[rawKey] === 1, thisRawKey[[1]], thisRawKey]}, 
+									{
+										(* The key. *)
+										key,
+										(* The value associated with the key. We need to wrap it in hold for now incase
+										   it's not inert. We'll remove the hold later. *)
+										Extract[#, 2, Hold]
+									}
+								]
+							] /@ ExpandAlternatives[rawKey]
+						] & /@ DownValues[symbol]
+						,
+						1
+					]
+					,
+					OptionValue["Selector"]
+				]
+			)
+	]
+
+(*!
+	\function ExpandAlternatives
+	\maintainer danielb 
+	
+	\calltable
+		ExpandAlternatives[eIn_] '' given an expression, returns a list of expressions whereby Alternatives have been expanded.
+		
+	Example:
+	
+	ExpandAlternatives[{"a" | "b", "c"}] = {{"a", "c"}, {"b", "c"}}
+*)
+ExpandAlternatives[eIn_] :=
+	Module[{e = {eIn}, pos},
+		pos = Position[e, _Alternatives];
+		If [pos === {},
+			e
+			,
+			With[{alt = List @@ Extract[e, pos[[1]]]},
+				Flatten[ExpandAlternatives /@ (First[ReplacePart[e, pos[[1]] -> #]] & /@ alt), 1]
+			]
+		]
+	]
+
+(*!
+	\function GetSymbolContext
+	
+	\calltable
+		GetSymbolContext[symbolName] '' given a symbol (in string form), returns its likely context, which might be a Private context.
+	
+	The function works by first checking if the symbol is Global` or resolvable
+	by the $ContextPath. If not, it checks whether it is a Private symbol
+	in one of the packages on the $ContextPath.
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`GetSymbolContext]
+
+	\related 'GetSymbolPackage
+	
+	\maintainer danielb
+*)
+GetSymbolContext[symbolName_String] :=
+	Module[{context, expr, isGlobal},
+
+		isGlobal = Names["Global`" <> symbolName] =!= {};
+		If [TrueQ[isGlobal],
+			Return["Global`"];
+		];
+
+		expr = ToExpression[symbolName, StandardForm, HoldComplete];
+
+		(* Check whether it's on the $ContextPath. *)
+		expr /. HoldComplete[sym_] :>
+			(
+				context = Context[sym];
+				
+				If [context === "Global`",
+					(* If the symbol shows up as in Global`, but it
+					   wasn't there when we checked earlier, then
+					   that means we created it. Remove it. *)
+					If [!TrueQ[isGlobal],
+						Remove[sym];
+					]
+					,
+					(* We found the symbol on the $ContextPath. *)
+					Return[context];
+				];
+			);
+
+		(* Otherwise, we haven't been able to find the
+		   symbol. As a last ditch effort, examine the
+		   private contexts... *)
+		Function[{thisContext},
+			With[{possiblePrivateSymbol = thisContext <> "Private`" <> symbolName},
+				If [Names[possiblePrivateSymbol] =!= {},
+					Return[StringDropByDelimiter[possiblePrivateSymbol, "`"] <> "`", Module];
+				];
+			];
+			(* New package format. *)
+			With[{possiblePrivateSymbol = thisContext <> "PackagePrivate`" <> symbolName},
+				If [Names[possiblePrivateSymbol] =!= {},
+					Return[StringDropByDelimiter[possiblePrivateSymbol, "`"] <> "`", Module];
+				];
+			];
+		] /@ $ContextPath;
+
+		None
+	];
+
+StringDropByDelimiter[str_, delim_] := StringJoin[Riffle[Drop[StringSplit[str, delim], -1], delim]]
+
+(*!
+	\function NotebookDirectoryForFunction
+	
+	\calltable
+		NotebookDirectoryForFunction[sym] '' given a function symbol, what directory should we put working notebooks?
+	
+	\related 'NotebookDirectoryForContext
+	
+	\maintainer danielb
+*)
+NotebookDirectoryForFunction[sym_] :=
+	Module[{res, contexts, symbolContext},
+		
+		symbolContext = Context[sym];
+		
+		res = NotebookDirectoryForContext[symbolContext];
+		
+		If [res === Automatic,
+			contexts = Cases[DownValuesToRules[NotebookDirectoryForContext][[All, 1]], _String];
+			Function[{context},
+				If [StringStartsQ[symbolContext, context],
+					Return[NotebookDirectoryForContext[context], Module];
+				];
+			] /@ contexts;
+			
+			Automatic
+			,
+			res
+		]
+	]
+
+(*!
+	\function NotebookDirectoryForContext
+	
+	\calltable
+		NotebookDirectoryForContext[context] '' given a context, what directory should we put working notebooks?
+
+	Can be used to override the default notebook directory for
+	working notebooks. For example, I'm working on a project
+	where I have files in my personal CVS directory, and I'd
+	prefer function notebooks to go in a directory there, so
+	I can set a down value appropriately.
+	
+	\related 'NotebookDirectoryForFunction
+	
+	\maintainer danielb
+*)
+NotebookDirectoryForContext[context_] := Automatic
+
+DownValuesToRules[f_Symbol] := Replace[DownValues[f], (Verbatim[HoldPattern][_[a_]] :> b_) :> (a :> b), {1}]
+
+NotebookTypeToDirectory[_] := Automatic;
+
+(*!
+	\function OpenNotebook
+	
+	\calltable
+		OpenNotebook[file] '' opens the given notebook. If the notebook looks like a name, we try to resolve the path of the notebook.
+		
+	\maintainer danielb
+*)
+Clear[OpenNotebook];
+Options[OpenNotebook] =
+{
+	"Evaluate" -> False		(*< evaluate the notebook's contents? Not compatible with non-default MathematicaVersion option. *)
+};
+OpenNotebook[pathIn_, opts:OptionsPattern[]] :=
+	Module[{nb = Null, path},
+			
+		path = pathIn;
+		
+		If [!FreeQ[path, $PathnameSeparator] && !FileExistsQ[path],
+			Print["OpenNotebook: File not found: ", path];
+			Return[$Failed];
+		];
+			
+		If [StringFreeQ[path, $PathnameSeparator],
+			(* Perhaps it's a bare file name without a directory. Try and intelligently
+			   guess the full path. *)
+			With[{issueNotebookPath = ResolveIssueNotebook[path]},
+				If [issueNotebookPath =!= $Failed,
+					path = issueNotebookPath;
+				];
+			];
+		];
+		
+		nb = NotebookOpen[path];
+		
+		If [TrueQ[OptionValue["Evaluate"]],
+			SelectionMove[nb, All, Notebook];
+			SelectionEvaluate[nb];
+		];
+		
+		nb
+	];
+
+PrintAndDisplayError[args___] :=
+	With[{str = StringJoin[ToString /@ args]},
+		Print[str];
+		MessageDialog[str, "WindowTitle" -> "Error"];
+	];
+
+Options[NotebookGenerator] =
+{
+	"DynamicOutputVar" -> Null,	 (*< If button output should be redirected to a dynamic section in the notebook. Note that Null is a special value used by RedirectPrintsAndMessagesToDynamicOutputSection to mean "don't redirect". *)
+	"Function" -> Automatic,		(*< Override the default function symbol. *)
+	"SubTest" -> None				(*< If this is a sub test notebook, then the name of the sub-test. *)
+};
+
+(* Down values can be specified for this function so that if a person creates
+   a notebook of a given type, we can specify what that should do. *)
+NotebookGenerator[name_, "Standard", OptionsPattern[]] := Automatic;
+NotebookGenerator[name_, type_, OptionsPattern[]] := Automatic;
+
+(* "Function" notebooks are used to do development on a function. *)
+NotebookGenerator[nameIn_, "Function", OptionsPattern[]] :=
+	Module[{package, reloadLine = "", funcSymbol = None, context, argNames, argNamesStr = "",
+			optionsButton = Sequence @@ {}, editFunctionButton = Sequence @@ {},
+			buttons, buttonsRow = Sequence @@ {}, mathdoc,
+			functionUses = {},
+			createTestsButton = Sequence @@ {}, runTestsButton,
+			runTestsCell = Sequence @@ {},
+			newCellButton = Sequence @@ {},
+			editTestsButton = Sequence @@ {},
+			captureButton = Sequence @@ {},
+			moveNotebookButtons,
+			funcName,
+			notebookName},
+		
+		notebookName = funcName = nameIn;
+		If [OptionValue["Function"] =!= Automatic,
+			funcSymbol = OptionValue["Function"];
+			With[{sym = funcSymbol}, funcName = SymbolName[sym]; context = Context[sym];];
+			,
+			If [!CouldBeWLSymbolQ[funcName],
+				Speak["Failed"];
+				Return[$Failed];
+			];
+			
+			context = GetSymbolContext[funcName];
+			
+			If [context === None,
+				Speak["Couldn't find function"];
+				Return[$Failed];
+			];
+		];
+
+		package = context;
+		If [StringMatchQ[context, __ ~~ "`Private`"],
+			package = StringDropByDelimiter[context, "`"] <> "`"
+		];
+		
+		
+		If [package =!= None,
+			
+			(* Get the function's MathDoc comment so that we
+			   can extract any possible example uses of the function. *)
+			With[{packageSource = GetPackageSource[package]},
+				If [packageSource === $Failed,
+					mathdoc = $Failed;
+					,
+					mathdoc =
+						GetFunctionMathdoc[
+							packageSource,
+							funcName
+						];
+				];
+			];
+			
+			If [!MatchQ[mathdoc, $Failed | Missing[]],
+				
+				functionUses = ExtractUsesOfFunction[mathdoc, funcName];
+			   
+				(* Add context. *)
+				If [!StringFreeQ[Context[funcSymbol], "`Private`" | "`PackagePrivate`"],
+					functionUses =
+						Function[{functionUse},
+							StringReplace[
+								functionUse,
+								StartOfString ~~ funcName ~~ "[" :> (context <> funcName <> "[")
+							]
+					   ] /@ functionUses;
+				];
+				
+				(* Take the function uses, which are strings, and turn them into
+				   expressions, for the benefit of being able to call Indent2 on
+				   them so that they are nicely indented in the function notebook.
+				   This is useful, for example, if we needed to add the private context
+				   in front of the function symbol, which can result in a single-line
+				   function use looking very ugly and wanting to be indented / turned
+				   into multiple lines. *)
+				functionUses =
+					Function[{functionUse},
+						If [Quiet[ToExpression[functionUse, StandardForm, HoldComplete]] =!= $Failed,
+							RemoveHoldFromIndentedString[
+								Indent2[
+									ToExpression[functionUse, StandardForm, HoldComplete],
+									"RemoveContexts" -> False
+								]
+							]
+							,
+							(* Couldn't seem to parse the function use as WL. Just use raw string. *)
+							functionUse
+						]
+					] /@ functionUses;
+					
+				(* The TODO example usage we add can result in duplicates.
+				   Get rid of them. *)
+				functionUses = DeleteDuplicates[functionUses];
+			];
+		];
+		
+		If [context =!= None,
+		
+			funcSymbol = Symbol[context <> funcName];
+		   
+			reloadLine = GetReloadLine[funcSymbol];
+			
+			If [functionUses === {},
+				argNames = GetFunctionArgumentNames[funcSymbol];
+				If [argNames =!= {},
+					argNamesStr = StringJoin[Riffle[ToString /@ argNames[[1]], ", "]];
+					If [!StringFreeQ[ToString[funcSymbol], "`Private`" | "`PackagePrivate`"],
+						functionUses = {context <> funcName<>"[" <> argNamesStr <> "]"};
+						,
+						functionUses = {funcName<>"[" <> argNamesStr <> "]"};
+					]
+					,
+					(* For example, if it's a System` function and we can't introspect DownValues. *)
+					functionUses = {funcName<>"[]"};
+				];
+			];
+		];
+		
+		With[{funcSymbol = funcSymbol, dynamicOutputVar = OptionValue["DynamicOutputVar"],
+			  subTest = OptionValue["SubTest"]},
+			If [funcSymbol =!= None,
+				
+				captureButton =
+					Row[{
+						FunctionCaptureButton[funcSymbol],
+						SmartButton[
+							"?",
+							(* Display help *)
+							TODO,
+							"Width" -> 30
+						]
+					}];
+				
+				editFunctionButton =
+					Row[{
+						SmartButton[
+							"Edit Function",
+							EditFunction[funcSymbol]
+						],
+						SmartButton[
+							"?",
+							(* Display help *)
+							TODO,
+							"Width" -> 30
+						]
+					}];
+					
+				editTestsButton =
+					If [OptionValue["SubTest"] =!= None,
+						SmartButton[
+							"Edit Tests",
+							EditUnitTests[funcSymbol, subTest]
+						]
+						,
+						SmartButton[
+							"Edit Tests",
+							EditUnitTests[funcSymbol]
+						]
+					];
+				
+				If [Options[funcSymbol] =!= {},
+					optionsButton =
+						SmartButton[
+							"Options",
+							Print[Indent2[Options[funcSymbol]]];
+						];
+				];
+				
+				newCellButton =
+					SmartButton[
+						"New Test",
+						RedirectPrintsAndMessagesToDynamicOutputSection[
+							NewFunctionCell[funcSymbol],
+							dynamicOutputVar
+						]
+					];
+					
+				createTestsButton =
+					SmartButton[
+						"Add Tests to File",
+						RedirectPrintsAndMessagesToDynamicOutputSection[
+							CreateUnitTests[funcSymbol, "SubTest" -> subTest],
+							dynamicOutputVar
+						]
+					];
+					
+				runTestsButton =
+					SmartButton[
+						"Run Tests",
+						RunUnitTestsInNotebook[funcSymbol];
+					];
+					
+				runTestsCell =
+					CodeString[
+						reloadLine <> "RunUnitTests[" <> ToString[funcSymbol] <> If [OptionValue["SubTest"] =!= None, ", \"SubTest\" -> " <> ToString[OptionValue["SubTest"], InputForm], ""] <> "]"
+					];
+			];
+			
+			moveNotebookButtons =
+				Row[{
+					SmartButton[
+						"<",
+						MoveNotebook["Left"]
+					],
+					SmartButton[
+						">",
+						MoveNotebook["Right"]
+					]
+				}];
+			
+			buttons =
+				Riffle[
+					{
+						newCellButton,
+						createTestsButton,
+						runTestsButton,
+						optionsButton,
+						editTestsButton,
+						editFunctionButton,
+						captureButton,
+						moveNotebookButtons
+					},
+					" "
+				];
+			
+			If [buttons =!= {},
+				buttonsRow = DockedToolbar[Row[buttons], dynamicOutputVar]
+			];
+		];
+		
+		{
+			(* We use "Docked" as a way of indicating to CreateIssueNotebook
+			   that it should convert this to docked a cell. *)
+			buttonsRow
+			,
+			runTestsCell
+			,
+			(* This section cell was added so that when we add the test UI above
+			   a code cell, it doesn't get clobbered by the output of the "RunUnitTests"
+			   code cell above this point. The issue is that the test UI is an
+			   "Output" cell, which as the behavior of getting overwritten when
+			   a cell above it generates new output. *)
+			TextCell["Tests", "Section"]
+			,
+			Sequence @@
+			   Function[{functionUse},
+				   CodeString[
+reloadLine <>
+functionUse
+				   ]
+				] /@ functionUses
+		}
+	];
+
+(*!
+	\function CouldBeWLSymbolQ
+	
+	\calltable
+		CouldBeWLSymbolQ[str] '' Returns True if the given string could be a WL symbol.
+	
+	Examples:
+	
+	CouldBeWLSymbolQ["Test"] === True
+	
+	CouldBeWLSymbolQ["Test1"] === True
+	
+	CouldBeWLSymbolQ["1"] === False
+
+	Unit tests:
+
+	RunUnitTests[CouldBeWLSymbolQ]
+
+	\maintainer danielb
+*)
+CouldBeWLSymbolQ[str_] :=
+	(* TODO: Uhhh, what? *)
+	StringQ[str]
+
+(*!
+	\function ExtractUsesOfFunction
+	
+	\calltable
+		ExtractUsesOfFunction[source, functionName] '' given some M source and the name of a function, returns all uses of that function.
+	
+	Example:
+	
+	ExtractUsesOfFunction[
+		GetFunctionMathdoc[
+			GetPackageSource["WUtils`WUtils`"],
+			"ExtractUsesOfFunction"
+		],
+		"ExtractUsesOfFunction"
+	]
+	
+	\maintainer danielb
+*)
+ExtractUsesOfFunction[source_, functionName_] :=
+	Module[{functionPositions, openingBracePos, closingBracePosition, res, leftWhitespace},
+		
+		functionPositions =
+			StringPosition[
+				source,
+				functionName ~~ "["
+			];
+		
+		res = {};
+		
+		Function[{functionPosition},
+			
+			openingBracePos = functionPosition[[2]];
+			closingBracePosition = FindMatchingBrace[source, openingBracePos];
+			
+			If [closingBracePosition =!= Missing[],
+				leftWhitespace = GetLeftWhitespace[source, functionPosition[[1]]];
+				res = {res, StringTake[source, {functionPosition[[1]] - StringLength[leftWhitespace], closingBracePosition}]};
+			];
+		] /@ functionPositions;
+		
+		RemoveIndentation /@ Flatten[res]
+	]
+
+(*!
+	\function FindMatchingBrace
+	
+	\calltable
+		FindMatchingBrace[str, position] '' given a string and a position in that string that gives the position of an opening brace (ex. "["), returns the location of the matching closing brace.
+	
+	TODO: Should replace this with 'FindMatchingBracket', which is a more robust function that
+		  properly deals with strings (which can contain false positive closing brackets), etc.
+	
+	Example:
+	
+	FindMatchingBrace["abc[blah];", 4] === 9
+	
+	FindMatchingBrace["abc[blah", 4] === Missing[]
+	
+	\related 'ExtractUsesOfFunction
+	
+	\maintainer danielb
+*)
+FindMatchingBrace[str_, position_] :=
+	Module[{openingBrace, closingBrace, counter, char, res},
+		openingBrace = StringTake[str, {position}];
+		closingBrace = closingBraceLookup[openingBrace];
+		If [!StringQ[closingBrace],
+			Print["FindMatchingBrace: Unsupported: " <> ToString[openingBrace, InputForm]];
+			Return[$Failed];
+		];
+		
+		res = Missing[];
+		counter = 1;
+		
+		Function[{pos},
+			char = StringTake[str, {pos}];
+			Which[
+				char === openingBrace,
+				++counter;
+				,
+				char === closingBrace,
+				--counter;
+			];
+			If [counter === 0,
+				res = pos;
+				Return[res, Module];
+			];
+		] /@ Range[position + 1, StringLength[str]];
+		
+		res
+	]
+	
+closingBraceLookup["["] = "]"
+closingBraceLookup["{"] = "}"
+closingBraceLookup["("] = ")"
+
+(*!
+	\function GetLeftWhitespace
+	
+	\calltable
+		GetLeftWhitespace[str_, pos_] '' given a string and a position in that string, returns the spaces and tabs immediately to the left.
+	
+	Example:
+
+	GetLeftWhitespace["xyz\n   abc", 8] === "   "
+	
+	\maintainer danielb
+*)
+GetLeftWhitespace[str_, pos_] :=
+	StringCases[StringTake[str, pos - 1], RegularExpression["[ \t]*$"]]
+
+(*!
+	\function GetReloadLine
+	
+	\calltable
+		GetReloadLine[funcSymbol] '' given a function symbol, returns the line of code to use to reload its file/package. (line of code as a string)
+	
+	Examples:
+	
+	GetReloadLine[WUtils`WUtils`SymbolToFile] === "ReloadParserFiles[];\n"
+	
+	\related 'ReloadFunction
+	
+	\maintainer danielb
+*)
+GetReloadLine[funcSymbol_] :=
+	Module[{package, context},
+		
+		(* Why would I turn a symbol into a string just to turn around and
+		   try and figure out what it's context was? Confused. *)
+		(*package = GetSymbolPackage[ToString[funcSymbol]];*)
+		
+		context = Context[funcSymbol];
+		
+		If [StringMatchQ[context, __ ~~ "`Private`"],
+			package = StringDropByDelimiter[context, "`"] <> "`";
+			,
+			package = context;
+		];
+		
+		With[{reloadFunc = ReloadFunction[funcSymbol]},
+			
+			If [reloadFunc === Missing[],
+				"<< " <> package <> "\n"
+				,
+				ToString[reloadFunc] <> "[];\n" 
+			]
+		]
+	]
+
+(*!
+	\function ReloadFunction
+	
+	\calltable
+		ReloadFunction[funcSymbol] '' given a function, returns a held function call that can be used to reload that file (and perhaps other functions for the relevant product/feature) in an intelligent way. See also: Va["automatic file reloading"]
+	
+	Examples:
+	
+	ReloadFunction[SymbolToFile] === HoldComplete[ReloadParserFiles]
+
+	Unit tests:
+
+	RunUnitTests[ReloadFunction]
+	
+	\maintainer danielb
+*)
+ReloadFunction[funcSymbol_] :=
+	Module[{contextParts, contextValueWasDefinedIn, value, context},
+		
+		context = Context[funcSymbol];
+		If [context === $Failed, Return[$Failed]];
+		
+		contextParts = StringSplit[context, "`"];
+		
+		With[{tmp = GetVariablePossiblyFromParentPackage[context, "$ReloadFunction"]},
+			If [tmp === Missing[],
+				Return[Missing[]]
+				,
+				{contextValueWasDefinedIn, value} = tmp;
+				
+				value
+			]
+		]
+	]
+
+(*!
+	\function GetFunctionArgumentNames
+	
+	\calltable
+		GetFunctionArgumentNames[functionSymbol] '' given a function symbol, returns all sets of argument names that can be passed to it.
+	
+	Example:
+	
+	GetFunctionArgumentNames[CalculateTokenize] === {{"s", "opts"}}
+	
+	\maintainer danielb
+*)
+GetFunctionArgumentNames[functionSymbol_] :=
+	Module[{downValues, args},
+		downValues = DownValues[functionSymbol];
+		DeleteDuplicates[
+			Function[{downValue},
+	
+				(* Get the arguments from this down value. *)
+				args = downValue[[1]] /. Verbatim[HoldPattern][_[args___]] :> {args};
+	
+				(* Remove blanks. *)
+				args = args /. Verbatim[Pattern][s_Symbol, Blank[]] :> SymbolName[s];
+				
+				args = args /. Verbatim[Optional][s_, default_] :> s <> " : " <> ToString[default, InputForm];
+				
+				args = DeleteCases[args, Verbatim[OptionsPattern][], Infinity];
+	
+				args
+	
+			] /@ downValues
+		]
+	]
+
+(*!
+	\function FunctionCaptureButton
+	
+	\calltable
+		FunctionCaptureButton[funcSymbol] '' given a function symbol, creates a button that can be used to enable/disable capturing calls to that function for display in the current notebook.
+	
+	\related 'EnableFunctionCapture
+	
+	\maintainer danielb
+*)
+FunctionCaptureButton[funcSymbol_] :=
+	DynamicModule[{buttonLabel},
+		
+		buttonLabel = "Capture";
+		
+		SmartButton[
+			Dynamic[buttonLabel],
+			(
+			If [buttonLabel === "Capture",
+				EnableFunctionCapture[funcSymbol];
+				RegisterFunctionCaptureNotebook[funcSymbol, InputNotebook[]];
+				buttonLabel = "Release";
+				,
+				DisableFunctionCapture[funcSymbol];
+				buttonLabel = "Capture";
+			]
+			),
+			"Width" -> 100
+		]
+	]
+
+(*!
+	\function EnableFunctionCapture
+	
+	\calltable
+		EnableFunctionCapture[funcSymbol] '' given a function symbol, enable function call capturing.
+	
+	Examples:
+	
+	DownValues[myFunc] = {HoldPattern[myFunc[myArg]] :> Print[myArg]};
+	
+	EnableFunctionCapture[myFunc];
+
+	Unit tests:
+
+	RunUnitTests[EnableFunctionCapture]
+
+	\related 'DisableFunctionCapture
+	
+	\maintainer danielb
+*)
+Clear[EnableFunctionCapture];
+Options[EnableFunctionCapture] =
+{
+	"AssociateWithInputNotebook" -> True		(*< associate the InputNotebook[] with the captured function? *)
+};
+EnableFunctionCapture[funcSymbol_, OptionsPattern[]] :=
+	Module[{},
+		
+		If [!FreeQ[Attributes[funcSymbol], Protected],
+			(* For now we won't worry about calling Protect again in the DisableFunctionCapture code. *)
+			If [Unprotect[funcSymbol] === $Failed,
+				Print["Couldn't Unprotect function '", funcSymbol, "'"];
+				Return[$Failed];
+			];
+		];
+		
+		DownValues[funcSymbol] =
+			Function[{downValue},
+				addCaptureToDownValue[downValue]
+			] /@ DownValues[funcSymbol];
+			
+		If [TrueQ[OptionValue["AssociateWithInputNotebook"]],
+			RegisterFunctionCaptureNotebook[funcSymbol, InputNotebook[]]
+		]
+	]
+
+(*!
+	\function addCaptureToDownValue
+	
+	\calltable
+		addCaptureToDownValue[downValue] '' given a down value, instrument it so that calls to it can be captured.
+	
+	Examples:
+	
+	addCaptureToDownValue[HoldPattern[myFunc[myArg]] :> Print[myArg]]
+	
+	===
+	
+	HoldPattern[myFunc[myArg]] :>
+		CaptureFunctionCall[
+			funcSymbol,
+			HoldComplete[{myArg}],
+			Print[myArg]
+		]
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`addCaptureToDownValue]
+
+	\related 'EnableFunctionCapture
+	
+	\maintainer danielb
+*)
+addCaptureToDownValue[downValueIn_] :=
+	Module[{downValue = downValueIn, optBinding},
+		
+		If [!FreeQ[downValueIn, CaptureFunctionCall],
+			(* Already captured. *)
+			downValueIn
+			,
+			
+			(* If an OptionsPattern exists, ensure that it has a binding
+			   so that we can capture its value. *)
+			{optBinding, downValue} = getOptionsPatternBinding[downValue, "AddIfMissing" -> True];
+			
+			downValue =
+			Replace[
+				downValue,
+				HoldPattern[RuleDelayed][
+					HoldPattern[HoldPattern][funcSymbol_[args___]],
+					impl_
+				] :>
+					With[{bindingList = ArgListToBindingList[HoldComplete[{args}]]},
+						RuleDelayed[
+							HoldPattern[funcSymbol[args]],
+							CaptureFunctionCall[
+								funcSymbol,
+								bindingList,
+								impl
+							]
+						]
+					]
+				,
+				{0}
+			]
+		];
+		
+		(* UNDOME / Temporary: This is here until l-kernel helps me understand why
+		   I am getting $ added to argument bindings. *)
+		ReplaceSymbolsUsingPatterns[
+			downValue,
+			var__ ~~ "$" :> var
+		]
+	]
+
+(*!
+	\function getOptionsPatternBinding
+	
+	\calltable
+		getOptionsPatternBinding[downValue] '' returns the symbol bound to the OptionsPattern argument held in HoldComplete. If there is no OptionsPattern argument, then None is returned.
+	
+	Return format: {optBinding, modifiedDownValue}
+	
+	Examples:
+	
+	getOptionsPatternBinding[
+		HoldPattern[myFunc[myArg, opts:OptionsPattern[]]] :> Print[myArg, ": ", {opts}]
+	]
+	
+	===
+	
+	HoldComplete[opts]
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`getOptionsPatternBinding]
+
+	\related 'addCaptureToDownValue
+	
+	\maintainer danielb
+*)
+Clear[getOptionsPatternBinding];
+Options[getOptionsPatternBinding] =
+{
+	"AddIfMissing" -> False	 (*< add a binding to the OptionsPattern if one doesn't already exist. If this option is used, then the return value is of the form {optBinding, modifiedDownValue}. *)
+};
+getOptionsPatternBinding[downValue_, OptionsPattern[]] :=
+	Module[{optBinding = None},
+		
+		(* Find the binding if it's present and, if so, set optBinding. *)
+		Replace[
+			downValue,
+			HoldPattern[RuleDelayed][
+				HoldPattern[HoldPattern][funcSymbol_[___, HoldPattern[Pattern][binding_, HoldPattern[OptionsPattern][]], ___]],
+				impl_
+			] :>
+				(
+				optBinding = HoldComplete[binding]
+				)
+			,
+			{0}
+		];
+		
+		If [optBinding === None && TrueQ[OptionValue["AddIfMissing"]],
+			(* There wasn't a binding on the OptionsPattern, so
+			   we'll add one. *)
+			Return[addOptionsPatternBinding[downValue], Module]
+		];
+		
+		{
+			optBinding,
+			downValue
+		}
+	]
+
+(*!
+	\function addOptionsPatternBinding
+	
+	\calltable
+		addOptionsPatternBinding[downValue] '' given a down value that is assumed to have an OptionsPattern, but without a pattern binding on it, this function adds a pattern binding.
+	
+	Return format:
+	
+	{optBinding, modifiedDownValue}
+	
+	Examples:
+	
+	addOptionsPatternBinding[
+		HoldPattern[myFunc[myArg, OptionsPattern[]]] :> Print[myArg]
+	]
+	
+	===
+	
+	{
+		HoldComplete[bindingAddedDynamicallyByGetOptionsPatternBinding1330],
+		HoldPattern[
+			myFunc[myArg, bindingAddedDynamicallyByGetOptionsPatternBinding1330$:OptionsPattern[]]
+		] :>
+			Print[myArg]
+	}
+	
+	\related 'getOptionsPatternBinding
+	
+	\maintainer danielb
+*)
+addOptionsPatternBinding[downValue_] :=
+	Module[{modifiedDownValue, optBinding},
+		With[{newBinding = Unique["bindingAddedDynamicallyByGetOptionsPatternBinding"]},
+			modifiedDownValue =
+			Replace[
+				downValue,
+				HoldPattern[RuleDelayed][
+					HoldPattern[HoldPattern][funcSymbol_[a___, HoldPattern[OptionsPattern][], b___]],
+					impl_
+				] :>
+					(
+					optBinding = HoldComplete[newBinding];
+					RuleDelayed[
+						HoldPattern[funcSymbol[a, PatternX[newBinding, OptionsPattern[]], b]],
+						impl
+					]
+					) /. PatternX :> Pattern
+				,
+				{0}
+			];
+		];
+		
+		{
+			optBinding,
+			modifiedDownValue
+		}
+	]
+
+(*!
+	\function ArgListToBindingList
+	
+	\calltable
+		ArgListToBindingList[heldArgList] '' given held arguments of the form HoldComplete[{args___}], return back the same form but with each argument replaced with its pattern binding.
+	
+	Examples:
+	
+	ArgListToBindingList[
+		HoldComplete[
+			{
+			myArg1_Integer,
+			myArg2_String,
+			myArg3:OptionsPattern[]
+			}
+		]
+	]
+	
+	===
+	
+	HoldComplete[
+		{
+		myArg1,
+		myArg2,
+		myArg3
+		}
+	]
+
+	Unit tests:
+
+	RunUnitTests[ArgListToBindingList]
+
+	\related 'addCaptureToDownValue
+	
+	\maintainer danielb
+*)
+ArgListToBindingList[heldArgList_] :=
+	Module[{},
+		Replace[
+			HeldListToListOfHeld[heldArgList],
+			{
+			HoldComplete[HoldPattern[Pattern][binding_, _]] :> HoldComplete[binding]
+			}
+			,
+			{1}
+		] // ListOfHeldToHeldList
+	]
+
+(*!
+	\function CaptureFunctionCall
+	
+	\calltable
+		CaptureFunctionCall[funcSymbol, args, impl] '' comment
+	
+	Examples:
+	
+	CaptureFunctionCall[funcSymbol, args, impl] === TODO
+	
+	\related '
+	
+	\maintainer danielb
+*)
+Clear[CaptureFunctionCall];
+CaptureFunctionCall[funcSymbol_, args_, impl_] :=
+	Module[{},
+		
+		(*Print["CaptureFunctionCall: ", funcSymbol, ", ", args];*)
+		
+		(* Protect against recursive capturing if we're debugging Indent2,
+		   sincd the CreateCapturedFunctionCell calls Indent2. *)
+		If [!TrueQ[$creatingCapturedFunctionCell],
+			Block[{$creatingCapturedFunctionCell = True},
+				CreateCapturedFunctionCell[funcSymbol, args];
+			]
+		];
+		
+		impl
+	]
+
+(*!
+	\function CreateCapturedFunctionCell
+	
+	\calltable
+		CreateCapturedFunctionCell[funcSymbol, args] '' given a function symbol and its arguments, print a code cell into the appropriate notebook showing that function call.
+	
+	Examples:
+	
+	CreateCapturedFunctionCell[
+		mySymbol,
+		HoldComplete[{1, 2, 3}]
+	]
+	
+	\related 'CaptureFunctionCall
+	
+	\maintainer danielb
+*)
+CreateCapturedFunctionCell[funcSymbol_, HoldComplete[{args___}]] :=
+	Module[{nb, functionCall, reloadLine},
+		
+		nb = GetFunctionCaptureNotebook[funcSymbol];
+		
+		(* Move to the end of the notebook. *)
+		SelectionMove[Cells[nb][[-1]], Next, Cell];
+		
+		functionCall = HoldComplete[funcSymbol[args]];
+		
+		reloadLine = GetReloadLine[funcSymbol];
+		
+		NotebookWrite[
+			nb,
+			Cell[
+				RawBoxes[
+					reloadLine <>
+					RemoveHoldFromIndentedString[
+						Indent2[
+							functionCall,
+							"RemoveContexts" -> False
+						]
+					]
+				],
+				"Code",
+				InitializationCell -> False
+			]
+		];
+	]
+
+(*!
+	\function GetFunctionCaptureNotebook
+	
+	\calltable
+		GetFunctionCaptureNotebook[funcSymbol] '' given a function symbol, which notebook should captured function calls be reported in? If no notebook has been registered, then the InputNotebook[] is used.
+	
+	Examples:
+	
+	GetFunctionCaptureNotebook[SymbolToFile]
+	
+	\related 'RegisterFunctionCaptureNotebook
+	
+	\maintainer danielb
+*)
+GetFunctionCaptureNotebook[funcSymbol_] :=
+	With[{nb = registeredFunctionCaptureNotebook[funcSymbol]},
+		If [nb === Null,
+			InputNotebook[]
+			,
+			nb
+		]
+	]
+
+registeredFunctionCaptureNotebook[_] := Null;
+
+(*!
+	\function ReplaceSymbolsUsingPatterns
+	
+	\calltable
+		ReplaceSymbolsUsingPatterns[e, symbolMapping] '' Given an expression and a list of replacements such as {RegularExpression[\"mySymbol.+\"] -> \"mySymbol\"}, makes the appropriate replacements. The LHS of each replacement rule can be a string expression.
+	
+	This can be useful when testing the output of a function that involves dynamically
+	generated symbol. We can replace those dynamically generated symbols (which involve
+	unpredictable numeric portions) into predictable symbol names that don't have numeric
+	parts.
+	
+	Example:
+	
+	ReplaceSymbolsUsingPatterns[
+		HoldComplete[{bindingAddedDynamicallyByGetOptionsPatternBinding1410$}],
+		{
+		RegularExpression["bindingAddedDynamicallyByGetOptionsPatternBinding.+"] -> "bindingAddedDynamicallyByGetOptionsPatternBinding"
+		}
+	]
+	
+	===
+	
+	HoldComplete[{bindingAddedDynamicallyByGetOptionsPatternBinding}]
+
+	Unit tests:
+
+	RunUnitTests[ReplaceSymbolsUsingPatterns]
+
+	\maintainer danielb
+*)
+ReplaceSymbolsUsingPatterns[e_, symbolMappingIn_] :=
+	Module[{symbolMapping, notApplicableString = ToString[Unique["notApplicableSentinel"]]},
+		   
+		(* So that passing in a single replacement rule works. *)
+		symbolMapping = Flatten[{symbolMappingIn}];
+		   
+		symbolMapping =
+			Append[
+				(StartOfString ~~ #[[1]] ~~ EndOfString -> #[[2]]) & /@ symbolMapping,
+				StartOfString ~~ ___ ~~ EndOfString -> notApplicableString
+			];
+		
+		Replace[
+			e,
+			s_Symbol
+			:>
+			With[{
+				 code =
+					(
+					Symbol[StringReplace[HeldExpressionToString[HoldComplete[s]], symbolMapping]]
+					)
+				 },
+				code /; True
+			]
+			/;
+				(
+				StringReplace[HeldExpressionToString[HoldComplete[s]], symbolMapping] =!= notApplicableString
+				)
+			,
+			Infinity,
+			Heads -> True
+		]
+	]
+
+(*!
+	\function HeldExpressionToString
+	
+	\calltable
+		HeldExpressionToString[e] '' given a held expression, convert it to a string and remove the hold.
+	
+	If you have a held expression that you don't want to evaluate, and you want
+	to get the string representation of that expression (without the hold),
+	this function does the job.
+	
+	If there's a more elegant way to do this kind of thing, I'm not familiar with it.
+	
+	Example:
+	HeldExpressionToString[Hold[$myVar]] === "$myVar"
+	
+	\maintainer danielb
+*)
+HeldExpressionToString[e_] :=
+	StringReplace[
+		ToString[e, InputForm],
+		("HoldComplete" | "Hold") ~~ "[" ~~ innerExpression___ ~~ "]" :> innerExpression
+	]
+
+(*!
+	\function RegisterFunctionCaptureNotebook
+	
+	\calltable
+		RegisterFunctionCaptureNotebook[funcSymbol, notebook] '' given a function symbol and notebooks, associates the function with the function with the notebook so that when function calls are captured (via the EnableFunctionCapture mechanism), code cells will be added to the notebook.
+	
+	Examples:
+	
+	RegisterFunctionCaptureNotebook[
+		SymbolToFile,
+		InputNotebook[]
+	]
+	
+	\related 'EnableFunctionCapture 'CaptureFunctionCall
+	
+	\maintainer danielb
+*)
+RegisterFunctionCaptureNotebook[funcSymbol_, notebook_:If[Null =!= $FrontEnd, InputNotebook[], Null]] :=
+	Module[{},
+		registeredFunctionCaptureNotebook[funcSymbol] = notebook;
+	]
+
+(*!
+	\function DisableFunctionCapture
+	
+	\calltable
+		DisableFunctionCapture[funcSymbol] '' given a function symbol, disable function call capturing.
+	
+	Examples:
+	
+	DownValues[myFunc] =
+	{
+		HoldPattern[myFunc[myArg_]] :>
+			CaptureFunctionCall[myFunc, HoldComplete[{myArg}], myArg + 1]
+	}
+	
+	DisableFunctionCapture[myFunc];
+	
+	\related 'EnableFunctionCapture
+	
+	\maintainer danielb
+*)
+DisableFunctionCapture[funcSymbol_] :=
+	Module[{},
+		DownValues[funcSymbol] =
+			Function[{downValue},
+				removeCaptureFromDownValue[downValue]
+			] /@ DownValues[funcSymbol];
+	]
+
+(*!
+	\function removeCaptureFromDownValue
+	
+	\calltable
+		removeCaptureFromDownValue[downValue] '' comment
+	
+	Examples:
+	
+	removeCaptureFromDownValue[
+		HoldPattern[myFunc[myArg_]] :>
+			CaptureFunctionCall[myFunc, HoldComplete[{myArg}], myArg + 1]
+	]
+	
+	===
+	
+	HoldPattern[myFunc[myArg_]] :> myArg + 1
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`removeCaptureFromDownValue]
+
+	\related 'DisableFunctionCapture 'addCaptureToDownValue
+	
+	\maintainer danielb
+*)
+removeCaptureFromDownValue[downValue_] :=
+	Module[{},
+		Replace[
+			downValue,
+			RuleDelayed[
+				HoldPattern[HoldPattern][funcSymbol_[args___]],
+				CaptureFunctionCall[
+					_,
+					_,
+					impl_
+				]
+			] :>
+				RuleDelayed[
+					HoldPattern[funcSymbol[args]],
+					impl
+				]
+			,
+			{0}
+		]
+	]
+
+(*!
+	\function EditFunction
+	
+	\calltable
+		EditFunction[funcSymbol] '' given a function symbol, edit it in Workbench.
+	
+	Examples:
+	
+	EditFunction[EditFunction]
+	
+	\related 'OpenFileInWorkbench
+	
+	\maintainer danielb
+*)
+Clear[EditFunction];
+EditFunction[funcSymbol_, fileIn_:Automatic] :=
+	Module[{file, lineNum},
+		
+		file = fileIn;
+		
+		If [file === Automatic,
+			file = SymbolToFile[funcSymbol];
+			If [file === $Failed, Return[$Failed]];
+		];
+		
+		lineNum = GetLineNumber[funcSymbol, file];
+		If [lineNum === None,
+			Print["Couldn't find the definition of ", funcSymbol, " in ", file, "."];
+			$Failed
+			,
+			If [NumberQ[lineNum],
+				OpenFileInWorkbench[file, "Line" -> lineNum]
+				,
+				$Failed
+			]
+		]
+	]
+
+(*!
+	\function GetLineNumber
+	
+	\calltable
+		GetLineNumber[funcSymbol, file] '' given a function symbol and the file that defines it, returns the line number where the definition occurs, or $Failed if it couldn't be determined.
+	
+	Examples:
+	
+	GetLineNumber[GetLineNumber, SymbolToFile[GetLineNumber]]
+	
+	\maintainer danielb
+*)
+Clear[GetLineNumber];
+GetLineNumber[funcSymbol_, file_String] :=
+	Module[{},
+		If [!FileExistsQ[file], Print["Missing file: " <> file]; Return[$Failed]];
+		GetLineNumberOfStringInFile[
+			StartOfLine ~~ If [StringQ[funcSymbol], funcSymbol, SymbolName[funcSymbol]] <> "[",
+			file
+		]
+	]
+
+(*!
+	\function EditUnitTests
+	
+	\calltable
+		EditUnitTests[funcSymbol] '' opens the .mt file in Mathematica.
+	
+	Examples:
+	
+	EditUnitTests[CouldBeWLSymbolQ]
+	
+	\related 'CreateUnitTests 'RunUnitTests
+	
+	\maintainer danielb
+*)
+EditUnitTests[funcSymbol_Symbol, subTest_String:None] :=
+	Module[{file},
+		
+		file = UnitTestFilename[funcSymbol, "SubTest" -> subTest];
+		
+		If [file === $Failed, Return[$Failed]];
+		
+		OpenFileInWorkbench[file]
+	]
+
+(*!
+	\function NewFunctionCell
+	
+	\calltable
+		NewFunctionCell[funcSymbol] '' given a function symbol, adds a new notebook code cell for running that function.
+	
+	Examples:
+	
+	NewFunctionCell[CouldBeWLSymbolQ]
+	
+	\related 'CreateIssueNotebook
+	
+	\maintainer danielb
+*)
+NewFunctionCell[funcSymbol_] :=
+	Module[{reloadLine},
+		
+		reloadLine = GetReloadLine[funcSymbol];
+		
+		(* Move to the end of the notebook. *)
+		SelectionMove[Cells[InputNotebook[]][[-1]], Next, Cell];
+		
+		NotebookWrite[
+			InputNotebook[],
+			Cell[
+				RawBoxes[
+					reloadLine <>
+					ToString[funcSymbol] <> "[ARGS]"
+				],
+				"Code",
+				InitializationCell -> False
+			]
+		];
+		
+		(* Is there a way to put the selection at the exact point between "[" and "]"? *)
+		SelectionMove[Cells[InputNotebook[]][[-1]], Cell, Next, 0];
+		
+		NotebookFind[InputNotebook[], "ARGS", AutoScroll -> False];
+	]
+
+(*!
+	\function MoveNotebook
+	
+	\calltable
+		MoveNotebook[direction] '' moves the current notebook left/right. Useful if the notebook's width is half the width of the screen and you want to move it to the other side of the screen so that you have two notebooks side by side. Dragging a window to the precise spot on the other side of the screen takes a lot of effort. If you have two monitors, then moving to the right twice will end up putting the notebook on the next monitor, etc.
+	
+	Va["move right"]
+	
+	Example:
+	
+	MoveNotebook["Right"]
+	
+	\maintainer danielb
+*)
+MoveNotebook[direction_] :=
+	With[{newX = moveNotebookHelper[direction, NotebookX[], getWindowWidth[], GetScreenDimensions[][[1]], Global`$NumberOfDisplays]},
+		If [newX =!= $Failed,
+			SetOptions[
+				InputNotebook[],
+				WindowMargins ->
+					{
+						newX,
+						Gett[Options[InputNotebook[]], WindowMargins][[2]]
+					}
+			]
+		]
+	]
+
+(*!
+	\function NotebookX
+	
+	\calltable
+		NotebookX[] '' returns the X coordinate of the current notebook.
+	
+	Example:
+	
+	NotebookX[] === 0
+	
+	\maintainer danielb
+*)
+NotebookX[] :=
+	Module[{windowMargins, windowMarginsX, screenWidth,
+			notebookWidth, notebookHeight, res},
+		
+		screenWidth = GetScreenDimensions[][[1]];
+		
+		{notebookWidth, notebookHeight} = notebookWidthHeight[];
+		
+		windowMargins = Gett[Options[InputNotebook[]], WindowMargins];
+		windowMarginsX = windowMargins[[1]];
+		
+		Which[
+			(* Relative to left side of screen. *)
+			MatchQ[windowMarginsX, {n_, Automatic} /; NumberQ[n]],
+			res = windowMarginsX[[1]]
+			,
+			(* Relative to right side of screen. *)
+			MatchQ[windowMarginsX, {Automatic, n_} /; NumberQ[n]],
+			res = screenWidth - windowMarginsX[[2]] - notebookWidth
+			,
+			True,
+			Print["NotebookX: Unable to determine notebook's X coordinate. WindowMargins: ", InputForm[windowMargins]];
+			res = $Failed;
+		];
+		
+		res
+	]
+
+(*!
+	\function GetScreenDimensions
+	
+	\calltable
+		GetScreenDimensions[] '' returns the width and height of the screen.
+	
+	\maintainer danielb
+*)
+GetScreenDimensions[] := GetScreenDimensions[1]
+GetScreenDimensions[screenNum_] :=
+	{#[[1,1]], #[[2,1]]} & @ Map[Differences, "ScreenArea" /. SystemInformation["Devices", "ScreenInformation"][[screenNum]]]
+	
+(* Returns {notebookWidth, notebookHeight} *)
+notebookWidthHeight[] = Gett[Options[InputNotebook[]], WindowSize]
+
+(*!
+	\function getWindowWidth
+	
+	\calltable
+		getWindowWidth[] '' returns the width of the notebook's window.
+	
+	\maintainer danielb
+*)
+getWindowWidth[] := CurrentValue[InputNotebook[], WindowSize]
+
+(*!
+	\function moveNotebookHelper
+	
+	\calltable
+		moveNotebookHelper[dir, windowXPos, windowWidth, screenWidth, numDisplays] '' given a direction to move the window, and the current state of the window, plus information about the width of the display, etc, returns the new window margins for the window.
+
+	Examples:
+	
+	moveNotebookHelper["Right", 0, 500, 1000, 1] === {Automatic, 0.}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`moveNotebookHelper]
+
+	\maintainer danielb
+*)
+moveNotebookHelper[dir_, windowXPos_, windowWidth_, screenWidth_, numDisplays_] :=
+	Module[{xPos, windowIsFullScreen, moveDistance},
+		
+		xPos = notebookXInUnitsOfScreenWidthRoundedToHalfs[windowXPos, windowWidth, screenWidth];
+		
+		windowIsFullScreen = windowWidth / screenWidth >= 0.98;
+		
+		If [TrueQ[windowIsFullScreen],
+			moveDistance = 1;
+			,
+			moveDistance = 0.5;
+		];
+		
+		xPos =
+			Switch[
+				dir,
+				
+				"Left",
+				xPos - moveDistance
+				,
+				"Right",
+				xPos + moveDistance
+				,
+				_,
+				Print["MoveNotebook: Invalid direction: ", dir];
+				Return[$Failed, Module];
+			];
+		
+		If [xPos < 0,
+			(* Don't move the notebook off-screen left. *)
+			xPos = 0;
+		];
+		
+		If [xPos >= 1,
+			(* Don't move the notebook off-screen right. *)
+			If [EnsureDefined[Global`$NumberOfDisplays, "It specifies the number of computer displays your system has, and is required so that MoveNotebook can avoid moving a notebook off-screen to the right."] === $Failed, Return[$Failed, Module]];
+			 
+			If [xPos >= numDisplays,
+				(* Don't move the notebook off-screen right. *)
+				(* But do move it to the same xPos it was, which
+				   will ensure it's lined up with the screen's edge
+				   if it isn't already. *)
+				xPos -= moveDistance;
+			];
+		];
+			
+		toWindowMargins[xPos, screenWidth]
+	]
+
+notebookXInUnitsOfScreenWidthRoundedToHalfs[windowX_, windowWidth_, screenWidth_] :=
+	N[Round[notebookXInUnitsOfScreenWidth[windowX, windowWidth, screenWidth] * 2] / 2]
+
+(*!
+	\function notebookXInUnitsOfScreenWidth
+	
+	\calltable
+		notebookXInUnitsOfScreenWidth[windowX, windowWidth, screenWidth] '' returns the X coordinate of the notebook in units of screen widths. In the case where the notebook isn't half the width of the screen, the units are such that 0 means left-border-of-screen, 0.5 means that the window's right border is on the right-border-of-screen, and 1 means that the window's left border is on the left-border-of-screen-2.
+
+	Example:
+
+	notebookXInUnitsOfScreenWidth[0, 500, 1000] === 0.
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`notebookXInUnitsOfScreenWidth]
+
+	\related 'MoveNotebook 'notebookOnLeftQ 'notebookXInUnitsOfScreenWidthRoundedToHalfs
+	
+	\maintainer danielb
+*)
+notebookXInUnitsOfScreenWidth[windowX_, windowWidth_, screenWidth_] :=
+	Module[{screenWidthLessWindowWidth,
+			screenNum, windowXRelativeToScreen,
+			windowXAsRatioOfGap, debugFlag = False},
+		
+		screenWidthLessWindowWidth = screenWidth - windowWidth;
+		
+		If [screenWidthLessWindowWidth === 0,
+			(* Special case. Window width is exactly the screen width. *)
+			N[windowX / screenWidth]
+			,
+			(* Which screen the window's left border is on. 0-based index. *)
+			screenNum = Floor[windowX / screenWidth];
+			
+			(* The x-coordinate of the window on the screen it's on. *)
+			windowXRelativeToScreen = windowX - screenNum * screenWidth;
+			
+			(* The X coordinate of the window relative to the gap
+			   around the window on the screen. *)
+			windowXAsRatioOfGap = windowXRelativeToScreen / screenWidthLessWindowWidth;
+			
+			If [debugFlag, Print["windowXRelativeToScreen: ", windowXRelativeToScreen]];
+			If [debugFlag, Print["screenWidthLessWindowWidth: ", screenWidthLessWindowWidth]];
+			If [debugFlag, Print["windowXAsRatioOfGap: ", N[windowXAsRatioOfGap]]];
+			
+			Which [
+				(windowXRelativeToScreen / screenWidth) >= 0.95,
+				(* Window is just left of the left border of screen. *)
+				If [debugFlag, Print["Case A"]];
+				screenNum + 1
+				,
+				windowXAsRatioOfGap >= 0 && windowXAsRatioOfGap <= 1.1,
+				(* Window is within (or almost within) the bounds of the
+				   current screen. *)
+				If [debugFlag, Print["Case B"]];
+				screenNum + windowXAsRatioOfGap * 0.5
+				,
+				True,
+				(* Otherwise, the window's right edge spans over into
+				   the screen to the right. *)
+				If [debugFlag, Print["Case C"]];
+				screenNum +
+				0.5 +
+				((windowXRelativeToScreen - screenWidthLessWindowWidth) / windowWidth) * 0.5
+			]
+		]
+	]
+
+(*!
+	\function EnsureDefined
+	
+	\calltable
+		EnsureDefined[var, desc] '' ensures the given variable is defined. If not, an error is printed and $Failed is returned
+
+	Examples:
+	
+	EnsureDefined[myUndefinedVar, "Description of variable goes here."] === Null
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`EnsureDefined]
+
+	\maintainer danielb
+*)
+Attributes[EnsureDefined] = {HoldAllComplete};
+EnsureDefined[var_, desc_] :=
+	Module[{},
+		If [!ValueQ[var],
+			Print[
+				"The variable ",
+				(* Make sure that things like "Global`" aren't on the context path
+				   so that it's clear what context the variable is in. *)
+				Block[{$ContextPath = {"System`"}, $Context = "Private`"},
+					RemoveHoldFromIndentedString[ToString[HoldComplete[var]]]
+				],
+				" must be defined. ",
+				desc
+			];
+			Return[$Failed]
+		];
+	]
+
+(*!
+	\function toWindowMargins
+	
+	\calltable
+		toWindowMargins[xPos, screenWidth] '' given a desired notebook 'xPos', which is the X coordinate in units of screen width rounded to the nearest half, convert it to a usable WindowMargins X value.
+	
+	Example:
+	
+	toWindowMargins[0.5, 1920] === {Automatic, 0.}
+	
+	toWindowMargins[1, 1920] === {1920, Automatic}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`toWindowMargins]
+
+	\maintainer danielb
+*)
+Clear[toWindowMargins];
+toWindowMargins[xPos_, screenWidth_] :=
+	Module[{notebookOnLeftQ},
+		
+		notebookOnLeftQ = Abs[xPos - Round[xPos]] <= 0.000001;
+		
+		If [notebookOnLeftQ,
+			{xPos * screenWidth, Automatic}
+			,
+			{Automatic, (1 - (xPos + 0.5)) * screenWidth}
+		]
+	]
+
+(*!
+	\function DockedToolbar
+	
+	\calltable
+		DockedToolbar[content, dynamicOutputVar] '' returns content that can be placed in the notebook's toolbar, wrapped with an appropriate dynamic output section
+	
+	Examples:
+	
+	DockedToolbar[
+		rowOfButtons,
+		HoldComplete[myDynamicOutputVar]
+	]
+	
+	\related 'CreateIssueNotebook
+	
+	\maintainer danielb
+*)
+DockedToolbar[content_, dynamicOutputVar_] :=
+	Module[{},
+	   "Docked"[
+		   DynamicOutputSection[
+			   content,
+			   dynamicOutputVar,
+			   (* We need to specify a maximum height, otherwise, if there is too much
+				  output, the toolbar will become higher than the entire notebook, and
+				  there will be no way to dismiss the dynamic output. And at that point,
+				  the notebook is unusable. *)
+			   "MaxHeight" -> 300
+		   ]
+	   ]
+	]
+
+(*!
+	\function defaultNotebookButtons
+	
+	\calltable
+		defaultNotebookButtons[dynamicOutputVar] '' returns the default toolbar buttons for a notebook, containing buttons such as "Open Dir".
+	
+	\related 'CreateIssueNotebook
+	
+	\maintainer danielb
+*)
+Clear[defaultNotebookButtons];
+defaultNotebookButtons[dynamicOutputVar_] :=
+	Module[{openDirButton, moveNotebookButtons, buttons,
+			buttonsRow = Sequence @@ {},
+			codeCellButton, bulletButton},
+							
+		openDirButton =
+			SmartButton[
+				"Open Dir",
+				SystemOpen[ContextDirectory[]]
+			];
+			
+		codeCellButton =
+			SmartButton[
+				"Code Cell",
+				InsertCodeCell[]
+			];
+			
+		bulletButton =
+			SmartButton[
+				"Bullet",
+				CreateNotebookItem[]
+			];
+			
+		moveNotebookButtons =
+			Row[{
+				SmartButton[
+					"<",
+					MoveNotebook["Left"]
+				],
+				SmartButton[
+					">",
+					MoveNotebook["Right"]
+				]
+			}];
+		
+		buttons =
+			Grid[
+				{
+					{
+						Row[
+							Riffle[
+								{
+									openDirButton,
+									codeCellButton,
+									bulletButton
+								},
+								" "
+							]
+						],
+						Row[
+							{
+							moveNotebookButtons
+							},
+							ImageSize -> {Full, Automatic},
+							Alignment -> {Right, Center}
+						]
+					}
+				}
+			];
+			
+		If [buttons =!= {},
+			buttonsRow = DockedToolbar[buttons, dynamicOutputVar]
+		];
+				
+		buttonsRow
+	]
+
+(*!
+	\function ContextDirectory
+	
+	\calltable
+		ContextDirectory[] '' the directory most likely wrt context.
+	
+	\maintainer danielb
+*)
+ContextDirectory[] :=
+	Module[{dir},
+		dir = Quiet[Check[NotebookDirectory[InputNotebook[]], $Failed]]
+	]
+
+(*!
+	\function InsertCodeCell
+	
+	\calltable
+		InsertCodeCell[] '' inserts a code cell into the notebook.
+	
+	\maintainer danielb
+*)
+InsertCodeCell[] :=
+	Module[{},
+		NotebookWrite[
+			InputNotebook[],
+			Cell[
+				RawBoxes[""],
+				"Code",
+				InitializationCell -> False
+			]
+		];
+	]
+
+(*!
+	\function CreateNotebookItem
+	
+	\calltable
+		CreateNotebookItem[] '' replaces the current cell in the notebook with an Item cell. (bulleted list)
+	
+	Since right clicking on the cell and selecting "Style" -> "Item" is inefficient.
+	
+	\maintainer danielb
+*)
+CreateNotebookItem[] :=
+	Module[{},
+		NotebookWrite[InputNotebook[], Cell["replaceme", "Item"]];
+		NotebookFind[InputNotebook[], "replaceme", AutoScroll -> False];
+	]
+
+(*!
+	\function ExtractedDockedContents
+	
+	\calltable
+		ExtractedDockedContents[notebookContents] '' given a list that represents notebook contents, extract/remove the one of form "Docked"[_] if preesnt.
+	
+	Examples:
+	
+	ExtractedDockedContents[
+		{
+			"Docked"["dockedContents"],
+			"notebookContents1",
+			"notebookContents2"
+		}
+	]
+	
+	===
+	
+	{
+		{
+			"notebookContents1",
+			"notebookContents2"
+		},
+		"dockedContents"
+	}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`ExtractedDockedContents]
+
+	\related 'CreateIssueNotebook
+	
+	\maintainer danielb
+*)
+ExtractedDockedContents[notebookContentsIn_] :=
+	Module[{dockedContents, notebookContents = notebookContentsIn},
+		
+		dockedContents = None;
+		
+		Cases[
+			notebookContents,
+			"Docked"[d_] :>
+				(
+				dockedContents = d;
+				notebookContents = DeleteCases[notebookContents, "Docked"[_], {1}];
+				),
+			{1}
+		];
+		
+		{
+			notebookContents,
+			dockedContents
+		}
+	]
+
+Options[CreateNotebook2] =
+{
+	"Title" -> Automatic,				(*< The title of the notebook. If not specified, the notebook name will be used. *)
+	"Type" -> Automatic,				(*< The type of notebook to create." *)
+	"NotebookSubtype" -> Automatic,		(*< A sub-type to use when constructing the filename. For example, if the notebook title is "DSL-311" and the sub-type is "BETA", then the notebook filename will be "DSL-311 BETA.nb". *)
+	"Directory" -> Automatic,			(*< The directory in which to create the notebook. *)
+	"Contents" -> Automatic,			(*< The contents can be specified manually. *)
+	"DockedContents" -> None,			(*< The docked/toolbar contents. *)
+	"TemplateNotebook" -> None,			(*< The template notebook to make a copy of. *)
+	"Evaluator" -> Automatic,			(*< Specifies the kernel that the notebook should use. *)
+	"CreateFile" -> True,				(*< Should the notebook be saved? Or just created and opened? This option is not compatible with non-default values of MathematicaVersion, and it doesn't open the notebook if it already exists. It's useful for testing this function. *)
+	"CreateSubDirectory" -> False,		(*< Should we create a sub-directory of the same name as the notebook and place the notebook inside? This can be a good idea for 'issue' notebooks because it allows multiple notebooks per issue, etc. *)
+	"PreTitleContents" -> {}			(*< Notebook contents that should be put above the title? *)
+};
+CreateNotebook2[name_String, opts:OptionsPattern[]] :=
+	Module[{dir, path, title, template = OptionValue["TemplateNotebook"],
+			contents = {Code[{}]}, notebook, yOffset},
+		
+		If [TrueQ[OptionValue["CreateFile"]],
+			If [OptionValue["Directory"] =!= Automatic,
+				dir = OptionValue["Directory"];
+				,
+				If [!IssuesDirectoryDefined[], Return[$Failed]];
+				dir = Global`$IssuesDirectory;
+			];
+			
+			path = ToFileName[{dir}, name <> ".nb"];
+			
+			If [FileExistsQ[path],
+				(* The notebook already exists in the main issues directory. Open it instead. *)
+				Return@OpenNotebook[path];
+			];
+			
+			If [OptionValue["NotebookSubtype"] =!= Automatic,
+				path = ToFileName[{dir}, name <> " " <> OptionValue["NotebookSubtype"] <> ".nb"];
+				
+				If [FileExistsQ[path],
+					(* The notebook already exists in the main issues directory. Open it instead. *)
+					Return@OpenNotebook[path];
+				];
+			];
+	
+			(* By default, create a directory of the same name as the notebook and
+			   place the notebook in that directory. *)
+			If [TrueQ[OptionValue["CreateSubDirectory"]],
+				dir = ToFileName[{dir, name}];
+				If [!FileExistsQ[dir],
+					CreateDirectory[dir];
+					If [!FileExistsQ[dir],
+						Print["CreateNotebook: Couldn't create directory: ", dir];
+						Return[$Failed];
+					];
+				];
+			];
+			
+			path = ToFileName[{dir}, name <> ".nb"];
+			
+			If [FileExistsQ[path],
+				(* The notebook already exists. Open it instead. *)
+				Return@OpenNotebook[path];
+			];
+			
+			(* If a sub-type was given, name the notebook accordingly. This is
+			   useful so that it's possible to have multiple notebooks for
+			   any given issue, distinguished by sub-type. *)
+			If [OptionValue["NotebookSubtype"] =!= Automatic,
+				path = ToFileName[{dir}, name <> " " <> OptionValue["NotebookSubtype"] <> ".nb"];
+				
+				If [FileExistsQ[path],
+					(* The notebook already exists. Open it instead. *)
+					Return@OpenNotebook[path];
+				];
+			];
+		];
+		
+		If [OptionValue["Contents"] =!= Automatic,
+			contents = OptionValue["Contents"];
+		];
+		
+		If [OptionValue["Title"] =!= Automatic,
+			title = OptionValue["Title"];
+			,
+			title = name;
+			
+			If [OptionValue["Type"] =!= "Function",
+				(* When / how often will we want to de-camel-case the notebook title? *)
+				title = DeCamelCase[name];
+			];
+		];
+		
+		If [OptionValue["Title"] =!= Automatic,
+			title = OptionValue["Title"];
+		];
+		
+		With[{contents = contents},
+			If [template =!= None,
+				
+				If [!StringQ[template],
+					Print["CreateNotebook: Invalid template notebook filename: ", template];
+					Return[$Failed];
+				];				
+				
+				If [!FileExistsQ[template],
+					Print["CreateNotebook: Template notebook doesn't exist: ", template];
+					Return[$Failed];
+				];
+				
+				CopyFile[template, path];
+				Return@OpenNotebook[path];
+				,
+				If [version === "10" && Floor[$VersionNumber] === 9,
+					(* So that M10 notebooks line up vertically with M9 notebooks on the screen. *)
+					yOffset = 58;
+					,
+					yOffset = 0;
+				];
+				
+				notebook =
+				CreateWorkingNotebook[
+					contents,
+					title,
+					If [TrueQ[OptionValue["CreateFile"]],
+						"File" -> path
+						,
+						Sequence @@ {}
+					],
+					"LeftHalfOfScreen" -> True,
+					"EvaluateImmediately" -> False,
+					"Evaluator" -> If [OptionValue["Evaluator"] === Automatic, CurrentValue[InputNotebook[], Evaluator], "Local"],
+					"YOffset" -> yOffset,
+					"PreTitleContents" -> OptionValue["PreTitleContents"]
+				];
+				
+				If [OptionValue["DockedContents"] =!= None,
+					CurrentValue[
+						notebook,
+						DockedCells
+					] =
+					{
+						Cell[
+							BoxData[
+								ToBoxes[
+									OptionValue["DockedContents"]
+								]
+							],
+							"DockedCell"
+						]
+					}
+				];
+				
+				If [TrueQ[OptionValue["CreateFile"]],
+					If [version =!= Automatic &&
+						version =!= ToString[Floor[$VersionNumber]],
+						NotebookClose[notebook];
+						Return@OpenNotebook[path];
+					]
+				]
+			]
+		];
+		
+		notebook
+	]
+
+(*!
+	\function DeCamelCase
+	
+	\calltable
+		DeCamelCase[string] '' given a string, if it is camel cased, then it will be de-camel-cased, words separated with spaces.
+
+	Examples:
+	
+	DeCamelCase["JustTesting"] === "Just Testing"
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`DeCamelCase]
+
+	\maintainer danielb
+*)
+DeCamelCase[stringIn_] :=
+	Module[{string = stringIn, caseIndications, positions},
+		If [!CamelCaseQ[string],
+			string
+			,
+			caseIndications = UpperCaseQ /@ Characters[string];
+			positions = Position[caseIndications, True];
+			Function[{pos},
+				If [pos[[1]] > 1,
+					string = StringTake[string, {1, pos[[1]] - 1}] <> " " <> StringTake[string, {pos[[1]], -1}];
+				]
+			] /@ Reverse[positions];
+			
+			ToUpperCase[StringTake[string, {1}]] <> StringTake[string, {2, -1}]
+		]
+	];
+
+(*!
+	\function CamelCaseQ
+	
+	\calltable
+		CamelCaseQ[string] '' returns True if the given string is camel cased.
+
+	Examples:
+	
+	CamelCaseQ["JustTesting"] === True
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`CamelCaseQ]
+
+	\maintainer danielb
+*)
+CamelCaseQ[string_] :=
+	Module[{caseIndications, caseIndicationsGrouped},
+		
+		If [!StringMatchQ[string, LetterCharacter..],
+			Return[False];
+		];
+		
+		caseIndications = UpperCaseQ /@ Characters[string];
+		
+		caseIndicationsGrouped = Split[caseIndications];
+		
+		MatchQ[
+			If [#[[1]] === False, DeleteDuplicates[#], #] & /@ caseIndicationsGrouped,
+			(* ex. "JustTesting" *)
+			{
+				Repeated[
+					PatternSequence[{True}, {False}],
+					{1, Infinity}
+				]
+			}
+			|
+			(* ex. "justTesting" *)
+			{
+				{False},
+				Repeated[
+					PatternSequence[{True}, {False}],
+					{1, Infinity}
+				]
+			}
+		]
+	];
+
+(*!
+	\function CreateWorkingNotebook
+	
+	\calltable
+		CreateWorkingNotebook[contents_, title_] '' Open a new notebook and create cells in the notebook that correspond to 'contents'.
+*)
+Clear[CreateWorkingNotebook];
+Options[CreateWorkingNotebook] =
+{
+	"Evaluator" -> "Local",
+	"File" -> Null,
+	"RightHalfOfScreen" -> False,	   (*< should we put the notebook on the right half of the screen? Useful if the calling notebooks expects itself to be on the left half of the screen. *)
+	"LeftHalfOfScreen" -> False,		(*< should we put the notebook on the left half of the screen? *)
+	"EvaluateImmediately" -> True,	  (*< should the notebook evaluate its contents immediately when it's created? *)
+	"YOffset" -> 0,					 (*< can be used to alter the notebook's Y position on the screen. Useful when creating M10 notebooks if you want them to be at the same Y position as M9 notebooks on the screen. *)
+	"Metadata" -> None,				 (*< metadata to associate with the notebook. (key/value pairs, where keys are strings) *)
+	"PreTitleContents" -> {}			(*< Notebook contents that should be put above the title? *)
+};
+Attributes[CreateWorkingNotebook] = {HoldFirst};
+CreateWorkingNotebook[contents_, title_:Null, OptionsPattern[]] :=
+	Module[{notebook, screenWidth, screenHeight},
+		
+		{screenWidth, screenHeight} = GetScreenDimensions[];
+		
+		(* Lop off some screen height to account for Windows 7 taskbar, etc.
+		   Not an exact science. *)
+		screenHeight -= 40;
+		
+		notebook =
+			CreateDocument[
+				DocumentNotebook[
+					{
+						Sequence @@
+							createWorkingNotebookReplacements[
+								OptionValue["PreTitleContents"]
+							],
+						If [title =!= Null, TextCell[title, "Title"], Sequence @@ {}],
+						Sequence @@
+							createWorkingNotebookReplacements[contents]
+					},
+					Evaluator -> OptionValue["Evaluator"],
+					If [TrueQ[OptionValue["RightHalfOfScreen"]],
+						Sequence @@
+						{
+							WindowSize -> {screenWidth / 2 - 15, screenHeight},
+							WindowMargins -> {{screenWidth / 2, Automatic}, {0, Automatic}}
+						}
+						,
+						If [TrueQ[OptionValue["LeftHalfOfScreen"]],
+							Sequence @@
+							{
+								WindowSize ->
+									{
+										screenWidth / 2 - 15,
+										screenHeight
+										(* So that we don't obscure minimized M9 windows. *)
+										- 40
+										-
+										(* For some reason, when we specify YOffset (when creating M10
+										   notebooks), it also affects the height of the notebook.
+										   Super hacky hack to correct that so that M9 and M10 notebooks
+										   end up being the same height. *)
+										If [OptionValue["YOffset"] =!= 0,
+											OptionValue["YOffset"] / 3.5
+											,
+											0
+										]
+									},
+								WindowMargins -> {{0, Automatic}, {Automatic, OptionValue["YOffset"]}}
+							}
+							,
+							Sequence @@
+							{
+								WindowSize -> {screenWidth, screenHeight},
+								WindowMargins -> {{0, Automatic}, {-OptionValue["YOffset"], Automatic}}
+							}
+						]
+					]
+				]];
+		
+		If [TrueQ[OptionValue["EvaluateImmediately"]],
+			SelectionMove[notebook, All, Notebook];
+			FrontEndTokenExecute[notebook, "EvaluateCells"];
+		];
+		
+		(* If any metadata was specified, set it. *)
+		If [OptionValue["Metadata"] =!= None,
+			(
+				CurrentValue[notebook, {TaggingRules, #[[1]]}] = #[[2]]
+			) & /@ OptionValue["Metadata"]
+		];
+			
+		If [OptionValue["File"] =!= Null,
+			NotebookSave[notebook, OptionValue["File"]];
+		];
+		
+		notebook
+	]
+
+(*!
+	\function createWorkingNotebookReplacements
+	
+	\calltable
+		createWorkingNotebookReplacements[contents] '' replaces the syntax specification supported by CreateWorkingNotebook with that used by DocumentNotebook.
+	
+	Examples:
+	
+	createWorkingNotebookReplacements[{Output["Here"]}]
+
+	===
+
+	{TextCell["Here", "Output"]}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`createWorkingNotebookReplacements]
+
+	\related 'CreateWorkingNotebook
+	
+	\maintainer danielb
+*)
+Attributes[Code] = {HoldAllComplete};
+createWorkingNotebookReplacements[contents_] :=
+	Module[{items},
+		
+		(* Transforms Hold[{a, b, c}] into {Hold[a], Hold[b], Hold[c]} *)
+		items = Map[HoldComplete, HoldComplete[contents], {2}][[1]];
+		
+		(* Since these aren't System symbols (?), users of this function that
+		   aren't in this package will end up giving these symbols some other context.
+		   So, we need to map them back to our namespace. *)
+		items =
+			ReplaceSymbols[
+				items,
+				{
+					"Section" -> "WUtils`WUtils`Section",
+					"Subsection" -> "WUtils`WUtils`Subsection",
+					"Subitem" -> "WUtils`WUtils`Subitem",
+					"Code" -> "WUtils`WUtils`Code",
+					"CodeString" -> "WUtils`WUtils`CodeString",
+					"Output" -> "WUtils`WUtils`Output",
+					"BoxesCell" -> "WUtils`WUtils`BoxesCell"
+				}
+			];
+		
+		Replace[items,
+			{
+			HoldComplete[Sequence[]] :> Sequence[],
+			HoldComplete[Text[x_]] :> TextCell[x, "Text"],
+			HoldComplete[Item[x_]] :> TextCell[x, "Item"],
+			HoldComplete[Subitem[x_]] :> TextCell[x, "Subitem"],
+			HoldComplete[Section[x_]] :> TextCell[x, "Section"],
+			HoldComplete[Subsection[x_]] :> TextCell[x, "Subsection"],
+			HoldComplete[Code[x_List, opts___]] :> RenderHeldListOfCodeLines[Hold[x]],
+			HoldComplete[Code[]] :> TextCell["", "Code", InitializationCell->False],
+			HoldComplete[CodeString[x_, opts___]] :> ExpressionCell[RawBoxes[x], "Code", opts, InitializationCell->False],
+			HoldComplete[BoxesCell[x_, opts___]] :> ExpressionCell[RawBoxes[x], "Input", opts],
+			HoldComplete[Output[x_]] :> TextCell[x, "Output"],
+			HoldComplete[(head:(TextCell | ExpressionCell))[args__]] :> head[args],
+			HoldComplete[x_] :> ExpressionCell[Defer[x], "Code", InitializationCell->False]
+			}
+			,
+			1
+		]
+	]
+
+(*!
+	\function ReplaceSymbols
+	
+	\calltable
+		ReplaceSymbols[e, symbolMapping] '' Given an expression and a list of replacements such as {\"mySymbol\" -> \"mySymbol2\"}, makes the appropriate replacements. The LHS of each replacement rule is the SymbolName of the desired symbol.
+	
+	Example:
+	
+	ReplaceSymbols[
+		HoldComplete[
+			{
+				Global`Code[1 + 1]
+			}
+		],
+		{
+		"Code" -> "MyContext`Code"
+		}
+	]
+	
+	===
+	
+	HoldComplete[{MyContext`Code[1 + 1]}]
+
+	Unit tests:
+
+	RunUnitTests[ReplaceSymbols]
+
+	\maintainer danielb
+*)
+ReplaceSymbols[e_, symbolMappingIn_] :=
+	Module[{symbolMapping = Append[symbolMappingIn, s_ -> None]},
+		Replace[
+			e,
+			s_Symbol
+			:>
+			With[{
+				 code =
+					(
+					Symbol[HeldSymbolName[HoldComplete[s]] /. symbolMapping]
+					)
+				 },
+				code /; True
+			]
+			/; ((HeldSymbolName[HoldComplete[s]] /. symbolMapping) =!= None)
+			,
+			Infinity,
+			Heads -> True
+		]
+	]
+	
+(*!
+	\function ReplaceSymbolsUsingPatterns
+	
+	\calltable
+		ReplaceSymbolsUsingPatterns[e, symbolMapping] '' Given an expression and a list of replacements such as {RegularExpression[\"mySymbol.+\"] -> \"mySymbol\"}, makes the appropriate replacements. The LHS of each replacement rule can be a string expression.
+	
+	This can be useful when testing the output of a function that involves dynamically
+	generated symbol. We can replace those dynamically generated symbols (which involve
+	unpredictable numeric portions) into predictable symbol names that don't have numeric
+	parts.
+	
+	Example:
+	
+	ReplaceSymbolsUsingPatterns[
+		HoldComplete[{bindingAddedDynamicallyByGetOptionsPatternBinding1410$}],
+		{
+		RegularExpression["bindingAddedDynamicallyByGetOptionsPatternBinding.+"] -> "bindingAddedDynamicallyByGetOptionsPatternBinding"
+		}
+	]
+	
+	===
+	
+	HoldComplete[{bindingAddedDynamicallyByGetOptionsPatternBinding}]
+
+	Unit tests:
+
+	RunUnitTests[ReplaceSymbolsUsingPatterns]
+
+	\maintainer danielb
+*)
+ReplaceSymbolsUsingPatterns[e_, symbolMappingIn_] :=
+	Module[{symbolMapping, notApplicableString = ToString[Unique["notApplicableSentinel"]]},
+		   
+		(* So that passing in a single replacement rule works. *)
+		symbolMapping = Flatten[{symbolMappingIn}];
+		   
+		symbolMapping =
+			Append[
+				(StartOfString ~~ #[[1]] ~~ EndOfString -> #[[2]]) & /@ symbolMapping,
+				StartOfString ~~ ___ ~~ EndOfString -> notApplicableString
+			];
+		
+		Replace[
+			e,
+			s_Symbol
+			:>
+			With[{
+				 code =
+					(
+					Symbol[StringReplace[HeldExpressionToString[HoldComplete[s]], symbolMapping]]
+					)
+				 },
+				code /; True
+			]
+			/;
+				(
+				StringReplace[HeldExpressionToString[HoldComplete[s]], symbolMapping] =!= notApplicableString
+				)
+			,
+			Infinity,
+			Heads -> True
+		]
+	]
+
+(* Given a HoldComplete[_Symbol], returns the symbol name as a string. *)
+HeldSymbolName[s_] := StringReplace[HeldExpressionToString[s], __ ~~ "`" ~~ rest:__ :> rest]
+
+(*!
+	\function GetSymbolContext
+	
+	\calltable
+		GetSymbolContext[symbolName] '' given a symbol (in string form), returns its likely context, which might be a Private context.
+	
+	The function works by first checking if the symbol is Global` or resolvable
+	by the $ContextPath. If not, it checks whether it is a Private symbol
+	in one of the packages on the $ContextPath.
+	
+	Example:
+	
+	GetSymbolContext["GetSymbolContext"] === "WUnits`WUtils`"
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`GetSymbolContext]
+
+	\related 'GetSymbolPackage
+	
+	\maintainer danielb
+*)
+GetSymbolContext[symbolName_String] :=
+	Module[{context, expr, isGlobal},
+
+		isGlobal = Names["Global`" <> symbolName] =!= {};
+		If [TrueQ[isGlobal],
+			Return["Global`"];
+		];
+
+		expr = ToExpression[symbolName, StandardForm, HoldComplete];
+
+		(* Check whether it's on the $ContextPath. *)
+		expr /. HoldComplete[sym_] :>
+			(
+				context = Context[sym];
+				
+				If [context === "Global`",
+					(* If the symbol shows up as in Global`, but it
+					   wasn't there when we checked earlier, then
+					   that means we created it. Remove it. *)
+					If [!TrueQ[isGlobal],
+						Remove[sym];
+					]
+					,
+					(* We found the symbol on the $ContextPath. *)
+					Return[context];
+				];
+			);
+
+		(* Otherwise, we haven't been able to find the
+		   symbol. As a last ditch effort, examine the
+		   private contexts... *)
+		Function[{thisContext},
+			With[{possiblePrivateSymbol = thisContext <> "Private`" <> symbolName},
+				If [Names[possiblePrivateSymbol] =!= {},
+					Return[StringDropByDelimiter[possiblePrivateSymbol, "`"] <> "`", Module];
+				];
+			];
+			(* New package format. *)
+			With[{possiblePrivateSymbol = thisContext <> "PackagePrivate`" <> symbolName},
+				If [Names[possiblePrivateSymbol] =!= {},
+					Return[StringDropByDelimiter[possiblePrivateSymbol, "`"] <> "`", Module];
+				];
+			];
+		] /@ $ContextPath;
+
+		None
+	];
+	
+(*!
+	\function ResolveSymbol
+	
+	\calltable
+		ResolveSymbol[symbol] '' given a symbol's name, returns its symbol (with proper context) if it is on $ContextPath, even if it is private, or $Failed if not found.
+	
+	Example:
+	
+	ResolveSymbol["dependentsOfFile"] === WUtils`WUtils`Private`dependentsOfFile
+	
+	\related 'GetSymbolContext
+	
+	\maintainer danielb
+*)
+ResolveSymbol[symbol_String] :=
+	With[{context = GetSymbolContext[symbol]},
+		If [context === None,
+			$Failed
+			,
+			Symbol[context <> symbol]
+		]
+	]
+	
+(* Given a string and delimiter, drops the last part of the string as distinguished by the delimiter. *)
+StringDropByDelimiter[str_, delim_] := StringJoin[Riffle[Drop[StringSplit[str, delim], -1], delim]]
+
+(*!
+	\function GetSymbolPackage
+	
+	\calltable
+		GetSymbolPackage[symbolName] '' given a symbol (in string form), returns its likely package. Also works with Private symbol, so long as their context is on the $ContextPath.
+	
+	Example:
+	
+	GetSymbolPackage["GetSymbolPackage"] === "WUtils`WUtils`"
+	
+	\related 'GetSymbolContext
+	
+	\maintainer danielb
+*)
+Clear[GetSymbolPackage];
+GetSymbolPackage[symbolName_String] :=
+	Module[{context},
+		context = GetSymbolContext[symbolName];
+		If [StringMatchQ[context, __ ~~ "`Private`"],
+			StringDropByDelimiter[context, "`"] <> "`"
+			,
+			context
+		]
+	]
+
+(*!
+	\function InsertStringAfterMatch
+	
+	\calltable
+		InsertStringAfterMatch[str, strToInsert, strToMatch] '' given a string, insert 'strToInsert' into it after the location of 'strToMatch'.
+	
+	Example:
+	
+	InsertStringAfterMatch["abc def ghi", " 123", "def"] === "abc def 123 ghi"
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`InsertStringAfterMatch]
+
+	\related 'InsertStringInFile
+	
+	\maintainer danielb
+*)
+Clear[InsertStringAfterMatch];
+Options[InsertStringAfterMatch] =
+{
+	"LastMatch" -> False	   (*< insert wrt the last match, rather than the first match. *)
+};
+InsertStringAfterMatch[str_, strToInsert_, strToMatch_, OptionsPattern[]] :=
+	Module[{pos, posToUse},
+		
+		pos =
+			StringPosition[
+				str,
+				strToMatch,
+				If [TrueQ[OptionValue["LastMatch"]],
+					Infinity
+					,
+					1
+				]
+			];
+			
+		If [pos === {},
+			$Failed
+			,
+			If [TrueQ[OptionValue["LastMatch"]],
+			   posToUse = pos[[-1]];
+			   ,
+			   posToUse = pos[[1]];
+			];
+			
+			StringInsert[str, strToInsert, posToUse[[2]] + 1]
+		]
+	]
+	
+(*!
+	\function InsertStringBeforeMatch
+	
+	\calltable
+		InsertStringBeforeMatch[str, strToInsert, strToMatch] '' given a string, insert 'strToInsert' into it before the location of 'strToMatch'.
+	
+	Example:
+	
+	InsertStringBeforeMatch["abc def ghi", " 123", "def"] === "abc def 123 ghi"
+	
+	\related 'InsertStringInFile 'InsertStringAfterMatch
+	
+	\maintainer danielb
+*)
+Clear[InsertStringBeforeMatch];
+Options[InsertStringBeforeMatch] =
+{
+	"LastMatch" -> False	   (*< insert wrt the last match, rather than the first match. *)
+};
+InsertStringBeforeMatch[str_, strToInsert_, strToMatch_, OptionsPattern[]] :=
+	Module[{pos, posToUse},
+		
+		pos =
+			StringPosition[
+				str,
+				strToMatch,
+				If [TrueQ[OptionValue["LastMatch"]],
+					Infinity
+					,
+					1
+				]
+			];
+		
+		If [pos === {},
+			$Failed
+			,
+			
+			If [TrueQ[OptionValue["LastMatch"]],
+			   posToUse = pos[[-1, 1]];
+			   ,
+			   posToUse = pos[[1, 1]];
+			];
+			
+			StringInsert[str, strToInsert, posToUse]
+		]
+	]
+
+(*!
+	\function InsertStringInFile
+	
+	\calltable
+		InsertStringInFile[file, strToInsert, strToMatch] '' given a file, insert 'strToInsert' into it after the location of 'strToMatch'.
+	
+	Example:
+	
+	With[{file = FileNameJoin[{$TemporaryDirectory,"InsertStringInFile.m"}]},
+		Export[file, "line\nINSERT AFTER\nline", "String"];
+		InsertStringInFile[file, "\ninserted string", "INSERT AFTER", "AfterMatch" -> True];
+		With[{res = Import[file, "String"]},
+			DeleteFile[file];
+			res
+		]
+	]
+
+	Unit tests:
+
+	RunUnitTests[InsertStringInFile]
+
+	\related 'InsertStringAfterMatch
+	
+	\maintainer danielb
+*)
+Clear[InsertStringInFile];
+Options[InsertStringInFile] =
+{
+	"AfterMatch" -> False,	  (*< By default, this function inserts the string at the position of the match. If AfterMatch -> True, the insertion is performed at the end of the matched string. *)
+	"LastMatch" -> False,	   (*< insert wrt the last match, rather than the first match. *)
+	"DataString" -> None		(*< If the file contents are already in memory, they can be passed in. In that case, they will be returned rather than written to disk. *)
+};
+InsertStringInFile[file_, strToInsert_, strToMatch_, OptionsPattern[]] :=
+	Module[{data},
+		If [!FileExistsQ[file],
+			Print["InsertStringInFile: File doesn't exist: ", file];
+			,
+			If [OptionValue["DataString"] =!= None,
+				data = OptionValue["DataString"];
+				,
+				data = Import[file, "Text"];
+			];
+			If [TrueQ[OptionValue["AfterMatch"]],
+				data = InsertStringAfterMatch[data, strToInsert, strToMatch, "LastMatch" -> OptionValue["LastMatch"]];
+				,
+				data = InsertStringBeforeMatch[data, strToInsert, strToMatch, "LastMatch" -> OptionValue["LastMatch"]];
+			];
+			If [data =!= $Failed,
+				If [OptionValue["DataString"] === None,
+					Export[file, data, "Text"];
+					,
+					data
+				]
+				,
+				Print["InsertStringInFile: Failed Insertion: ", file];
+				$Failed
+			]
+		]
+	]
+
+(*!
+	\function GetFunctionArgumentNames
+	
+	\calltable
+		GetFunctionArgumentNames[functionSymbol] '' given a function symbol, returns all sets of argument names that can be passed to it.
+	
+	Example:
+	
+	GetFunctionArgumentNames[CalculateTokenize] === {{"s", "opts"}}
+	
+	\maintainer danielb
+*)
+GetFunctionArgumentNames[functionSymbol_] :=
+	Module[{downValues, args},
+		downValues = DownValues[functionSymbol];
+		DeleteDuplicates[
+			Function[{downValue},
+	
+				(* Get the arguments from this down value. *)
+				args = downValue[[1]] /. Verbatim[HoldPattern][_[args___]] :> {args};
+	
+				(* Remove blanks. *)
+				args = args /. Verbatim[Pattern][s_Symbol, Blank[]] :> SymbolName[s];
+				
+				args = args /. Verbatim[Optional][s_, default_] :> s <> " : " <> ToString[default, InputForm];
+				
+				args = DeleteCases[args, Verbatim[OptionsPattern][], Infinity];
+	
+				args
+	
+			] /@ downValues
+		]
+	]
+	
+(*!
+	\function EnsureDirectoryDefined
+	
+	\calltable
+		EnsureDirectoryDefined[dir_, varDescription_] '' ensure the given directory variable is defined, exists, and is a directory.
+		
+	Example:
+	
+	EnsureDirectoryDefined[$IssuesDirectory, "It specifies where new notebooks/directories should be created for working on issue."];
+		
+	\maintainer danielb
+*)
+Attributes[EnsureDirectoryDefined] = {HoldAllComplete};
+EnsureDirectoryDefined[var_, varDescription_] :=
+	Module[{varStr = HeldSymbolName[HoldComplete[var]]},
+		If [!StringQ[var],
+			Print[varStr <> " must be defined. " <> varDescription];
+			False
+			,
+			If [!FileExistsQ[var],
+				Print[varStr <> " does not exist. (" <> var <> ")"];
+				False
+				,
+				If [!DirectoryQ[var],
+					Print[varStr <> " exists but is not a directory. (" <> var <> ")"];
+					False
+					,
+					True
+				]
+			]
+		]
+	]
+	
+(*!
+	\function EnsureDirectoryExists
+	
+	\calltable
+		EnsureDirectoryExists[dir_, varDescription_] '' ensure the given directory exists, and is a directory.
+		
+	Example:
+	
+	EnsureDirectoryExists[$TemporaryDirectory];
+		
+	\maintainer danielb
+*)
+Attributes[EnsureDirectoryExists] = {HoldAllComplete};
+EnsureDirectoryExists[var_, varDescription_:""] :=
+	If [!FileExistsQ[var],
+		Print[var <> " does not exist." <> If [varDescription =!= "", " (" <> varDescription <> ")", ""]];
+		False
+		,
+		If [!DirectoryQ[var],
+			Print[var <> " exists but is not a directory." <> If [varDescription =!= "", " (" <> varDescription <> ")", ""]];
+			False
+			,
+			True
+		]
+	]
+	
+(*!
+	\function EnsureFileDefined
+	
+	\calltable
+		EnsureFileDefined[file_, varDescription_] '' ensure the given file variable is defined, exists, and is a file.
+		
+	Example:
+	
+	EnsureFileDefined[$TextEditor, "It specifies your default text editor."];
+		
+	\maintainer danielb
+*)
+Attributes[EnsureFileDefined] = {HoldAllComplete};
+EnsureFileDefined[var_, varDescription_] :=
+	Module[{varStr = HeldSymbolName[HoldComplete[var]]},
+		If [!StringQ[var],
+			Print[varStr <> " must be defined. " <> varDescription];
+			False
+			,
+			If [!FileExistsQ[var],
+				Print[varStr <> " does not exist. (" <> var <> ")"];
+				False
+				,
+				True
+			]
+		]
+	]
+	
+(* Opens Windows Explorer and selects the given file. (obviously won't work for Mac) *)
+SelectFileInExplorer[file_] := (Run["explorer.exe", "/select," <> file];)
+
+(* Returns the whitespace from the beginning of a string, or the empty string if none. *)
+LeadingWhitespace[str_String] :=
+	Module[{whitespace = ""},
+		StringReplace[str, w:(WhitespaceCharacter...) ~~ ___ :> (whitespace = w)]
+	]
+
+(* Returns {leadingWhitespace_, strWithLeadingWhitespaceRemoved_} *)
+GetAndRemoveLeadingWhitespace[str_String] :=
+	Module[{whitespace = LeadingWhitespace[str]},
+		If [whitespace === "",
+			{"", str}
+			,
+			{whitespace, StringTake[str, {StringLength[whitespace] + 1, -1}]}
+		]
+	]
+	
+(*!
+	\function ProcessFileDependencies
+	
+	\calltable
+		ProcessFileDependencies[files, dependencies] '' given a list of files to be reloaded, and a list of file dependencies, expand the list of files as necessary, and sort the list so that a dependent file is loaded prior to a depending file.
+	
+	Example:
+	
+	ProcessFileDependencies[
+		{
+			"C:\\Temp\\a.m",
+			"C:\\Temp\\b.m",
+			"C:\\Temp\\c.m"
+		},
+		{
+			"a.m" -> "b.m",
+			"b.m" -> "c.m"
+		}
+	]
+	
+	===
+	
+	{
+		"C:\\Temp\\c.m",
+		"C:\\Temp\\b.m",
+		"C:\\Temp\\a.m"
+	}
+	
+	\related 'dependenciesOfFile
+	
+	\maintainer danielb
+*)
+Clear[ProcessFileDependencies];
+ProcessFileDependencies[files_, dependencies_] :=
+	Module[{res, dependentList, isDependent},
+		
+		res = files;
+		
+		(* Get the dependencies of each file. *)
+		Function[{file},
+			dependentList = dependentsOfFile[file, dependencies];
+			(* Populate a isDependent function for use in sorting. *)
+			(isDependent[file, #] = True) & /@ dependentList;
+			
+			res = {res, dependentList};
+			
+			Function[{file2},
+				(isDependent[file2, #] = True) & /@ dependentsOfFile[file2, dependencies];
+			] /@ dependentList;
+			
+		] /@ files;
+		
+		res = DeleteDuplicates[Flatten[res]];
+		
+		isDependent[_, _] := False;
+		
+		(*Print[DownValues[isDependent] // Indent2];*)
+		
+		Sort[
+			res,
+			isDependent[#1, #2] &
+		]
+	]
+	
+(*!
+	\function dependentsOfFile
+	
+	\calltable
+		dependentsOfFile[file, dependencies] '' given a file and known dependency relationships, return the dependents of the given file.
+	
+	Doesn't go beyond a max depth to somewhat protect against circular dependencies.
+	
+	Example:
+	
+	dependentsOfFile[
+		"C:\\Temp\\c.m"
+		,
+		{
+			"C:\\Temp\\a.m" -> "C:\\Temp\\b.m",
+			"C:\\Temp\\b.m" -> "C:\\Temp\\c.m"
+		}
+	]
+	
+	===
+	
+	{"C:\\Temp\\b.m", "C:\\Temp\\a.m"}
+	
+	\related 'ProcessFileDependencies
+	
+	\maintainer danielb
+*)
+Clear[dependentsOfFile];
+dependentsOfFile[file_, dependencies_, depth_:0] :=
+	Module[{res, foundDependents, nonDirectDependents = {}},
+		
+		If [depth > 15,
+			Return[{}];
+		];
+		
+		res = {};
+		
+		foundDependents = DeleteDuplicates[Select[dependencies, #[[2]] === file &][[All, 1]]];
+
+		(* Dependencies of dependencies *)
+		Function[{foundDependency},
+			nonDirectDependents = Join[nonDirectDependents, dependentsOfFile[foundDependency, dependencies, depth + 1]];
+		] /@ foundDependents;
+		
+		DeleteCases[Join[foundDependents, nonDirectDependents], file]
+	]
+	
+(*!
+	\function dependenciesOfFile
+	
+	\calltable
+		dependenciesOfFile[file, dependencies] '' given a file and known dependency relationships, return the dependents of the given file.
+	
+	Doesn't go beyond a max depth to somewhat protect against circular dependencies.
+	
+	Example:
+	
+	dependenciesOfFile[
+		"C:\\Temp\\a.m"
+		,
+		{
+			"C:\\Temp\\a.m" -> "C:\\Temp\\b.m",
+			"C:\\Temp\\b.m" -> "C:\\Temp\\c.m"
+		}
+	]
+	
+	===
+	
+	{"C:\\Temp\\b.m", "C:\\Temp\\c.m"}
+	
+	\related 'ProcessFileDependencies
+	
+	\maintainer danielb
+*)
+Clear[dependenciesOfFile];
+dependenciesOfFile[file_, dependencies_, depth_:0] :=
+	Module[{res, foundDependencies, nonDirectDependencies = {}},
+		
+		If [depth > 15,
+			Return[{}];
+		];
+		
+		res = {};
+		
+		foundDependencies = DeleteDuplicates[Select[dependencies, #[[1]] === file &][[All, 2]]];
+
+		(* Dependencies of dependencies *)
+		Function[{foundDependency},
+			nonDirectDependencies = Join[nonDirectDependencies, dependenciesOfFile[foundDependency, dependencies, depth + 1]];
+		] /@ foundDependencies;
+		
+		DeleteCases[Join[foundDependencies, nonDirectDependencies], file]
+	]
+	
+(*!
+	\function ToSingular
+	
+	\calltable
+		ToSingular[str] '' given a word, returns the singular form.
+	
+	Example:
+	
+	ToSingular["cats"] === "cat"
+	
+	\maintainer danielb
+*)
+ToSingular[str_] :=
+	Module[{},
+		Which[
+			StringMatchQ[str, __ ~~ "ies"],
+			StringTake[str, {1, -4}] <> "y"
+			,
+			(* ex. "dependencyList" -> "dependency" *)
+			StringMatchQ[str, __ ~~ "List"],
+			StringTake[str, {1, -5}]
+			,
+			(* ex. "dependencySet" -> "dependency" *)
+			StringMatchQ[str, __ ~~ "Set"],
+			StringTake[str, {1, -4}]
+			,
+			StringMatchQ[str, __ ~~ "s"],
+			StringTake[str, {1, -2}]
+			,
+			_,
+			$Failed
+		]
+	]
+	
+(*!
+	\function CreateWorkingNotebook
+	
+	\calltable
+		CreateWorkingNotebook[contents_, title_] '' Open a new notebook and create cells in the notebook that correspond to 'contents'.
+*)
+Clear[CreateWorkingNotebook];
+Options[CreateWorkingNotebook] =
+{
+	"Evaluator" -> "Local",
+	"File" -> Null,
+	"RightHalfOfScreen" -> False,	   (*< should we put the notebook on the right half of the screen? Useful if the calling notebooks expects itself to be on the left half of the screen. *)
+	"LeftHalfOfScreen" -> False,		(*< should we put the notebook on the left half of the screen? *)
+	"EvaluateImmediately" -> True,	  (*< should the notebook evaluate its contents immediately when it's created? *)
+	"YOffset" -> 0,					 (*< can be used to alter the notebook's Y position on the screen. Useful when creating M10 notebooks if you want them to be at the same Y position as M9 notebooks on the screen. *)
+	"Metadata" -> None,				 (*< metadata to associate with the notebook. (key/value pairs, where keys are strings) *)
+	"PreTitleContents" -> {}			(*< Notebook contents that should be put above the title? *)
+};
+Attributes[CreateWorkingNotebook] = {HoldFirst};
+CreateWorkingNotebook[contents_, title_:Null, OptionsPattern[]] :=
+	Module[{notebook, screenWidth, screenHeight},
+		
+		{screenWidth, screenHeight} = GetScreenDimensions[];
+		
+		(* Lop off some screen height to account for Windows 7 taskbar, etc.
+		   Not an exact science. *)
+		screenHeight -= 40;
+		
+		notebook =
+			CreateDocument[
+				DocumentNotebook[
+					{
+						Sequence @@
+							createWorkingNotebookReplacements[
+								OptionValue["PreTitleContents"]
+							],
+						If [title =!= Null, TextCell[title, "Title"], Sequence @@ {}],
+						Sequence @@
+							createWorkingNotebookReplacements[contents]
+					},
+					Evaluator -> OptionValue["Evaluator"],
+					If [TrueQ[OptionValue["RightHalfOfScreen"]],
+						Sequence @@
+						{
+							WindowSize -> {screenWidth / 2 - 15, screenHeight},
+							WindowMargins -> {{screenWidth / 2, Automatic}, {0, Automatic}}
+						}
+						,
+						If [TrueQ[OptionValue["LeftHalfOfScreen"]],
+							Sequence @@
+							{
+								WindowSize ->
+									{
+										screenWidth / 2 - 15,
+										screenHeight
+										(* So that we don't obscure minimized M9 windows. *)
+										- 40
+										-
+										(* For some reason, when we specify YOffset (when creating M10
+										   notebooks), it also affects the height of the notebook.
+										   Super hacky hack to correct that so that M9 and M10 notebooks
+										   end up being the same height. *)
+										If [OptionValue["YOffset"] =!= 0,
+											OptionValue["YOffset"] / 3.5
+											,
+											0
+										]
+									},
+								WindowMargins -> {{0, Automatic}, {Automatic, OptionValue["YOffset"]}}
+							}
+							,
+							Sequence @@
+							{
+								WindowSize -> {screenWidth, screenHeight},
+								WindowMargins -> {{0, Automatic}, {-OptionValue["YOffset"], Automatic}}
+							}
+						]
+					]
+				]];
+		
+		If [TrueQ[OptionValue["EvaluateImmediately"]],
+			SelectionMove[notebook, All, Notebook];
+			FrontEndTokenExecute[notebook, "EvaluateCells"];
+		];
+		
+		(* If any metadata was specified, set it. *)
+		If [OptionValue["Metadata"] =!= None,
+			(
+				CurrentValue[notebook, {TaggingRules, #[[1]]}] = #[[2]]
+			) & /@ OptionValue["Metadata"]
+		];
+			
+		If [OptionValue["File"] =!= Null,
+			NotebookSave[notebook, OptionValue["File"]];
+		];
+		
+		notebook
+	]
+	
+(*!
+	\function createWorkingNotebookReplacements
+	
+	\calltable
+		createWorkingNotebookReplacements[contents] '' replaces the syntax specification supported by CreateWorkingNotebook with that used by DocumentNotebook.
+	
+	Examples:
+	
+	createWorkingNotebookReplacements[{Output["Here"]}]
+
+	===
+
+	{TextCell["Here", "Output"]}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`Private`createWorkingNotebookReplacements]
+
+	\related 'CreateWorkingNotebook
+	
+	\maintainer danielb
+*)
+Attributes[Code] = {HoldAllComplete};
+createWorkingNotebookReplacements[contents_] :=
+	Module[{items},
+		
+		(* Transforms Hold[{a, b, c}] into {Hold[a], Hold[b], Hold[c]} *)
+		items = Map[HoldComplete, HoldComplete[contents], {2}][[1]];
+		
+		(* Since these aren't System symbols (?), users of this function that
+		   aren't in this package will end up giving these symbols some other context.
+		   So, we need to map them back to our namespace. *)
+		items =
+			ReplaceSymbols[
+				items,
+				{
+					"Section" -> "WUtils`WUtils`Private`Section",
+					"Subsection" -> "WUtils`WUtils`Private`Subsection",
+					"Subitem" -> "WUtils`WUtils`Private`Subitem",
+					"Code" -> "WUtils`WUtils`Private`Code",
+					"CodeString" -> "WUtils`WUtils`Private`CodeString",
+					"Output" -> "WUtils`WUtils`Private`Output",
+					"BoxesCell" -> "WUtils`WUtils`Private`BoxesCell"
+				}
+			];
+		
+		Replace[items,
+			{
+			HoldComplete[Sequence[]] :> Sequence[],
+			HoldComplete[Text[x_]] :> TextCell[x, "Text"],
+			HoldComplete[Item[x_]] :> TextCell[x, "Item"],
+			HoldComplete[Subitem[x_]] :> TextCell[x, "Subitem"],
+			HoldComplete[Section[x_]] :> TextCell[x, "Section"],
+			HoldComplete[Subsection[x_]] :> TextCell[x, "Subsection"],
+			HoldComplete[Code[x_List, opts___]] :> RenderHeldListOfCodeLines[Hold[x]],
+			HoldComplete[Code[]] :> TextCell["", "Code", InitializationCell->False],
+			HoldComplete[CodeString[x_, opts___]] :> ExpressionCell[RawBoxes[x], "Code", opts, InitializationCell->False],
+			HoldComplete[BoxesCell[x_, opts___]] :> ExpressionCell[RawBoxes[x], "Input", opts],
+			HoldComplete[Output[x_]] :> TextCell[x, "Output"],
+			HoldComplete[(head:(TextCell | ExpressionCell))[args__]] :> head[args],
+			HoldComplete[x_] :> ExpressionCell[Defer[x], "Code", InitializationCell->False]
+			}
+			,
+			1
+		]
+	]
+	
+(*!
+	\function FunctionStack
+	
+	\calltable
+		FunctionStack[] '' returns the Stack, but tries to limit to user-defined function calls. The outer-most code should be wrapped in EnableFunctionStack so that it can setup StackComplete appropriately, otherwise FunctionStack doesn't work.
+	
+	Examples:
+	
+	Block[{myFunc, myFunc2},
+		Clear[myFunc];
+		Clear[myFunc2];
+		myFunc[] := myFunc2[];
+		myFunc2[] := FunctionStack[];
+		EnableFunctionStack[
+			myFunc[]
+		]
+	]
+	
+	===
+	
+	{myFunc[], myFunc2[]}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`FunctionStack]
+
+	\related 'FuncitonStackLog
+	
+	\maintainer danielb
+*)
+Clear[FunctionStack];
+FunctionStack[] :=
+	Module[{res},
+		(* Because we don't want the stack to bother recording
+		   the below code. *)
+		res =
+		StackInhibit[
+			TimeConstrained[
+				MemoryConstrained[
+					With[{stack = Stack[_]},
+						Select[
+							(* ex. {{1, stackItem1, {2, stackItem2}, ...} *)
+							Transpose[{Range[1, Length[stack]], stack}],
+							(
+								With[{stackItem = #[[2]]},
+									(* Prune the stack of things we don't want. *)
+									(
+										MatchQ[stackItem, HoldPattern[HoldForm][_[___]]] &&
+										With[{head = Extract[stackItem, {1, 0}, HoldComplete]},
+											If [MatchQ[head, HoldComplete[_Symbol]],
+												head /. HoldComplete[sym_] :>
+													(
+													Context[sym] =!= "System`" &&
+													FreeQ[stackItem, FunctionStack | PrintFunctionStack, Infinity]
+													) 
+												,
+												False
+											]
+										]
+									)
+								]
+							) &
+						][[All, 2]]
+					]
+					,
+					(* 100 MB *)
+					100000000
+					,
+					"MemoryConstrained"
+				]
+				,
+				(* 10 seconds *)
+				10
+				,
+				"TimeConstrained"
+			]
+		];
+		
+		If [Length[res] >= 1 && !FreeQ[res[[1]], StackComplete],
+			(* Get rid of StackComplete frame *)
+			res = res[[2;;]]
+		];
+		
+		res
+	]
+	
+(*!
+	\function PrintFunctionStack
+	
+	\calltable
+		PrintFunctionStack[] '' prints the function stack in a grid, with newest frames at the top. Indents code.
+	
+	Examples:
+	
+	Block[{myFunc, myFunc2},
+		Clear[myFunc];
+		Clear[myFunc2];
+		myFunc[] := myFunc2[];
+		myFunc2[] := PrintFunctionStack[];
+		EnableFunctionStack[
+			myFunc[]
+		]
+	]
+	
+	\related 'FunctionStack 'EnableFunctionStack
+	
+	\maintainer danielb
+*)
+Clear[PrintFunctionStack];
+PrintFunctionStack[stackIn_:Null] :=
+	Module[{stack},
+		
+		If [stackIn =!= Null,
+			stack = stackIn
+			,
+			stack = FunctionStack[];
+		];
+		
+		Print[
+			Grid[
+				{#} & /@ Reverse[RemoveHoldFromIndentedString[Indent2 /@ stack, "HoldForm"]],
+				Alignment -> {Left, Top},
+				Frame -> All,
+				Spacings -> {2, 2},
+				FrameStyle -> GrayLevel[0.8]
+			]
+		]
+	]
+
+(*!
+	\function EnableFunctionStack
+	
+	\calltable
+		EnableFunctionStack[expr] '' executes the given expression, setting up StackComplete as appropriate so that calls to FunctionStack can return the stack.
+	
+	Examples:
+	
+	Block[{myFunc, myFunc2},
+		Clear[myFunc];
+		Clear[myFunc2];
+		myFunc[] := myFunc2[];
+		myFunc2[] := FunctionStack[];
+		EnableFunctionStack[
+			myFunc[]
+		]
+	]
+	
+	===
+	
+	{myFunc[], myFunc2[]}
+	
+	\related 'FunctionStack
+	
+	\maintainer danielb
+*)
+Clear[EnableFunctionStack];
+Attributes[EnableFunctionStack] = {HoldAllComplete}
+EnableFunctionStack[expr_] :=
+	Module[{},
+		(* Only start recording the stack now. *)
+		StackBegin[
+			(* Without StackComplete, the key frames of the stack we're
+			   interested aren't there. *)
+			StackComplete[
+				expr
+			]
+		]
+	]
+	
+(*!
+	\function RenderHeldListOfCodeLines
+	
+	\calltable
+		RenderHeldListOfCodeLines[heldLines_List] '' given Hold[_List], a held list of code statements, render them as a code ExpressionCell.
+	
+	\related CreateWorkingNotebook
+*)
+Clear[RenderHeldListOfCodeLines];
+RenderHeldListOfCodeLines[heldLines_] :=
+	Module[{items, deferredItems, res},
+		items = HeldListToListOfHeld[heldLines] /. Hold[Global`MultiLineFunc[f_][args___]] :> RenderHeldFunctionIntoMultipleLines[Hold[f[args]]];
+		deferredItems = If [FreeQ[#, AlreadyRendered], (Defer @@ #), #] & /@ items;
+		
+		res = 
+			ExpressionCell[
+				RawBoxes[
+					RowBox@
+					Riffle[
+						If [FreeQ[#, AlreadyRendered],
+							ToBoxes[#, StandardForm]
+							,
+							#
+						] & /@ deferredItems,
+						"\[IndentingNewLine]"
+					]
+				]
+				,
+				"Code"
+				,
+				InitializationCell -> False
+			];
+			
+		res = res /. AlreadyRendered[x_] :> Sequence @@ x;
+		
+		res
+	]
+	
+(*!
+	\function RenderHeldFunctionIntoMultipleLines
+	
+	\calltable
+		RenderHeldFunctionIntoMultipleLines[e_] '' Attempt at getting multi-line function calls to work wrt CreateWorkingNotebook.
+		
+	Wrap a function call like this:
+	
+	MultiLineFunc[MyFunc][
+		1,
+		2,
+		3
+	]
+		
+	\related RenderHeldListOfCodeLines,  CreateWorkingNotebook
+*)
+RenderHeldFunctionIntoMultipleLines[e_] :=
+	Module[{args, head},
+		args = (Defer @@ #) & /@ HeldListToListOfHeld[e /. Hold[_[args___]] :> Hold[{args}]];
+		head = e /. Hold[head_[___]] :> head;
+		
+		AlreadyRendered[
+			Join[
+				{
+				ToString[head],
+				"[",
+				"\[IndentingNewLine]"
+				}
+				,
+				Riffle[
+					Riffle[
+						Riffle[
+							ToBoxes[#, StandardForm] & /@ args,
+							","
+						],
+						"\[IndentingNewLine]", 3
+					],
+					"	", {1, -2, 4}
+				]
+				,
+				{
+				"\[IndentingNewLine]",
+				"]",
+				";"
+				}
+			]
+		]
+	]
+
+(*!
+	\function GetScreenDimensions
+	
+	\calltable
+		GetScreenDimensions[] '' returns the width and height of the screen.
+	
+	\maintainer danielb
+*)
+GetScreenDimensions[] := GetScreenDimensions[1]
+GetScreenDimensions[screenNum_] :=
+	{#[[1,1]], #[[2,1]]} & @ Map[Differences, "ScreenArea" /. SystemInformation["Devices", "ScreenInformation"][[screenNum]]]
+
+(*!
+	\function KeyValueGet
+	
+	\calltable
+		KeyValueGet[keyValues_, key_] '' given either a list of key/value pairs (as rules), or key/value pairs with a non-List head (ex. Subparse["MyKey" -> "MyVal", ...]), and given a key, return the value. If the key is not defined, return Missing[].
+	
+	Example:
+	
+	KeyValueGet[{"a" -> "b", "c" -> "d"}, "a"] = "b"
+	
+	\related 'KeyValueSet
+	
+	\maintainer danielb
+*)
+KeyValueGet[keyValues_, key_, defaultValue_:Missing[]] :=
+	With[{res = key /. List@@Cases[keyValues, _Rule]},
+		If [res === key,
+			defaultValue
+			,
+			res
+		]
+	]
+	
+KeyValueGet[keyValues_, keyList_List, defaultValue_:Missing[]] :=
+	Module[{val},
+		val = keyValues;
+		Function[{key},
+			val = KeyValueGet[val, key, defaultValue];
+		] /@ keyList;
+		val
+	]
+
+Gett = KeyValueGet;
+
+(*!
+	\function KeyValueSet
+	
+	\calltable
+		KeyValueSet[keyValues_, key_ -> value_] '' given either a list of key/value pairs (as rules), or key/value pairs with a non-List head (ex. Subparse["MyKey" -> "MyVal", ...]), and given a key + value, return the key value pairs with the given key set to the given value.
+		KeyValueSet[keyValuesIn_, keyValueList_List] '' as bove, but setting multiple key/value pairs.
+		KeyValueSet[keyValuesIn_, keyList_List -> value_] '' allows a list of keys to be specified, which are interpreted as a hierarchy.
+	
+	Example:
+	
+	KeyValueSet[{"a" -> "b", "c" -> "d"}, "a" -> "x"] = {"a" -> "x", "c" -> "d"}
+	KeyValueSet[{"a" -> "b", "c" -> "d"}, {"a" -> "x", "b" -> "e"}] = {"a" -> "x", "c" -> "d", "b" -> "e"}
+	KeyValueSet[{"a" -> 1, "b" -> {"c" -> 2}}, {"b", "c"} -> 3] = {"a" -> 1, "b" -> {"c" -> 3}}
+	
+	\related 'KeyValueGet
+	
+	\maintainer danielb
+*)
+Clear[KeyValueSet];
+KeyValueSet[keyValues_, key_ -> value_] :=
+	With[{pos = Position[keyValues, key, {2}]},
+		If [pos === {},
+			Append[keyValues, key -> value]
+			,
+			ReplacePart[keyValues, pos[[1, 1]] -> (key -> value)]
+		]
+	]
+	
+KeyValueSet[keyValuesIn_, keyValueList_List] :=
+	Module[{keyValues = keyValuesIn},
+		Function[{keyValue},
+			keyValues = KeyValueSet[keyValues, keyValue]
+		] /@ keyValueList;
+		
+		keyValues
+	]
+	
+KeyValueSet[keyValues_, keyList_List -> value_] :=
+	KeyValueSet[
+		keyValues,
+		With[{remainderKeyList = keyList[[2;;]], prev = KeyValueGet[keyValues, First[keyList]]},
+			First[keyList] -> KeyValueSet[If [prev =!= Missing[], prev, {}], If [Length[remainderKeyList] === 1, First[remainderKeyList], remainderKeyList] -> value]
+		]
+	]
+	
+Sett = KeyValueSet;
+
+(*!
+	\function SmartButton
+	
+	\calltable
+		SmartButton[text, func] '' Creates a button of a better default height, and auto-sizes the width. Uses the "Method" -> "Queued" so that if it takes more than 5 seconds, it wont silently fail.
+	
+	\maintainer danielb
+*)
+Clear[SmartButton];
+Options[SmartButton] =
+{
+	"Height" -> 40,			 (*< the height of the button *)
+	"Width" -> Automatic		(*< the width of the button *)
+};
+Attributes[SmartButton] = {HoldAllComplete};
+SmartButton[text_, func_, OptionsPattern[]] :=
+	Button[
+		text,
+		func,
+		ImageSize ->
+			{
+				If [OptionValue["Width"] === Automatic,
+					If [!StringMatchQ[$SystemID, "Mac*"],
+						35 + 7.5 * StringLength[text]
+						,
+						(* Mac sems to need more width per text. *)
+						45 + 10 * StringLength[text]
+					]
+					,
+					OptionValue["Width"]
+				]
+				,
+				OptionValue["Height"]
+			},
+		(* Otherwise, if the computation takes more than 5 seconds or so, it is
+		   silently killed. *)
+		Method -> "Queued"
+	]
+	
+(*!
+	\function GetLeftWhitespace
+	
+	\calltable
+		GetLeftWhitespace[str_, pos_] '' given a string and a position in that string, returns the spaces and tabs immediately to the left.
+	
+	Example:
+
+	GetLeftWhitespace["xyz\n   abc", 8] === "   "
+	
+	\maintainer danielb
+*)
+GetLeftWhitespace[str_, pos_] :=
+	StringCases[StringTake[str, pos - 1], RegularExpression["[ \t]*$"]][[1]]
+	
+(*!
+	\function SmartGet
+	
+	\calltable
+		SmartGet[file] '' reads a .m file and turns any comments into: "Comment" -> Comment["..."], so that the expression may then be modified by code without losing comments. If the file is like a .m file that is a series of expressions on subsequent lines, they are returned as a list. If the file consists of a single expression, it is returned. The "ReturnHeld" option can be used to specify that the returned value should be wrapped in HoldComplete to prevent evaluation.
+		
+	NOTE: Does not support nested comments.
+
+	Example:
+
+	Block[
+		{file = TemporaryFile[]},
+		(
+			Export[file, "(* My comment. *)\nmyFunc[1, 2, 3]", "Text"];
+			With[{res = SmartGet[file, "ReturnHeld" -> True]}, DeleteFile[file]; res]
+		)
+	]
+
+	===
+
+	HoldComplete[{"Comment" -> Comment["My comment."], myFunc[1, 2, 3]}]
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`SmartGet]
+
+	\related 'SmartExport
+	
+	\maintainer danielb
+*)
+Clear[SmartGet];
+Options[SmartGet] =
+{
+	"ReturnHeld" -> False,					  (*< If True, then the return value is wrapped in HoldComplete to prevent evaluation. *)
+	"AppendCommasAfterComments" -> True		 (*< If the file being read consists of a single expression where comments are generally inside of a list, then commas should be added so that they don't result in Times. The unfortunate aspect of this option is that a file might have BOTH top-level comments *and* comments within expressions, and there is no setting that can accomodate both varieties at the same time. How could/should that be done? WL really needs a function that can read a file and preserve comments. *)
+};
+SmartGet[file_, OptionsPattern[]] :=
+	Module[{res},
+		
+		If [!FileExistsQ[file],
+			Print["SmartGet: ", file, ": File not found"];
+			Return[$Failed];
+		];
+		
+		res =
+			smartGetHelper[
+				Import[file, "String"],
+				"AppendCommasAfterComments" -> OptionValue["AppendCommasAfterComments"]
+			];
+		
+		If [TrueQ[OptionValue["ReturnHeld"]],
+			res
+			,
+			res /. HoldComplete[inner_] :> inner
+		]
+	]
+	
+(*!
+	\function smartGetHelper
+	
+	\calltable
+		smartGetHelper[str] '' the part of SmartGet that processes the string/lines read from the file and turns it into a WL expression. Turns any comments into: "Comment" -> Comment["..."], so that the expression may then be modified by code without losing comments. If the file is like a .m file that is a series of expressions on subsequent lines, they are returned as a held list. If the file consists of a single expression, it is returned held.
+
+	TODO: If lines end in a semi-colon, they seem to get returned as Null.
+
+	Examples:
+	
+	WUtils`WUtils`Private`smartGetHelper[
+	   "(* My comment *)\nmyFunc[1, 2, 3]"
+	]
+	
+	===
+	
+	HoldComplete[{"Comment" -> Comment["My comment"], myFunc[1, 2, 3]}]
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`Private`smartGetHelper]
+
+	\related 'SmartGet
+	
+	\maintainer danielb
+*)
+Clear[smartGetHelper];
+Options[smartGetHelper] =
+{
+	"AppendCommasAfterComments" -> True			 (*< If the file being read consists of a single expression where comments are generally inside of a list, then commas should be added so that they don't result in Times. *)
+};
+smartGetHelper[str_, OptionsPattern[]] :=
+	Module[{expression},
+		
+		expression = ToExpressionPreservingComments[str, "AppendCommas" -> OptionValue["AppendCommasAfterComments"]];
+		
+		If [MatchQ[expression, HoldComplete[{_}]],
+			(* ReadList wrapped the expression in a list. Undo
+			   that. The case where we don't undo it is if
+			   the file was a series of expressions on
+			   separate lines, resulting in a multi-part
+			   List. *)
+			expression /. HoldComplete[{inner_}] :>
+				(
+				expression = HoldComplete[inner]
+				)
+		];
+				
+		expression
+	]
+	
+(*!
+	\function ReplaceCommentsWithExpressions
+	
+	\calltable
+		ReplaceCommentsWithExpressions[str] '' performs a replacement on a string, replacing any (* comments *) with WL expressions that will survive ToExpression.
+	
+	Examples:
+	
+	ReplaceCommentsWithExpressions[
+	"(* Just testing *)
+	\"a\""
+	]
+	
+	===
+	
+	"\"Comment\" -> Comment[\"Just testing\"]
+	\"a\""
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`ReplaceCommentsWithExpressions]
+
+	\maintainer danielb
+*)
+
+(* Given a HoldComplete[_Symbol], returns the symbol name as a string. *)
+HeldSymbolName[s_] := StringReplace[HeldExpressionToString[s], __ ~~ "`" ~~ rest:__ :> rest]
+
+(*!
+	\function RenderHeldListOfCodeLines
+	
+	\calltable
+		RenderHeldListOfCodeLines[heldLines_List] '' given Hold[_List], a held list of code statements, render them as a code ExpressionCell.
+	
+	\related CreateWorkingNotebook
+*)
+Clear[RenderHeldListOfCodeLines];
+RenderHeldListOfCodeLines[heldLines_] :=
+	Module[{items, deferredItems, res},
+		items = HeldListToListOfHeld[heldLines] /. Hold[Global`MultiLineFunc[f_][args___]] :> RenderHeldFunctionIntoMultipleLines[Hold[f[args]]];
+		deferredItems = If [FreeQ[#, AlreadyRendered], (Defer @@ #), #] & /@ items;
+		
+		res = 
+			ExpressionCell[
+				RawBoxes[
+					RowBox@
+					Riffle[
+						If [FreeQ[#, AlreadyRendered],
+							ToBoxes[#, StandardForm]
+							,
+							#
+						] & /@ deferredItems,
+						"\[IndentingNewLine]"
+					]
+				]
+				,
+				"Code"
+				,
+				InitializationCell -> False
+			];
+			
+		res = res /. AlreadyRendered[x_] :> Sequence @@ x;
+		
+		res
+	]
+
+(*!
+	\function RenderHeldFunctionIntoMultipleLines
+	
+	\calltable
+		RenderHeldFunctionIntoMultipleLines[e_] '' Attempt at getting multi-line function calls to work wrt CreateWorkingNotebook.
+		
+	Wrap a function call like this:
+	
+	MultiLineFunc[MyFunc][
+		1,
+		2,
+		3
+	]
+		
+	\related RenderHeldListOfCodeLines,  CreateWorkingNotebook
+*)
+RenderHeldFunctionIntoMultipleLines[e_] :=
+	Module[{args, head},
+		args = (Defer @@ #) & /@ HeldListToListOfHeld[e /. Hold[_[args___]] :> Hold[{args}]];
+		head = e /. Hold[head_[___]] :> head;
+		
+		AlreadyRendered[
+			Join[
+				{
+				ToString[head],
+				"[",
+				"\[IndentingNewLine]"
+				}
+				,
+				Riffle[
+					Riffle[
+						Riffle[
+							ToBoxes[#, StandardForm] & /@ args,
+							","
+						],
+						"\[IndentingNewLine]", 3
+					],
+					"	", {1, -2, 4}
+				]
+				,
+				{
+				"\[IndentingNewLine]",
+				"]",
+				";"
+				}
+			]
+		]
+	]
+
+(*!
+	\function SetCellMetadata
+	
+	\calltable
+		SetCellMetadata[cellObjectOrNotebook, key -> value] '' given a cell object, sets the TaggingRules value for the given key.
+	
+	Note: Can also be used to set a notebook's metadata.
+	
+	Examples:
+	
+	SetCellMetadata[
+		myCellObject,
+		"MyKey" -> "MyValue"
+	]
+	
+	\related 'GetCellMetadata
+	
+	\maintainer danielb
+*)
+Clear[SetCellMetadata];
+SetCellMetadata[cellObjectOrNotebook_, key_ -> value_] :=
+	Module[{},
+		
+		{key -> value};
+		
+		SetOptions[
+			cellObjectOrNotebook,
+			TaggingRules ->
+				Sett[
+					Gett[NotebookRead[cellObjectOrNotebook], TaggingRules, {}],
+					key -> value
+				]
 		]
 	]
 
