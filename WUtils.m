@@ -6,10 +6,6 @@ ReloadWUtils::usage = "ReloadWUtils  "
 
 GetFunctionSource::usage = "GetFunctionSource  "
 
-NextCharOfType::usage = "NextCharOfType  "
-
-NextMatchingSubstring::usage = "NextMatchingSubstring  "
-
 FindMatchingBracket::usage = "FindMatchingBracket  "
 
 DoubleQuotedStringPattern::usage = "DoubleQuotedStringPattern  "
@@ -33,6 +29,12 @@ GetFunctionCodeSections::usage = "GetFunctionCodeSections  "
 FindMessageDefinitions::usage = "FindMessageDefinitions  "
 
 FindCommentBeforeSpan::usage = "FindCommentBeforeSpan  "
+
+ExpandSpansToIncludeTrailingSemiColons::usage = "ExpandSpansToIncludeTrailingSemiColons  "
+
+TestFun33::usage = "TestFun33  "
+
+DeleteNesetedSpans::usage = "DeleteNesetedSpans  "
 
 Begin["`Private`"]
 
@@ -100,34 +102,44 @@ GetFunctionSource[func_Symbol, OptionsPattern[]] :=
 
 GetFunctionSource::cff = "Couldn't find function `1`";
 GetFunctionSource[func_Symbol, src_String] :=
-	Block[{name, positions, firstBracketCharPos, nextNewlineCharPos, remainder, endPos, cases, bracketType,
+	Block[{name, spans, firstBracketCharPos, nextNewlineCharPos, remainder, endPos, cases, bracketType,
 		   closingBracketPos, remainderOfLine, nextNonWhitespaceCharPos, funcName},
 		
 		name = SymbolName[func];
 		
 		funcName = SymbolName[func];
 		
-		positions = GetFunctionCodeSections[src, funcName];
+		spans = GetFunctionCodeSections[src, funcName];
 		
-		If [positions === {} || positions === $Failed,
+		If [spans === {} || spans === $Failed,
 			Message[GetFunctionSource::cff, func];
 			Return[$Failed];
 		];
 		
-		positions = Join[positions, FindMessageDefinitions[src, funcName]];
-		positions = Join[positions, FindOptionsCodeSections[src, funcName]];
-		positions = Join[positions, FindAttributesCodeSections[src, funcName]];
-		positions = Join[positions, FindMathdocComments[src, funcName]];
+		spans = Join[spans, FindMessageDefinitions[src, funcName]];
+		spans = Join[spans, FindOptionsCodeSections[src, funcName]];
+		spans = Join[spans, FindAttributesCodeSections[src, funcName]];
+		spans = Join[spans, FindMathdocComments[src, funcName]];
 		
-		positions =
+		spans =
 			Join[
-				positions,
-				Flatten[DeleteCases[(FindCommentBeforeSpan[src, #1] & ) /@ positions, {}], 1]
+				spans,
+				Flatten[DeleteCases[(FindCommentBeforeSpan[src, #1] & ) /@ spans, {}], 1]
 			];
 		
-		positions = Sort[positions];
+		(* We should keep trailing semi-colons if they're present. *)
+		spans = ExpandSpansToIncludeTrailingSemiColons[src, spans];
 		
-		StringJoin[Riffle[StringTake[src, #] & /@ positions, "\n"]]
+		(* We should delete spans that are nested. If a larger span
+		   contains a smaller span, then get rid of the smaller span.
+		   One case where this is important is if a comment such as a
+		   top-of-function Mathdoc comment contains something that
+		   looks like a down value. *)
+		spans = DeleteNesetedSpans[spans];
+		
+		spans = Sort[spans];
+		
+		StringJoin[Riffle[StringTake[src, #] & /@ spans, "\n"]]
 	];
 
 bracketPattern["[" | "]"] := "[" | "]";
@@ -601,6 +613,75 @@ FindCommentBeforeSpan[str_, span_] :=
 			priorString,
 			RegularExpression["\\(\\*.*?\\*\\)(?=\\s*$)"]
 		]
+	];
+
+(*!
+	\function ExpandSpansToIncludeTrailingSemiColons
+	
+	\calltable
+		ExpandSpansToIncludeTrailingSemiColons[str, spans] '' given a list of spans, expand them to the right if they are followed by a trailing semi-colon.
+
+	Examples:
+	
+    ExpandSpansToIncludeTrailingSemiColons["Func[]; Func2[];", {{1, 6}, {9, 15}}]
+
+    ===
+
+    {{1, 7}, {9, 16}}
+
+    Unit tests: ExpandSpansToIncludeTrailingSemiColons.mt
+
+    \maintainer danielb
+*)
+ExpandSpansToIncludeTrailingSemiColons[str_, spans_] :=
+	Block[{stringLen = StringLength[str]},
+		Function[{span},
+			With[{endPos = span[[2]]},
+				If [endPos < stringLen && StringTake[str, {endPos + 1}] === ";",
+					{span[[1]], endPos + 1}
+					,
+					span
+				]
+			]
+		] /@ spans
+	];
+
+(*!
+	\function DeleteNesetedSpans
+	
+	\calltable
+		DeleteNesetedSpans[spans] '' delete spans that occur inside of other, larger spans.
+
+	Examples:
+	
+    DeleteNesetedSpans[{{1, 5}, {3, 5}, {4, 8}, {4, 4}, {8, 8}}] === {{1, 5}, {4, 8}}
+
+    Unit tests: DeleteNesetedSpans.mt
+
+    \maintainer danielb
+*)
+DeleteNesetedSpans[spansIn_] :=
+	Block[{spans = spansIn, prevSpan},
+		spans = Sort[spans];
+		spans =
+			MapIndexed[
+				With[{index = First[#2], item = #1},
+					Which[
+						index < Length[spans] && item[[1]] == spans[[index + 1, 1]] && item[[2]] < spans[[index + 1, 2]],
+						XPrint[item, ": A"];
+						Sequence @@ {}
+						,
+						index > 1 && (item[[2]] < spans[[index - 1, 2]] || (item[[1]] > spans[[index - 1, 1]] && item[[2]] <= spans[[index - 1, 2]])),
+						XPrint[item, ": B"];
+						Sequence @@ {}
+						,
+						True,
+						item
+					]
+				] &,
+				spans
+			];
+		DeleteDuplicates[spans]
 	];
 
 End[]
