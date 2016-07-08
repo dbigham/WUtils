@@ -396,6 +396,26 @@ UnitTestFilenamesImpl::usage = "UnitTestFilenamesImpl  "
 
 HasUnitTests::usage = "HasUnitTests  "
 
+RenameSymbolOrContext::usage = "RenameSymbolOrContext  "
+
+RenameSymbolInTestFile::usage = "RenameSymbolInTestFile  "
+
+StringReplaceUsesOfSymbol::usage = "StringReplaceUsesOfSymbol  "
+
+RenameSymbolInNotebook::usage = "RenameSymbolInNotebook  "
+
+ComposeEmail::usage = "ComposeEmail  "
+
+ComposeEmailViaGmail::usage = "ComposeEmailViaGmail  "
+
+UrlEncode::usage = "UrlEncode  "
+
+FileSearchUI::usage = "FileSearchUI  "
+
+FilesContaining::usage = "FilesContaining  "
+
+SpacedRow::usage = "SpacedRow  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -2810,11 +2830,11 @@ CreateHeldVarIfNull[val_, defaultValue_:"$NotSpecified$"] :=
 *)
 NewHeldVar[] := NewHeldVar["Unique"]
 NewHeldVar[baseName_] :=
-    (* We don't just use unique, we also use the current timestamp
-       to lessen the likelihood of collisions. For example, if someone
-       emailed you a notebook with dynamic modules that contained instances
-       of these held variables that collided with ones used by dynamic modules
-       in other notebooks currently open. *)
+	(* We don't just use unique, we also use the current timestamp
+	   to lessen the likelihood of collisions. For example, if someone
+	   emailed you a notebook with dynamic modules that contained instances
+	   of these held variables that collided with ones used by dynamic modules
+	   in other notebooks currently open. *)
 	With[{var = Unique["WUtils`WUtils`Private`NewVar`" <> baseName <> ToString[Ceiling[AbsoluteTime[]]]]},
 		HoldComplete[var]
 	]
@@ -11792,6 +11812,518 @@ UnitTestFilenamesImpl[contextOrDirectory_, OptionsPattern[]] :=
 		
 		files
 	]
+
+(*!
+	\function RenameSymbolOrContext
+	
+	\calltable
+		RenameSymbolOrContext[oldContext, oldSymbolName, newContext, newSymbolName] '' rename a symbol and/or its context. Updates the function notebook if it exists and the unit test file if it exists.
+	
+	\related 'MakeSymbolPrivate
+	
+	\maintainer danielb
+*)
+RenameSymbolOrContext[oldContext_String, oldSymbolName_String, newContext_String, newSymbolName_String] :=
+	Block[{testFile, notebookFile, sourceFile, contents},
+		
+		With[{oldSymbol = ToExpression[oldContext <> oldSymbolName], newSymbol = ToExpression[newContext <> newSymbolName]},
+			sourceFile = SymbolToFile[oldSymbol];
+			If [!StringQ[sourceFile],
+				sourceFile = SymbolToFile[newSymbol];
+				If [StringQ[sourceFile],
+					testFile = UnitTestFilename[newSymbol, "SourceFile" -> sourceFile];
+				];
+				,
+				testFile = UnitTestFilename[oldSymbol, "SourceFile" -> sourceFile];
+			];
+			If [!StringQ[sourceFile],
+				Print["RenameSymbolOrContext: Couldn't determine file that implements function."];
+				Return[$Failed];
+			];
+		];
+		
+		If [StringQ[testFile] && FileExistsQ[testFile],
+			RenameSymbolInTestFile[
+				testFile,
+				oldContext,
+				oldSymbolName,
+				newContext,
+				newSymbolName,
+				"SourceFile" -> sourceFile
+			];
+		];
+		
+		notebookFile = ResolveIssueNotebook[oldSymbolName];
+		
+		If [StringQ[notebookFile] && FileExistsQ[notebookFile],
+			RenameSymbolInNotebook[
+				notebookFile,
+				oldContext,
+				oldSymbolName,
+				newContext,
+				newSymbolName
+			];
+		];
+		
+	  	(* Replace any uses of the function in the current file. *)
+	  	contents = Import[sourceFile, "Text"];
+	  	contents =
+			StringReplaceUsesOfSymbol[
+				contents,
+				oldContext,
+				oldSymbolName,
+				newContext,
+				newSymbolName
+			];
+	  	
+	  	If [StringQ[contents],
+	  		Export[
+	  			sourceFile,
+	  			contents,
+	  			"Text"
+	  		];
+	  		,
+	  		Print["ERROR: RenameSymbolOrContext: Modified file contents aren't a String. Aborting."];
+	  		Print["  File: ", sourceFile];
+	  		Return[$Failed];
+	  	];
+	];
+
+(*!
+	\function RenameSymbolInTestFile
+	
+	\calltable
+		RenameSymbolInTestFile[testFile, oldContext, oldSymbolName, newContext, newSymbolName] '' renames the a symbol and/or its context in a test file.
+	
+	\maintainer danielb
+*)
+
+Clear[RenameSymbolInTestFile];
+Options[RenameSymbolInTestFile] =
+{
+	"SourceFile" -> Automatic			(*< The source file that implements the function. *)
+};
+RenameSymbolInTestFile[testFile_, oldContext_, oldSymbolName_, newContext_, newSymbolName_, OptionsPattern[]] :=
+	Block[{testContents, res, newTestFile},
+		
+		testContents = Import[testFile, "Text"];
+		
+		If [testContents === $Failed || !StringQ[testContents],
+			Print["RenameSymbolInTestFile: Couldn't read test file. Aborting."];
+			Print["  Test file: ", testFile];
+			Return[$Failed];
+		];
+		
+	  	testContents =
+			StringReplaceUsesOfSymbol[
+				testContents,
+				oldContext,
+				oldSymbolName,
+				newContext,
+				newSymbolName
+			];
+		
+		With[{newSymbol = ToExpression[newContext <> newSymbolName]},
+			newTestFile = UnitTestFilename[newSymbol, "SourceFile" -> OptionValue["SourceFile"]];
+		];
+		
+		If [!StringQ[newTestFile],
+			Print["Couldn't determine test directory."];
+			Return[$Failed];
+		];
+		  
+		(* Rename the test file according to its new name, and write out the modified contents. *)
+	
+		If [ToLowerCase[newTestFile] === ToLowerCase[testFile],
+			DeleteFile[testFile];
+			With[{dir = DirectoryName[testFile]},
+				If [FileNames["*", dir] === {},
+					DeleteDirectory[dir];
+				];
+			];
+			
+			res = Export[newTestFile, testContents, "Text"];
+			If [res === $Failed,
+				Return[$Failed];
+			];
+			,
+			res = Export[newTestFile, testContents, "Text"];
+			If [res === $Failed,
+				Return[$Failed];
+			];
+			
+			If [newTestFile =!= testFile,
+				DeleteFile[testFile];
+				With[{dir = DirectoryName[testFile]},
+					If [FileNames["*", dir] === {},
+						DeleteDirectory[dir];
+					];
+				]
+			];
+		];
+		
+		res
+	];
+
+(*!
+	\function StringReplaceUsesOfSymbol
+	
+	\calltable
+		StringReplaceUsesOfSymbol[string, symbolContext, symbolName, newSymbolContext, newSymbolName] '' comment
+
+	Examples:
+	
+	StringReplaceUsesOfSymbol[
+		"MyContext`MySymbol = 1",
+		"MyContext`",
+		"MySymbol",
+		"NewContext`",
+		"NewSymbol"
+	]
+
+	===
+
+	"NewContext`NewSymbol = 1"
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`StringReplaceUsesOfSymbol]
+
+	\maintainer danielb
+*)
+StringReplaceUsesOfSymbol[string_, symbolContext_, symbolName_, newSymbolContext_, newSymbolName_] :=
+	Module[{},
+  		StringReplace[
+  			string,
+  			{
+  				(* Fully qualified uses of symbol (ie. with context) *)
+  				WordBoundary ~~ (symbolContext <> symbolName | symbolContext <> "PackageScope`" <> symbolName) -> newSymbolContext <> newSymbolName,
+  				WordBoundary ~~ symbolName <> "[" -> newSymbolName <> "[",
+  				(* ex. Options[MyFunc] *)
+  				"[" <> symbolName <> "]" -> "[" <> newSymbolName <> "]",
+  				"\\function " <> symbolName -> "\\function " <> newSymbolName,
+  				WordBoundary ~~ symbolName <> "::" -> newSymbolName <> "::",
+  				(* Test IDs *)
+  				"TestID" ~~ WhitespaceCharacter... ~~ "->" ~~ WhitespaceCharacter... ~~ "\"" ~~ symbolName ~~ "-" ->
+  					"TestID -> \"" <> newSymbolName <> "-"
+  			}
+  		]
+	];
+
+(*!
+	\function RenameSymbolInNotebook
+	
+	\calltable
+		RenameSymbolInNotebook[notebookFile, oldContext, oldSymbolName, newContext, newSymbolName] '' renames a symbol and/or its context in the given notebook, and move's the notebook file if appropriate.
+	
+	\maintainer danielb
+*)
+RenameSymbolInNotebook[notebookFile_, oldContext_, oldSymbolName_, newContext_, newSymbolName_] :=
+	Block[{notebookContents, res},
+		
+		notebookContents = Import[notebookFile, "Text"];
+		
+		If [notebookContents === $Failed || !StringQ[notebookContents],
+			Print["MakeSymbolPrivate: Couldn't read notebook file. Aborting."];
+			Print["  File: ", notebookContents];
+			Return[$Failed];
+		];
+		
+	  	notebookContents =
+			StringReplaceUsesOfSymbol[
+				notebookContents,
+				oldContext,
+				oldSymbolName,
+				newContext,
+				newSymbolName
+			];
+			
+		(* We'll also be more aggressive and now do a full/simple replace. *)
+		notebookContents =
+			StringReplace[
+				notebookContents,
+	  			{
+	  				(* Fully qualified uses of symbol (ie. with context) *)
+	  				WordBoundary ~~ (oldContext <> oldSymbolName | oldContext <> "PackageScope`" <> oldSymbolName) -> newContext <> newSymbolName,
+	  				(* Function calls should use the full context, since the symbol is now private. *)
+	  				WordBoundary ~~ oldSymbolName <> "[" -> newContext <> newSymbolName <> "[",
+	  				(* RowBox *)
+	  				"\"" <> oldSymbolName <> "\", \"[" -> "\"" <> newContext <> newSymbolName <> "\", \"[",
+	  				"\"" <> oldSymbolName <> "\", \"]" -> "\"" <> newContext <> newSymbolName <> "\", \"]", 
+	  				(* For the notebook's title, etc. *)
+					WordBoundary ~~ oldSymbolName -> newSymbolName
+	  			}
+				
+			];
+		  
+		(* Rename the file according to its new name, and write out the modified contents. *)
+		With[{newFile = FileNameJoin[{DirectoryName[notebookFile] <> newSymbolName <> ".nb"}]},
+			If [newFile === notebookFile,
+				res = Export[newFile, notebookContents, "Text"];
+				,
+				If [res = Export[newFile, notebookContents, "Text"] =!= $Failed,
+					DeleteFile[notebookFile];
+				];
+				
+				If [oldSymbolName =!= newSymbolName,
+					With[{grandparentDirectory = ParentDirectory[DirectoryName[notebookFile]]},
+						With[{newDir = FileNameJoin[{grandparentDirectory <> newSymbolName}]},
+							RenameDirectory[
+								DirectoryName[notebookFile],
+								FileNameJoin[{grandparentDirectory, newDir}]
+							]
+						]
+					];
+				];
+			];
+		];
+		
+		res
+	];
+
+(*!
+	\function ComposeEmail
+	
+	\calltable
+		ComposeEmail[] '' compose an email.
+	
+	Example:
+	
+	ComposeEmail["To" -> "Jeremy"]
+	
+	\maintainer danielb
+*)
+Options[ComposeEmail] =
+{
+	"To" -> None,			(*< to who? *)
+	"Invoke" -> Automatic,	(*< how should the compose be triggered? SystemOpen? Gmail? *)
+	"Subject" -> Null		(*< the email subject. *)
+};
+ComposeEmail[opts:OptionsPattern[]] :=
+	Module[{to = OptionValue["To"], tmp},
+		
+		(* Lookup the person's email address if known. *)
+		(* It seems iffy that a 'ComposeEmail' function should know how to map first
+		   names to email addresses. Wouldn't it be purer to do that outside of this
+		   function? If so, what component would handle that? Presumably that would
+		   be a job for the thing that maps SR to actions. *)
+		If [StringQ[to],
+			tmp = GetPerson[to, "EmailAddress"];
+			If [StringQ[tmp],
+				to = tmp;
+			];
+		];
+		
+		Switch[OptionValue["Invoke"],
+			Automatic | SystemOpen | Missing[] | Null,
+			SystemOpen[
+				"mailto:" <> to <>
+				If [OptionValue["Subject"] =!= Null,
+					"?subject=" <> OptionValue["Subject"]
+					,
+					""
+				]
+			];
+			,
+			"Gmail",
+			ComposeEmailViaGmail["To" -> to, "Subject" -> OptionValue["Subject"]];
+			,
+			_,
+			Print["ComposeEmail: Unknown Invoke: ", OptionValue["Invoke"]];
+		];
+			
+	];
+
+(*!
+	\function ComposeEmailViaGmail
+	
+	\calltable
+		ComposeEmailViaGmail[] '' compose an email via the Gmail interface.
+	
+	Example:
+	
+	ComposeEmail["To" -> "address@domain.com"]
+	
+	\maintainer danielb
+*)
+Options[ComposeEmailViaGmail] =
+{
+	"To" -> None,			(*< to who? *)
+	"Subject" -> Null,		(*< email subject *)
+	"Body" -> Null			(*< email body *)
+};
+ComposeEmailViaGmail[opts:OptionsPattern[]] :=
+	Module[{url},
+		
+		url = "https://mail.google.com/mail/?view=cm&fs=1";
+		
+		If [OptionValue["To"] =!= None,
+			url = url <> "&to=" <> UrlEncode[OptionValue["To"]];
+		];
+		
+		If [OptionValue["Subject"] =!= Null,
+			url = url <> "&su=" <> UrlEncode[OptionValue["Subject"]];
+		];
+		
+		If [OptionValue["Body"] =!= Null,
+			url = url <> "&body=" <> UrlEncode[OptionValue["Body"]];
+		];
+		
+		SystemOpen[url]
+	];
+
+(*!
+	\function UrlEncode
+	
+	\calltable
+		UrlEncode[str] '' url encode a string.
+	
+	Example:
+	
+	UrlEncode["just testing"] === "just+testing"
+	
+	\maintainer danielb
+*)
+UrlEncode[str_] :=
+	(
+	LoadJavaClass["java.net.URLEncoder"];
+	URLEncoder`encode[str]
+	)
+
+(*!
+	\function FileSearchUI
+	
+	\calltable
+		FileSearchUI[searchStr] '' search for the given string and display buttons to jump into matching files. (can specify directory, etc.)
+	
+	\maintainer danielb
+*)
+Clear[FileSearchUI];
+Options[FileSearchUI] =
+{
+	"Dir" -> Automatic,		 (*< the directories to search. *)
+	"Files" -> Automatic,	   (*< the files to search. *)
+	"FeelingLucky" -> False	 (*< open the first result? *)
+};
+FileSearchUI[searchStr_, OptionsPattern[]] :=
+	Module[{files},
+		
+		files =
+			FilesContaining[
+				searchStr,
+				"Dir" -> OptionValue["Dir"],
+				"Files" ->
+					If [OptionValue["Files"] =!= Automatic,
+						Flatten[{OptionValue["Files"]}]
+						,
+						Automatic
+					],
+				"FilePattern" -> {"*.m", "*.mt", "*.nb", "*.java", "*.txt", "*.cpp", "*.h", "*.hpp"}
+			];
+		
+		If [TrueQ[OptionValue["FeelingLucky"]],
+			OpenFileInWorkbench[files[[1]], "Substring" -> searchStr]
+			,
+			displayFileList[files, "Substring" -> searchStr]
+		]
+	]
+
+(* End of CodeToIndentedString functions *)
+
+(*!
+	\function FilesContaining
+	
+	\calltable
+		FilesContaining[str] '' returns the list of files containing the given string.
+		FilesContaining[strList] '' returns the list of files containing one of the given strings.
+	
+	Examples:
+	
+	FilesContaining["Indent2[", "FilePattern" -> "*.m", "Dir" -> "C:\\Temp"]
+	
+	\related 'FindList 'FileNames
+	
+	\maintainer danielb
+*)
+Clear[FilesContaining];
+Options[FilesContaining] =
+{
+	"FilePattern" -> "*.*",					(*< the types of files to search. *)
+	"Dir" -> $UserDocumentsDirectory,		(*< the directory/directories to search. Searches all subdirectories. Can be a string or a list of strings. If not specified, searches the user's documents directory. *)
+	"Files" -> Automatic					(*< if specified, then "Dirs" is ignored and the explicit list of files is used. *)
+};
+FilesContaining[str_, OptionsPattern[]] :=
+	Module[{dir = OptionValue["Dir"]},
+		
+		Select[
+			If [OptionValue["Files"] === Automatic,
+				FileNames[OptionValue["FilePattern"], dir, Infinity]
+				,
+				OptionValue["Files"]
+			],
+			FindList[#, str, 1] =!= {} &
+		]
+	]
+
+(*!
+	\function displayFileList
+	
+	\calltable
+		displayFileList[files] '' displays a list of files as buttons. Clicking a button opens the file in Workbench.
+	
+	\maintainer danielb
+*)
+Clear[displayFileList];
+Options[displayFileList] =
+{
+	"Substring" -> None	 (*< the substring to navigate to. *)
+};
+displayFileList[files_, OptionsPattern[]] :=
+	Module[{extraEntry = Sequence @@ {}},
+		
+		(* Don't display more than 100 files. *)
+		If [Length[files] > 100,
+			files = files[[1;;100]];
+			extraEntry = "...";
+		];
+		
+		If [Length[files] > 0,
+			SpacedRow[
+				Join[
+					Function[{file},
+						SmartButton[
+							FileNameTake[file, -1],
+							If [FileExtension[file] === "nb",
+								OpenNotebook[file]
+								,
+								OpenFileInWorkbench[file, "Substring" -> OptionValue["Substring"]]
+							]
+						]
+					] /@ files
+					,
+					{extraEntry}
+				]
+			]
+			,
+			None
+		]
+	]
+
+(*!
+	\function SpacedRow
+	
+	\calltable
+		SpacedRow[rows] '' like Row, but adds some space between the cells.
+	
+	Examples:
+	
+	SpacedRow[{"A", "B", "C"}]
+	
+	\related 'Row
+	
+	\maintainer danielb
+*)
+SpacedRow[rows_] := Row[Riffle[rows, " "]]
 
 End[]
 

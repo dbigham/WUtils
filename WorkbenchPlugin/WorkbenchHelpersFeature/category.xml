@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/com.wolfram.plugin.workbenchhelpersfeature_1.0.0.qualifier.jar" id="com.wolfram.plugin.workbenchhelpersfeature" version="1.0.0.qualifier">
+      <category name="Workbench Helpers"/>
+   </feature>
+   <category-def name="Workbench Helpers" label="Workbench Helpers"/>
+</site>
