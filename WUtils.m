@@ -2808,8 +2808,14 @@ CreateHeldVarIfNull[val_, defaultValue_:"$NotSpecified$"] :=
 	
 	\maintainer danielb
 *)
+NewHeldVar[] := NewHeldVar["Unique"]
 NewHeldVar[baseName_] :=
-	With[{var = Unique["WUtils`WUtils`Private`NewVar`" <> baseName]},
+    (* We don't just use unique, we also use the current timestamp
+       to lessen the likelihood of collisions. For example, if someone
+       emailed you a notebook with dynamic modules that contained instances
+       of these held variables that collided with ones used by dynamic modules
+       in other notebooks currently open. *)
+	With[{var = Unique["WUtils`WUtils`Private`NewVar`" <> baseName <> ToString[Ceiling[AbsoluteTime[]]]]},
 		HoldComplete[var]
 	]
 
@@ -11085,10 +11091,10 @@ With[{dir = DirectoryName[DirectoryName[FindFile[package]]]},
 
 (* Reloads .m files in this directory if they've changed. *)
 ReloadWUtils[] := $reloadWUtils[]
-If [ListQ[Global`$VaReloadFunctions],
-	Global`$VaReloadFunctions =
+If [ListQ[Global`$ReloadFunctions],
+	Global`$ReloadFunctions =
 		DeleteDuplicates[
-			Append[Global`$VaReloadFunctions, ReloadWUtils]
+			Append[Global`$ReloadFunctions, ReloadWUtils]
 		]
 	];
 
