@@ -182,8 +182,6 @@ RandomDigitsOrLetters::usage = "RandomDigitsOrLetters  "
 
 SetHeldVarKeyValue::usage = "SetHeldVarKeyValue  "
 
-MakeExpectedValueSystemIndependent::usage = "MakeExpectedValueSystemIndependent  "
-
 ListOfHeldMessagesToString::usage = "ListOfHeldMessagesToString  "
 
 AddCellID::usage = "AddCellID  "
@@ -385,6 +383,20 @@ MakePrivateSymbolContextDefinite::usage = "MakePrivateSymbolContextDefinite  "
 FileToCustomPrivateContext::usage = "FileToCustomPrivateContext  "
 
 WorkOn::usage = "WorkOn  "
+
+RunUnitTests::usage = "RunUnitTests  "
+
+RunUnitTestsUi::usage = "RunUnitTestsUi  "
+
+RunTestFile::usage = "RunTestFile  "
+
+RunTestFiles::usage = "RunTestFiles  "
+
+UnitTestFilenames::usage = "UnitTestFilenames  "
+
+UnitTestFilenamesImpl::usage = "UnitTestFilenamesImpl  "
+
+HasUnitTests::usage = "HasUnitTests  "
 
 Begin["`Private`"]
 
@@ -5668,7 +5680,7 @@ CreateTest[e_, file_, OptionsPattern[]] :=
 " <> RemoveHoldFromIndentedString[Indent2[HoldComplete[e], 1, 4, "RemoveContexts" -> False]] <> "
 	,
 " <>
-		With[{expected2 = MakeExpectedValueSystemIndependent[expected]},
+		With[{expected2 = expected},
 			(* HoldComplete encase Sequence[] *)
 			If [!FreeQ[HoldComplete[expected2], HeldExpectedValue],
 				With[{expected3 = HoldComplete[expected2]},
@@ -10919,120 +10931,120 @@ KeyValueSet[keyValues_, keyList_List -> value_] :=
 Sett = KeyValueSet
 
 (*!
-    \function RemoveIndentation
-    
-    \calltable
-        RemoveIndentation[str] '' given a string, remove any top-level indentation
-    
-    RemoveIndentation["   Blah[\n        1\n    ]"] === "Blah[\n    1\n]"
-    
-    \maintainer danielb
+	\function RemoveIndentation
+	
+	\calltable
+		RemoveIndentation[str] '' given a string, remove any top-level indentation
+	
+	RemoveIndentation["   Blah[\n		1\n	]"] === "Blah[\n	1\n]"
+	
+	\maintainer danielb
 *)
 RemoveIndentation[str_] :=
-    Module[{topLevelIndent},
-        topLevelIndent =
-	        StringReplace[
-	            StringCases[str, RegularExpression["^[ \t]*"]][[1]],
-	            (* 4 spaces per tab *)
-	            "\t" :> "    "
-	        ];
-            
-        If [topLevelIndent === "",
-            str
-            ,
-            StringTake[
-	            StringReplace[
-	                StringReplace[str, "\t" :> "    "],
-	                "\n" <> topLevelIndent :> "\n"
-	            ],
-	            {StringLength[topLevelIndent] + 1, -1}
-	        ]
-        ]
-    ]
+	Module[{topLevelIndent},
+		topLevelIndent =
+			StringReplace[
+				StringCases[str, RegularExpression["^[ \t]*"]][[1]],
+				(* 4 spaces per tab *)
+				"\t" :> "	"
+			];
+			
+		If [topLevelIndent === "",
+			str
+			,
+			StringTake[
+				StringReplace[
+					StringReplace[str, "\t" :> "	"],
+					"\n" <> topLevelIndent :> "\n"
+				],
+				{StringLength[topLevelIndent] + 1, -1}
+			]
+		]
+	]
 
 (*!
-    \function CreateFunctionInFile
-    
-    \calltable
-        CreateFunctionInFile[file, callSignature] '' given a call signature, creates a new function in the given file.
-    
-    Examples:
-    
-    CreateFunctionInFile[
-        FindFile["WUtils`WUtils`"],
-        "MyNewFunc[arg1, arg2, arg3]"
-    ]
-    
-    \maintainer danielb
+	\function CreateFunctionInFile
+	
+	\calltable
+		CreateFunctionInFile[file, callSignature] '' given a call signature, creates a new function in the given file.
+	
+	Examples:
+	
+	CreateFunctionInFile[
+		FindFile["WUtils`WUtils`"],
+		"MyNewFunc[arg1, arg2, arg3]"
+	]
+	
+	\maintainer danielb
 *)
 Clear[CreateFunctionInFile];
 Clear[CreateFunctionInFile];
 Options[CreateFunctionInFile] =
 {
-    "Description" -> None		(*< the plain-English description of what the function does. If specified, placed in the Mathdoc comment. *)
+	"Description" -> None		(*< the plain-English description of what the function does. If specified, placed in the Mathdoc comment. *)
 };
 CreateFunctionInFile::cdc = "Couldn't determine context for file `1`";
 CreateFunctionInFile[file_, callSignature_String, opts:OptionsPattern[]] :=
-    Module[{code, res, funcName, context, newPackageFormatQ = False},
-        
-        
-        context = FileToContext[file];
-        
-        If [!StringQ[context],
-        	Message[CreateFunctionInFile::cdc, file];
-        	Return[$Failed];
-        ];
-        
-        code = CreateFunction[callSignature, "Description" -> OptionValue["Description"], "UseTabs" -> (TabsOrSpaces[context] === "Tabs")];
-        
-        If [NewPackageFormatQ[file],
-            newPackageFormatQ = True;
-            AppendToFile[file, code <> "\n\n"];
-            res = Null;
-            ,
-	        res =
-	        InsertStringInFile[
-	            file,
-	            code <> "\n\n",
-	            StartOfLine ~~ "End[]",
-	            "LastMatch" -> True
-	        ];
-        ];
-        
-        If [res =!= $Failed,
-            
-            funcName = StringReplace[callSignature, f:WLSymbolPattern[] ~~ "[" ~~ __ :> f];
+	Module[{code, res, funcName, context, newPackageFormatQ = False},
+		
+		
+		context = FileToContext[file];
+		
+		If [!StringQ[context],
+			Message[CreateFunctionInFile::cdc, file];
+			Return[$Failed];
+		];
+		
+		code = CreateFunction[callSignature, "Description" -> OptionValue["Description"], "UseTabs" -> (TabsOrSpaces[context] === "Tabs")];
+		
+		If [NewPackageFormatQ[file],
+			newPackageFormatQ = True;
+			AppendToFile[file, code <> "\n\n"];
+			res = Null;
+			,
+			res =
+			InsertStringInFile[
+				file,
+				code <> "\n\n",
+				StartOfLine ~~ "End[]",
+				"LastMatch" -> True
+			];
+		];
+		
+		If [res =!= $Failed,
+			
+			funcName = StringReplace[callSignature, f:WLSymbolPattern[] ~~ "[" ~~ __ :> f];
 
-	        If [TrueQ[GivePrivateSymbolsADefiniteContext[context] && !UpperCaseQ[StringTake[funcName, 1]]],
+			If [TrueQ[GivePrivateSymbolsADefiniteContext[context] && !UpperCaseQ[StringTake[funcName, 1]]],
 				MakePrivateSymbolContextDefinite[file, funcName];
-	        ];
-            
-            (* The AutoExport mechanism, upon file reload, will export
-               any new function symbols if they start with a capital
-               letter. *)
-            ReloadFiles[];
+			];
+			
+			(* The AutoExport mechanism, upon file reload, will export
+			   any new function symbols if they start with a capital
+			   letter. *)
+			ReloadFiles[];
 
-            If [StringQ[context],
-	            If [MemberQ[Names[context <> "*"], funcName | context <> funcName],
-	                res = WorkOn["Function", ToExpression[context <> funcName], "File" -> file];
-	                ,
-	                If [MemberQ[Names[context <> "Private`*"], funcName | context <> "Private`" <> funcName],
-	                    res = WorkOn["Function", ToExpression[context <> "Private`" <> funcName], "File" -> file];
-	                    ,
-	                    (* New package format? *)
-	                    If [TrueQ[newPackageFormatQ],
-	                        
-	                        WorkOn["Function", funcName, "File" -> file];
-	                    ];
-	                ]
-	            ];
-	            ,
-	            res = $Failed
-            ];
-        ];
-        
-        res
-    ]
+			If [StringQ[context],
+				If [MemberQ[Names[context <> "*"], funcName | context <> funcName],
+					res = WorkOn["Function", ToExpression[context <> funcName], "File" -> file];
+					,
+					If [MemberQ[Names[context <> "Private`*"], funcName | context <> "Private`" <> funcName],
+						res = WorkOn["Function", ToExpression[context <> "Private`" <> funcName], "File" -> file];
+						,
+						(* New package format? *)
+						If [TrueQ[newPackageFormatQ],
+							
+							WorkOn["Function", funcName, "File" -> file];
+						];
+					]
+				];
+				,
+				res = $Failed
+			];
+		];
+		
+		res
+	]
 
 (*!
 	\function ReloadFiles
@@ -11083,46 +11095,46 @@ If [ListQ[Global`$VaReloadFunctions],
 	
 	CreateFunction["performSrMap[sr, mapping]"]
 
-    Unit tests:
+	Unit tests:
 
-    RunUnitTests[WUtils`WUtils`CreateFunction]
+	RunUnitTests[WUtils`WUtils`CreateFunction]
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 Clear[CreateFunction];
 Options[CreateFunction] =
 {
-    "Description" -> None,          (*< the plain-English description of what the function does. If specified, placed in the Mathdoc comment. *)
-    "CopyToClipboard" -> False,     (*< Copy the resulting function to the clipboard? *)
-    "UseTabs" -> False				(*< Use tabs for indentation? *)
+	"Description" -> None,		  (*< the plain-English description of what the function does. If specified, placed in the Mathdoc comment. *)
+	"CopyToClipboard" -> False,	 (*< Copy the resulting function to the clipboard? *)
+	"UseTabs" -> False				(*< Use tabs for indentation? *)
 };
 CreateFunction[argIn_:$CodeAssistDefault, OptionsPattern[]] := 
 	Module[{str, res, parts, functionName, args, functionAndArgs, fromClipboard = False,
-	        desc = "comment", examples},
+			desc = "comment", examples},
 		
 		{functionAndArgs, fromClipboard} = getCodeAssistArg[argIn];
 		
 		res =
 		If [CouldBeFunctionCall[functionAndArgs],
-	        
-	        parts = StringTrim /@ StringSplit[functionAndArgs, "[" | "," | "]"];
-	        
-	        functionName = parts[[1]];
-	        args = parts[[2;;]];
-	        
-	        If [OptionValue["Description"] =!= None,
-	            desc = OptionValue["Description"];
-	        ];
-	        
-	        examples = "";
-	        
-	        If [!TrueQ[FunctionWithNoArgs[functionAndArgs]],
-	            examples = "\n\n	Examples:
-    
-    " <> functionAndArgs <> " === TODO";
-            ];
-		        
-		    str =
+			
+			parts = StringTrim /@ StringSplit[functionAndArgs, "[" | "," | "]"];
+			
+			functionName = parts[[1]];
+			args = parts[[2;;]];
+			
+			If [OptionValue["Description"] =!= None,
+				desc = OptionValue["Description"];
+			];
+			
+			examples = "";
+			
+			If [!TrueQ[FunctionWithNoArgs[functionAndArgs]],
+				examples = "\n\n	Examples:
+	
+	" <> functionAndArgs <> " === TODO";
+			];
+				
+			str =
 "(*!
 	\\function " <> functionName <> "
 	
@@ -11150,12 +11162,12 @@ CreateFunction[argIn_:$CodeAssistDefault, OptionsPattern[]] :=
 		];
 		
 		If [TrueQ[OptionValue["UseTabs"]],
-		    res = StringReplace[res, "    " -> "\t"];
+			res = StringReplace[res, "	" -> "\t"];
 		];
 		
 		(* ex. Va["create function Blah[blah1, blah2] \"My description\""] *)
 		If [TrueQ[OptionValue["CopyToClipboard"]],
-		    CopyToClipboard[res];
+			CopyToClipboard[res];
 		];
 		
 		codeAssistPostlude[fromClipboard, res]
@@ -11177,9 +11189,9 @@ CreateFunction[argIn_:$CodeAssistDefault, OptionsPattern[]] :=
 *)
 getCodeAssistArg[argIn_] :=
 	If [argIn === $CodeAssistDefault,
-	    {GetClipboard[], True}
-	    ,
-	    {argIn, False}
+		{GetClipboard[], True}
+		,
+		{argIn, False}
 	]
 
 (*!
@@ -11202,21 +11214,21 @@ CouldBeFunctionCall[str_] := StringMatchQ[str, __ ~~ "[" ~~ ___ ~~ "]"]
 	\calltable
 		FunctionWithNoArgs[functionAndArgs] '' returns True if the given function signature has zero arguments.
 
-    Examples:
-    
-    FunctionWithNoArgs["myFunc[]"] === True
+	Examples:
+	
+	FunctionWithNoArgs["myFunc[]"] === True
 
-    Unit tests:
+	Unit tests:
 
-    RunUnitTests[WUtils`WUtils`FunctionWithNoArgs]
+	RunUnitTests[WUtils`WUtils`FunctionWithNoArgs]
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 FunctionWithNoArgs[functionAndArgs_] :=
 	Module[{},
 		StringMatchQ[
-		    functionAndArgs,
-		    ___ ~~ "[]"
+			functionAndArgs,
+			___ ~~ "[]"
 		]
 	]
 
@@ -11245,7 +11257,7 @@ codeAssistInvalidArguments[fromClipboard_, arg_] :=
 codeAssistPostlude[fromClipboard_, res_] :=
 	(
 	If [TrueQ[fromClipboard],
-	    Speak["OK"];
+		Speak["OK"];
 		CopyToClipboard[res];
 	];
 	
@@ -11253,197 +11265,197 @@ codeAssistPostlude[fromClipboard_, res_] :=
 	)
 
 (*!
-    \function AppendToFile
-    
-    \calltable
-        AppendToFile[file, str] '' append the given string to the given file
+	\function AppendToFile
+	
+	\calltable
+		AppendToFile[file, str] '' append the given string to the given file
 
-    Examples:
-    
-    WithTemporaryFiles[
-        {myFile = "abc\n\n\n\n"},
-        (
-            AppendToFile[myFile, "NEW"];
-            Import[myFile, "Text"]
-        )
-    ]
+	Examples:
+	
+	WithTemporaryFiles[
+		{myFile = "abc\n\n\n\n"},
+		(
+			AppendToFile[myFile, "NEW"];
+			Import[myFile, "Text"]
+		)
+	]
 
-    ===
+	===
 
-    "abc\n\nNEW"
+	"abc\n\nNEW"
 
-    Unit tests:
+	Unit tests:
 
-    RunUnitTests[WUtils`WUtils`AppendToFile]
+	RunUnitTests[WUtils`WUtils`AppendToFile]
 
-    \maintainer danielb
+	\maintainer danielb
 *)
 Clear[AppendToFile];
 Options[AppendToFile] =
 {
-    "NumberOfDelimitingNewlines" -> 2       (* The number of newlines that should separate the previous last contents of the file and the newly appended string. *)
+	"NumberOfDelimitingNewlines" -> 2	   (* The number of newlines that should separate the previous last contents of the file and the newly appended string. *)
 };
 AppendToFile[file_, str_, OptionsPattern[]] :=
-    Module[{existingContents, i, numNewlines, existingContentsWithoutTrailingNewlines},
-        
-        existingContents = Import[file, "Text"];
+	Module[{existingContents, i, numNewlines, existingContentsWithoutTrailingNewlines},
+		
+		existingContents = Import[file, "Text"];
  
-        i = StringLength[existingContents];
-        While [i > 0 && StringTake[existingContents, {i}] === "\n",
-            --i;
-        ];
-        
-        numNewlines = StringLength[existingContents] - i;
-        
-        existingContentsWithoutTrailingNewlines = StringTake[existingContents, {1, StringLength[existingContents] - numNewlines}];
-        
-        Export[
-            file,
-	        existingContentsWithoutTrailingNewlines
-	        <>
-	        StringJoin[Table["\n", {OptionValue["NumberOfDelimitingNewlines"]}]]
-	        <>
-	        str
-	        <>
-	        "\n"
-	        ,
-	        "Text"
-        ]
-    ];
+		i = StringLength[existingContents];
+		While [i > 0 && StringTake[existingContents, {i}] === "\n",
+			--i;
+		];
+		
+		numNewlines = StringLength[existingContents] - i;
+		
+		existingContentsWithoutTrailingNewlines = StringTake[existingContents, {1, StringLength[existingContents] - numNewlines}];
+		
+		Export[
+			file,
+			existingContentsWithoutTrailingNewlines
+			<>
+			StringJoin[Table["\n", {OptionValue["NumberOfDelimitingNewlines"]}]]
+			<>
+			str
+			<>
+			"\n"
+			,
+			"Text"
+		]
+	];
 
 (*!
-    \function GivePrivateSymbolsADefiniteContext
-    
-    \calltable
-        GivePrivateSymbolsADefiniteContext[context] '' given a context, returns True if private symbols defined in its corresponding files should be given a definite context. For example, private symbols in MachineLearning` by default are given an unpredictable context based on how ML code is loaded.
-    
-    \maintainer danielb
+	\function GivePrivateSymbolsADefiniteContext
+	
+	\calltable
+		GivePrivateSymbolsADefiniteContext[context] '' given a context, returns True if private symbols defined in its corresponding files should be given a definite context. For example, private symbols in MachineLearning` by default are given an unpredictable context based on how ML code is loaded.
+	
+	\maintainer danielb
 *)
 GivePrivateSymbolsADefiniteContext[context_] :=
-    Module[{val},
-        val = GetVariablePossiblyFromParentPackage[context, "$GivePrivateSymbolsADefiniteContext"];
-        
-        If [MissingQ[val],
-            False
-            ,
-            val[[2]]
-        ]
-    ];
+	Module[{val},
+		val = GetVariablePossiblyFromParentPackage[context, "$GivePrivateSymbolsADefiniteContext"];
+		
+		If [MissingQ[val],
+			False
+			,
+			val[[2]]
+		]
+	];
 
 (*!
-    \function MakePrivateSymbolContextDefinite
-    
-    \calltable
-        MakePrivateSymbolContextDefinite[file, symbolName] '' adds a line to the file to give the private symbol a definite context. Useful in the special case that a non-default file loader is used which makes private symbol contexts unpredictable.
-    
-    \maintainer danielb
+	\function MakePrivateSymbolContextDefinite
+	
+	\calltable
+		MakePrivateSymbolContextDefinite[file, symbolName] '' adds a line to the file to give the private symbol a definite context. Useful in the special case that a non-default file loader is used which makes private symbol contexts unpredictable.
+	
+	\maintainer danielb
 *)
 Clear[MakePrivateSymbolContextDefinite];
 Options[MakePrivateSymbolContextDefinite] =
 {
-    "DataString" -> None		(*< If the file contents are already in memory, they can be passed in. In that case, they will be returned rather than written to disk. *)
+	"DataString" -> None		(*< If the file contents are already in memory, they can be passed in. In that case, they will be returned rather than written to disk. *)
 };
 MakePrivateSymbolContextDefinite[file_, symbolName_String, OptionsPattern[]] :=
-    Module[{privateContext},
-        
-        privateContext = FileToCustomPrivateContext[file];
-        If [privateContext === $Failed,
-            Return[$Failed];
-        ];
-        
-        With[{line = symbolName <> " = " <> privateContext <> symbolName <> ";"},
-	        InsertStringInFile[
-	            file,
-	            line <> "\n",
-	            StartOfLine ~~ WhitespaceCharacter... ~~ ("PackageScope" | "PackageExport" | "PackageImport") ~~ "[" ~~ Shortest[__] ~~ "]" ~~ RepeatedNull["\n"],
-	            "LastMatch" -> True,
-	            "AfterMatch" -> True,
-	            "DataString" -> OptionValue["DataString"]
-	        ]
-        ]
-    ];
+	Module[{privateContext},
+		
+		privateContext = FileToCustomPrivateContext[file];
+		If [privateContext === $Failed,
+			Return[$Failed];
+		];
+		
+		With[{line = symbolName <> " = " <> privateContext <> symbolName <> ";"},
+			InsertStringInFile[
+				file,
+				line <> "\n",
+				StartOfLine ~~ WhitespaceCharacter... ~~ ("PackageScope" | "PackageExport" | "PackageImport") ~~ "[" ~~ Shortest[__] ~~ "]" ~~ RepeatedNull["\n"],
+				"LastMatch" -> True,
+				"AfterMatch" -> True,
+				"DataString" -> OptionValue["DataString"]
+			]
+		]
+	];
 
 (*!
-    \function FileToCustomPrivateContext
-    
-    \calltable
-        FileToCustomPrivateContext[file] '' given a file, read it and look for the ThisFileImplementsContext[...] that indicates what private context should be assigned to private symbols we add to the file.
-    
-    \maintainer danielb
+	\function FileToCustomPrivateContext
+	
+	\calltable
+		FileToCustomPrivateContext[file] '' given a file, read it and look for the ThisFileImplementsContext[...] that indicates what private context should be assigned to private symbols we add to the file.
+	
+	\maintainer danielb
 *)
 Clear[FileToCustomPrivateContext];
 Options[FileToCustomPrivateContext] =
 {
-    "FileContents" -> Automatic			(*< If the file contents are already in memory, they can be passed in. *)
+	"FileContents" -> Automatic			(*< If the file contents are already in memory, they can be passed in. *)
 };
 FileToCustomPrivateContext[file_, OptionsPattern[]] :=
-    Module[{contents, cases},
-        If [OptionValue["FileContents"] === Automatic,
-        	contents = Import[file, "Text"];
-        	,
-        	contents = OptionValue["FileContents"];
-        ];
-        cases = StringCases[contents, "ThisFileImplementsContext[\"" ~~ Shortest[inner__] ~~ "\"]" :> inner];
-        If [cases === {},
-            $Failed
-            ,
-            cases[[1]]
-        ]
-    ];
+	Module[{contents, cases},
+		If [OptionValue["FileContents"] === Automatic,
+			contents = Import[file, "Text"];
+			,
+			contents = OptionValue["FileContents"];
+		];
+		cases = StringCases[contents, "ThisFileImplementsContext[\"" ~~ Shortest[inner__] ~~ "\"]" :> inner];
+		If [cases === {},
+			$Failed
+			,
+			cases[[1]]
+		]
+	];
 
 (*!
-    \function WorkOn
-    
-    \calltable
-        WorkOn["Function", funcSymbol] '' initiates work on the given function. If an existing notebook exists for that function, it is opened. If not, it is created. Also opens the function in Workbench.
-        WorkOn[project] '' given a project, can be used to tie into functionality that sets up your working environment, such as opening programs, opening source files in Workbench, navigating to folders in Wolfram Workbench, opening notebooks, arranging windows, etc.
-    
-    Examples:
-    
-    WorkOn["Function", WUtils`WUtils`SymbolToFile]
-    
-    \related 'EditFunction 'CreateIssueNotebook 'OpenIssueNotebook
-    
-    \maintainer danielb
+	\function WorkOn
+	
+	\calltable
+		WorkOn["Function", funcSymbol] '' initiates work on the given function. If an existing notebook exists for that function, it is opened. If not, it is created. Also opens the function in Workbench.
+		WorkOn[project] '' given a project, can be used to tie into functionality that sets up your working environment, such as opening programs, opening source files in Workbench, navigating to folders in Wolfram Workbench, opening notebooks, arranging windows, etc.
+	
+	Examples:
+	
+	WorkOn["Function", WUtils`WUtils`SymbolToFile]
+	
+	\related 'EditFunction 'CreateIssueNotebook 'OpenIssueNotebook
+	
+	\maintainer danielb
 *)
 Clear[WorkOn];
 Options[WorkOn] =
 {
-    "File" -> Automatic         (*< The file that defines the function, or Automatic if this function should try and determine it. *)
+	"File" -> Automatic		 (*< The file that defines the function, or Automatic if this function should try and determine it. *)
 };
 WorkOn["Function", funcSymbol_, OptionsPattern[]] :=
-    Module[{},
-        
-        If [OptionValue["File"] === Automatic,
-            EditFunction[funcSymbol];
-            ,
-            EditFunction[funcSymbol, OptionValue["File"]];
-        ];
-        
-        CreateIssueNotebook[
-	        (* Odd that we're turning the symbol back into a string just to
-	           have it re-resolved into a symbol. *)
-            "Name" -> If [StringQ[funcSymbol], funcSymbol, SymbolName[funcSymbol]],
-            "Type" -> "Function"
-        ];
-        
-    ]
-    
+	Module[{},
+		
+		If [OptionValue["File"] === Automatic,
+			EditFunction[funcSymbol];
+			,
+			EditFunction[funcSymbol, OptionValue["File"]];
+		];
+		
+		CreateIssueNotebook[
+			(* Odd that we're turning the symbol back into a string just to
+			   have it re-resolved into a symbol. *)
+			"Name" -> If [StringQ[funcSymbol], funcSymbol, SymbolName[funcSymbol]],
+			"Type" -> "Function"
+		];
+		
+	]
+	
 WorkOn[a:"Function"] :=
-    With[{clipboard = GetClipboard[]},
-        If [CouldBeWLSymbolQ[clipboard],
-            
-            ReloadVirtualAssistantFiles[];
-            
-		    WorkOn[
-		        a,
-		        StringToSymbol[clipboard]
-		    ]
-		    ,
-		    Print["Clipboard contents don't appear to be a function name: ", InputForm[clipboard]];
-		    $Failed
-        ]
-    ]
+	With[{clipboard = GetClipboard[]},
+		If [CouldBeWLSymbolQ[clipboard],
+			
+			ReloadFiles[];
+			
+			WorkOn[
+				a,
+				StringToSymbol[clipboard]
+			]
+			,
+			Print["Clipboard contents don't appear to be a function name: ", InputForm[clipboard]];
+			$Failed
+		]
+	]
 
 WorkOn[project_] :=
 	Module[{},
@@ -11451,11 +11463,322 @@ WorkOn[project_] :=
 	]
 	
 WorkOn["WUtils"] :=
-    Module[{},
-        (* Forces the folder to open. *)
-        SelectFileInWorkbench[FindFile["WUtils`WUtils`"]];
-        SelectFolderInWorkbench[FileNameDrop[FindFile["WUtils`WUtils`"], -1]];
-    ]
+	Module[{},
+		(* Forces the folder to open. *)
+		SelectFileInWorkbench[FindFile["WUtils`WUtils`"]];
+		SelectFolderInWorkbench[FileNameDrop[FindFile["WUtils`WUtils`"], -1]];
+	]
+
+(*!
+	\function RunUnitTests
+	
+	\calltable
+		RunUnitTests[funcSymbol] '' given a function symbol, run its unit tests.
+		RunUnitTests[context] '' given a context, run its unit tests.
+	
+	Examples:
+	
+	RunUnitTests[CanonicalLinguisticPattern]
+	
+	\related 'CreateUnitTests
+	
+	\maintainer danielb
+*)
+
+Clear[RunUnitTests];
+Options[RunUnitTests] =
+{
+	"IncludeSlowTests" -> False,		(*< even run terribly slow "unit" tests? *)
+	"RerunFailures" -> False,		   (*< only re-run failures? *)
+	"SubTest" -> None					(*< Only run a particular sub-test file. *)
+};
+
+RunUnitTests[funcSymbol_Symbol, OptionsPattern[]] :=
+	Module[{files},
+		files = UnitTestFilename[funcSymbol, "SubTest" -> OptionValue["SubTest"], "ReturnList" -> True];
+		
+		If [MatchQ[files, {__String}],
+			files = Select[files, FileExistsQ];
+			If [files === {},
+				Print["No tests have been added for ", ToString[funcSymbol], "."];
+				,
+				RunUnitTestsUi[files, "RerunFailures" -> OptionValue["RerunFailures"]]
+			]
+			,
+			Print["No tests have been added for ", ToString[funcSymbol], "."];
+		]
+	]
+	
+(*!
+	\function HasUnitTests
+	
+	\calltable
+		HasUnitTests[funcSymbol] '' returns True if the given function has a unit test file.
+	
+	Examples:
+	
+	HasUnitTests[CanonicalLinguisticPattern] === True
+	
+	\related 'RunUnitTests
+	
+	\maintainer danielb
+*)
+HasUnitTests[funcSymbol_] :=
+	Module[{file},
+		file = UnitTestFilename[funcSymbol];
+		If [!StringQ[file] || !FileExistsQ[file],
+			False
+			,
+			True
+		]
+	]
+
+RunUnitTests[context_String, OptionsPattern[]] :=
+	Module[{files},
+		If [FileExistsQ[context] && !DirectoryQ[context],
+			RunUnitTestsUi[{context}, "RerunFailures" -> OptionValue["RerunFailures"]]
+			,
+			files = UnitTestFilenames[context, "IncludeSlowTests" -> OptionValue["IncludeSlowTests"]];
+			If [!ListQ[files] || files === {},
+				Print["No tests have been added for ", ToString[context], "."];
+				,
+				RunUnitTestsUi[files, "RerunFailures" -> OptionValue["RerunFailures"]]
+			]
+		]
+	]
+
+(*!
+	\function RunUnitTestsUi
+	
+	\calltable
+		RunUnitTestsUi[files] '' given one or more test files, run them and display the results, along with buttons for things like 'Rerun Tests', 'Rerun Failures', etc.
+	
+	\maintainer danielb
+*)
+Clear[RunUnitTestsUi];
+Options[RunUnitTestsUi] =
+{
+	"RerunFailures" -> False			(*< only re-run failures? *)
+};
+RunUnitTestsUi[files_, OptionsPattern[]] :=
+	Module[{dynamicOutputVar, res, outerDynamicOutputVar},
+		With[{rerunFailures = OptionValue["RerunFailures"]},
+			
+			outerDynamicOutputVar = DynamicOutputSectionVar[];
+			dynamicOutputVar = DynamicOutputSectionVar[];
+			
+			With[{parentDynamicOutputVar = WUtils`WUtils`Private`$ButtonDynamicOutputSectionVar},
+				res =
+				DynamicOutputSection[
+					Row[{
+						SmartButton[
+							"Rerun Tests",
+							RedirectPrintsAndMessagesToDynamicOutputSection[
+								RunTestFiles[files, "RerunFailures" -> rerunFailures],
+								dynamicOutputVar,
+								"IgnoreMessages" -> True
+							];
+						],
+						" ",
+						SmartButton[
+							"Rerun Failures",
+							RedirectPrintsAndMessagesToDynamicOutputSection[
+								RunTestFiles[files, "RerunFailures" -> rerunFailures],
+								dynamicOutputVar,
+								"IgnoreMessages" -> True
+							];
+						],
+						" ",
+						SmartButton[
+							"OK",
+							With[{var = parentDynamicOutputVar},
+								If [MatchQ[var, _HoldComplete],
+									(* If we're inside the output of a button, be polite and
+									   set its dyanmic output to blank when the user clicks OK,
+									   since deleting the evaluation cell would destroy the
+									   button itself, and/or the larger UI it's a part of. *)
+									SetHeldVar[var, ""];
+									,
+									NotebookDelete[EvaluationCell[]]
+								];
+							];
+						]
+					}],
+					dynamicOutputVar,
+					"NakedSection" -> True
+				];
+			];
+			
+			RedirectPrintsAndMessagesToDynamicOutputSection[
+				RunTestFiles[files, "RerunFailures" -> rerunFailures],
+				dynamicOutputVar,
+				"IgnoreMessages" -> True
+			];
+			
+			SetHeldVar[outerDynamicOutputVar, res];
+			
+			outerDynamicOutputVar /. HoldComplete[sym_] :>
+				Dynamic[
+					sym
+				]
+		]
+	];
+
+(*!
+	\function RunTestFile
+	
+	\calltable
+		RunTestFile[mtFile] '' runs a .mt file and returns the list of TestResult objects.
+	
+	\maintainer danielb
+*)
+RunTestFile[mtFile_] :=
+	Block[{tests, expressions, res},
+		If [!FileExistsQ[mtFile], Print["RunTestFile: File not found: ", mtFile]; Return[$Failed]];
+		expressions = Quiet@ReadList[mtFile, Hold[Expression]];
+		tests = Cases[expressions, Hold[_MUnit`Test|_MUnit`TestMatch|_VerificationTest], Infinity];
+		res = ReleaseHold /@ tests
+	];
+
+(*!
+	\function RunTestFiles
+	
+	\calltable
+		RunTestFiles[files] '' run a list of .mt files, printing results using AntLog. Returns the total number of failures.
+	
+	\maintainer danielb
+*)
+Clear[RunTestFiles];
+Options[RunTestFiles] =
+{
+	"PrintFiles" -> False,			(*< Print to indicate when running a file. *)
+	"PrintSuccess" -> False,		(*< Print a line to indicate when a test was successful? *)
+	"RerunFailures" -> False		(*< Only re-run the tests that failed last run. TODO *)
+};
+RunTestFiles[files_, OptionsPattern[]] :=
+	Block[{testRes = {}, testFileRes, numFailures, numTests},
+		
+		numFailures = 0;
+		numTests = 0;
+		
+		Function[{testFile},
+			If [TrueQ[OptionValue["PrintFiles"]],
+				Print["Running: " <> ToString[FileNameTake[testFile, -1]]];
+			];
+			testFileRes = RunTestFile[testFile];
+			numFailures += Length[Select[testFileRes, (MUnit`FailureMode[#] =!= "Success") &]];
+			numTests += Length[testFileRes];
+			Function[{testResult},
+				If [TrueQ[OptionValue["PrintSuccess"]] || MUnit`FailureMode[testResult] =!= "Success",
+					Print[testResultToString[testResult]];
+				]
+			] /@ testFileRes;
+			AppendTo[testRes, testFile -> testFileRes];
+		] /@ files;
+		
+		If [numTests === 0,
+			Print["No tests."];
+			,
+			If [numFailures === 0,
+				Print["All ", numTests, " tests passed."];
+			];
+		];
+		
+		<|
+			"NumFailures" -> numFailures,
+			"NumTests" -> numTests
+		|>
+	];
+
+(*!
+	\function testResultToString
+	
+	\calltable
+		testResultToString[testResult] '' converts a MUnit TestResult to a string.
+	
+	\maintainer danielb
+*)
+testResultToString[testResult_] :=
+	Block[{str = "", out, actual, expected},
+		
+		out[line_] := (If [str =!= "", str = str <> "\n"]; str = str <> line); 
+		
+		If [MUnit`FailureMode[testResult] =!= "Success",
+			out[TestID[testResult] <> ": FAILED"];
+			out[Indent2[MUnit`TestInput[testResult], 1, 4]];
+			
+			(* For some reason, on cloud only, this returns the test wrapped in HoldForm
+			   which has yet to be evaluated. Not sure why. To work around that,
+			   I'll detect that case and force it to evaluate. *)
+			actual = MUnit`ActualOutput[testResult];
+			actual = Replace[actual, HoldForm[inner_] :> inner, {0}];
+			
+			expected = MUnit`ExpectedOutput[testResult];
+			expected = Replace[expected, HoldForm[inner_] :> inner, {0}];
+			
+			out["	EXPECTED:"];
+			out[Indent2[expected, 2, 4]];
+			out["	ACTUAL:"];			
+			out[Indent2[actual, 2, 4]];
+			If [MUnit`ActualMessages[testResult] =!= MUnit`ExpectedMessages[testResult],
+				If [MUnit`ExpectedMessages[testResult] =!= {},
+					out["	EXPECTED MESSAGES:"];
+					out[Indent2[MUnit`ExpectedMessages[testResult], 2, 4]];
+					out["	ACTUAL MESSAGES:"];
+					out[Indent2[MUnit`ActualMessages[testResult], 2, 4]];
+					,
+					out["	MESSAGES:"];
+					out[Indent2[MUnit`ActualMessages[testResult], 2, 4]];
+				]
+			]
+			,
+			out[TestID[testResult] <> ": SUCCESS"];
+		];
+		
+		str
+	];
+
+(*!
+	\function UnitTestFilenames
+	
+	\calltable
+		UnitTestFilenames[context] '' givne a context, returns the list of unit tests.
+	
+	Examples:
+	
+	UnitTestFilenames["WUtils`WUtils`"]
+	
+	\related 'UnitTestFilename
+	
+	\maintainer danielb
+*)
+Options[UnitTestFilenames] =
+{
+	"IncludeSlowTests" -> False		 (*< even run terribly slow "unit" tests? *)
+};
+UnitTestFilenames[contextOrDirectory_, opts:OptionsPattern[]] := UnitTestFilenamesImpl[contextOrDirectory, opts]
+
+Options[UnitTestFilenamesImpl] = Options[UnitTestFilenames];
+UnitTestFilenamesImpl[contextOrDirectory_, OptionsPattern[]] :=
+	Module[{dir, files},
+		
+		(* But check if it is instead a directory. *)
+		If [!StringFreeQ[contextOrDirectory, $PathnameSeparator] && FileExistsQ[contextOrDirectory] && DirectoryQ[contextOrDirectory],
+			dir = contextOrDirectory;
+			,
+			dir = UnitTestDirectory[contextOrDirectory];
+		];
+		
+		If [!StringQ[dir], Return[$Failed]];
+		
+		files = FileNames["*.mt", dir, Infinity];
+		
+		If [!TrueQ[OptionValue["IncludeSlowTests"]],
+			TODO
+		];
+		
+		files
+	]
 
 End[]
 
