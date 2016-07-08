@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`GetNearestTrailingSpan
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["UnitTests/CalculateParse/GeneralLibrary/GetNearestTrailingSpan.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

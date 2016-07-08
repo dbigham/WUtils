@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`InsertStringInFile
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/InsertStringInFile.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

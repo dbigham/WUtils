@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`Indent2
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/Indent2.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

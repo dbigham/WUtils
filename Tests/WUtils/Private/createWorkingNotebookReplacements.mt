@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`Private`CalculateParse`GeneralLibrary`Private`createWorkingNotebookReplacements
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/Private/createWorkingNotebookReplacements.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

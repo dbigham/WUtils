@@ -4,13 +4,6 @@
    $Path, rendering FindFile useless.
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/NonSQARun/ContextToFile.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

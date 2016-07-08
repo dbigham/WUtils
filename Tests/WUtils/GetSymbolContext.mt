@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`GetSymbolContext
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/GetSymbolContext.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

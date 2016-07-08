@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`InsertStringAfterMatch
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/InsertStringAfterMatch.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

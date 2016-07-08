@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`SetHeldVarKeyValue
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["CalculateParse/Prototype/VirtualAssistant/Tests/UnitTests/Utility/SetHeldVarKeyValue.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

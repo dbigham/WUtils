@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`CodeCellBoxesToHeldExpressions
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["CalculateParse/Prototype/VirtualAssistant/Tests/UnitTests/Utility/CodeCellBoxesToHeldExpressions.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

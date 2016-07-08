@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`DeCamelCase
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/DeCamelCase.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

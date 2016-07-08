@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`StringStartsWith
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/StringStartsWith.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

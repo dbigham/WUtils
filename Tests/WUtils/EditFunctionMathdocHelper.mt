@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`EditFunctionMathdocHelper
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["CalculateParse/Prototype/VirtualAssistant/Tests/UnitTests/Utility/EditFunctionMathdocHelper.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`Private`CalculateUtilities`DebuggingUtilities`Private`filterIndentOptions
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/Private/filterIndentOptions.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

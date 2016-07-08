@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`Prototype`VirtualAssistant`VaSemantics`NewSemanticExpr
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["CalculateParse/Prototype/VirtualAssistant/Tests/UnitTests/VaSemantics/NewSemanticExpr.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

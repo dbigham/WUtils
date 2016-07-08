@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`Private`CalculateParse`GeneralLibrary`Private`rowBoxFix1
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/Private/rowBoxFix1.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

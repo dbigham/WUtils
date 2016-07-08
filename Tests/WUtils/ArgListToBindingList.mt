@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`ArgListToBindingList
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/ArgListToBindingList.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

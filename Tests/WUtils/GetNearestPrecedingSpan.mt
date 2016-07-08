@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`GetNearestPrecedingSpan
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["UnitTests/CalculateParse/GeneralLibrary/GetNearestPrecedingSpan.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

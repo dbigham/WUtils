@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`Private`CalculateParse`GeneralLibrary`Private`needsUsesHelper
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/Private/needsUsesHelper.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

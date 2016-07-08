@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`ToExpressionPreservingComments
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/ToExpressionPreservingComments.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

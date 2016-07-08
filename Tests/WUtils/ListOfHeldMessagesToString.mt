@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`ListOfHeldMessagesToString
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["AlphaSource/CalculateParse/Prototype/VirtualAssistant/Tests/UnitTests/Utility/ListOfHeldMessagesToString.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

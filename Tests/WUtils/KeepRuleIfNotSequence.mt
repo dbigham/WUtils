@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`KeepRuleIfNotSequence
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/KeepRuleIfNotSequence.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

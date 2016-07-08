@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`StringReplaceInFiles
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["UnitTests/CalculateParse/GeneralLibrary/StringReplaceInFiles.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

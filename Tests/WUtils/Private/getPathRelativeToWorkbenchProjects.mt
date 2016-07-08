@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`Private`CalculateParse`GeneralLibrary`Private`getPathRelativeToWorkbenchProjects
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/Private/getPathRelativeToWorkbenchProjects.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

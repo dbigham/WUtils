@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`Prototype`VirtualAssistant`VaActions`ExtractedDockedContents
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["CalculateParse/Prototype/VirtualAssistant/Tests/UnitTests/VaActions/ExtractedDockedContents.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

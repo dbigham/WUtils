@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`ReplaceSymbolsUsingPatterns
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/ReplaceSymbolsUsingPatterns.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`GetLineNumberOfString
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/GetLineNumberOfString.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

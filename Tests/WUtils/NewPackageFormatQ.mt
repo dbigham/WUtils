@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`NewPackageFormatQ
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/NewPackageFormatQ.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

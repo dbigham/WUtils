@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`GetNextLine
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/GetNextLine.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

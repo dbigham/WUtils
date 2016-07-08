@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`StringReplaceUsesOfSymbol
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["CalculateParse/Prototype/VirtualAssistant/Tests/UnitTests/Utility/StringReplaceUsesOfSymbol.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

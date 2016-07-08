@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`RemoveHoldFromIndentedString
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/RemoveHoldFromIndentedString.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

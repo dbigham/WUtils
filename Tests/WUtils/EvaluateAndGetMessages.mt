@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`EvaluateAndGetMessages
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["AlphaSource/CalculateParse/Prototype/VirtualAssistant/Tests/UnitTests/Utility/EvaluateAndGetMessages.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`CamelCaseQ
 
    Author: danielb
-    
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/CamelCaseQ.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

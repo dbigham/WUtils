@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`EnableFunctionCapture
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/EnableFunctionCapture.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

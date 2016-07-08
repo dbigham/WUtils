@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`Prototype`VirtualAssistant`CodeAssist`CreateFunction
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["CalculateParse/Prototype/VirtualAssistant/Tests/UnitTests/CodeAssist/CreateFunction.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

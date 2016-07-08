@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`CreateHeldVarIfNull
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/CreateHeldVarIfNull.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

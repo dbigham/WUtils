@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`UnitTestDirectory
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/NonSQARun/UnitTestDirectory.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]

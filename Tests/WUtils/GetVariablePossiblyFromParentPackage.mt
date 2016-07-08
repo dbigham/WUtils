@@ -1,13 +1,6 @@
 (* Tests for: CalculateParse`GeneralLibrary`GetVariablePossiblyFromParentPackage
 
    Author: danielb
-
-   Usage:
-   
-   << Tests`Utilities`ParserTestingTools`
-   ParserTestReport[
-       FindFile["Tests/UnitTests/CalculateParse/GeneralLibrary/GetVariablePossiblyFromParentPackage.mt"]
-   ]
 *)
 
 TestExecute[$TestAbortTime = 600]
