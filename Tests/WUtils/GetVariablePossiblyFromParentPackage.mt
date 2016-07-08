@@ -4,17 +4,7 @@
 *)
 
 Test[
-    WUtils`WUtils`GetVariablePossiblyFromParentPackage[
-        "WUtils`WUtils`",
-        "$UnitTestDir"
-    ]
-    ,
-    {
-        "CalculateParse`Private`",
-        FileNameJoin[
-            {CalculateScan`CommonSymbols`$AlphaRootDirectory, "Tests", "UnitTests", "CalculateParse"}
-        ]
-    }
-    ,
+    WUtils`WUtils`GetVariablePossiblyFromParentPackage["WUtils`WUtils`", "$UnitTestDir"],
+    {"WUtils`WUtils`", "C:\\Users\\Daniel\\WolframWorkspaces\\Base2\\WUtils\\Tests"},
     TestID -> "GetVariablePossiblyFromParentPackage-20150202-QTOU4E"
 ]

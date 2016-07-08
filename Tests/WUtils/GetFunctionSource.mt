@@ -76,17 +76,13 @@ Test[
 ]
 
 Test[
-	WUtils`WUtils`GetFunctionSource[MyFunc, "MyFunc[] :=\n\t(* Comment *)\n\tModule[{},\n\t\t1\n\t]"]
-	,
-	"MyFunc[] :=
-	(* Comment *)
-	Module[{},
-		1
-	]"
-	,
-	TestID -> "GetFunctionSource-20160706-LMZIS1"
+    WUtils`WUtils`GetFunctionSource[
+        MyFunc,
+        "MyFunc[] :=\n\t(* Comment *)\n\tModule[{},\n\t\t1\n\t]"
+    ],
+    "MyFunc[] :=\n\t(* Comment *)\n\tModule[{},\n\t\t1\n\t]",
+    TestID -> "GetFunctionSource-20160706-LMZIS1"
 ]
-
 Test[
     WUtils`WUtils`GetFunctionSource[
         MyFunc,
@@ -99,43 +95,10 @@ Test[
 ]
 
 Test[
-	WUtils`WUtils`GetFunctionSource[
-		MyFunc,
-		"
-(*!
-	\\function MyFunc
-
-	\\calltable
-		MyFunc[] ' does stuff and things.
-
-	\\maintainer danielb
-*)
-Options[MyFunc] = {\"MyOptions\" -> Automatic}
-Attributes[MyFunc] = {HoldAllComplete}
-(* Another comment *)
-MyFunc::msg = \"Message text\"
-MyFunc::msg2 = \"Message text\"
-MyFunc[OptionsPattern[]] :=\n\t(* Comment *)\n\tModule[{},\n\t\t1\n\t]"
-	]
-	,
-	"(*!
-	\\function MyFunc
-
-	\\calltable
-		MyFunc[] ' does stuff and things.
-
-	\\maintainer danielb
-*)
-Options[MyFunc] = {\"MyOptions\" -> Automatic}
-Attributes[MyFunc] = {HoldAllComplete}
-(* Another comment *)
-MyFunc::msg = \"Message text\"
-MyFunc::msg2 = \"Message text\"
-MyFunc[OptionsPattern[]] :=
-	(* Comment *)
-	Module[{},
-		1
-	]"
-	,
-	TestID -> "GetFunctionSource-20160706-HV5921"
+    WUtils`WUtils`GetFunctionSource[
+        MyFunc,
+        "\n(*!\n\t\\function MyFunc\n\n\t\\calltable\n\t\tMyFunc[] ' does stuff and things.\n\n\t\\maintainer danielb\n*)\nOptions[MyFunc] = {\"MyOptions\" -> Automatic}\nAttributes[MyFunc] = {HoldAllComplete}\n(* Another comment *)\nMyFunc::msg = \"Message text\"\nMyFunc::msg2 = \"Message text\"\nMyFunc[OptionsPattern[]] :=\n\t(* Comment *)\n\tModule[{},\n\t\t1\n\t]"
+    ],
+    "(*!\n\t\\function MyFunc\n\n\t\\calltable\n\t\tMyFunc[] ' does stuff and things.\n\n\t\\maintainer danielb\n*)\nOptions[MyFunc] = {\"MyOptions\" -> Automatic}\nAttributes[MyFunc] = {HoldAllComplete}\n(* Another comment *)\nMyFunc::msg = \"Message text\"\nMyFunc::msg2 = \"Message text\"\nMyFunc[OptionsPattern[]] :=\n\t(* Comment *)\n\tModule[{},\n\t\t1\n\t]",
+    TestID -> "GetFunctionSource-20160706-HV5921"
 ]

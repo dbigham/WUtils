@@ -12,35 +12,26 @@ Test[
 ]
 
 Test[
-    WUtils`WUtils`Indent2[Blah["a", "b"], "AlwaysIndentToLevel" -> 0]
-    ,
-    "Blah[\n    \"a\",\n    \"b\"\n]"
-    ,
+    WUtils`WUtils`Indent2[Blah["a", "b"], "AlwaysIndentToLevel" -> 0],
+    "Blah[\n\t\"a\",\n\t\"b\"\n]",
     TestID -> "Indent2-20150130-BRV2XX"
 ]
-
 Test[
     WUtils`WUtils`Indent2[
         "primary kernel" :> (CurrentValue[InputNotebook[], Evaluator] = "Local"),
         "AlwaysIndentToLevel" -> 0
-    ]
-    ,
-    "\"primary kernel\" :>\n    (\n    CurrentValue[InputNotebook[], Evaluator] = \"Local\"\n    )"
-    ,
+    ],
+    "\"primary kernel\" :>\n\t(\n\tCurrentValue[InputNotebook[], Evaluator] = \"Local\"\n\t)",
     TestID -> "Indent2-20150130-OT52A6"
 ]
-
 Test[
     WUtils`WUtils`Indent2[
         "primary kernel" :> (CurrentValue[InputNotebook[], Evaluator] = "Local"),
         "AlwaysIndentToLevel" -> 1
-    ]
-    ,
-    "\"primary kernel\" :>\n    (\n    CurrentValue[\n        InputNotebook[],\n        Evaluator\n    ] =\n        \"Local\"\n    )"
-    ,
+    ],
+    "\"primary kernel\" :>\n\t(\n\tCurrentValue[\n\t\tInputNotebook[],\n\t\tEvaluator\n\t] =\n\t\t\"Local\"\n\t)",
     TestID -> "Indent2-20150130-VRLNLK"
 ]
-
 Test[
     WUtils`WUtils`Indent2[
         "primary kernel" :> (CurrentValue[InputNotebook[], Evaluator] = "Local")
@@ -86,13 +77,10 @@ Test[
                     Sequence @@ {}
                 ]
             ]
-    ]
-    ,
-    "FixedOrder[\n    \"email\" | FixedOrder[\"send\", OptionalElement[\"an\"], \"email\"],\n    OptionalElement[\"to\"],\n    name:GrammarToken[\"Name\"],\n    OptionalElement[\"using\"],\n    OptionalElement[app:GrammarToken[\"EmailApp\"], Automatic]\n] :>\n    HeldHead[ComposeEmail][\n        With[\n            {email = GetPerson[name, \"EmailAddress\"]},\n            If[email =!= Missing[], \"To\" -> email, \"To\" -> name]\n        ],\n        If[app =!= Automatic, \"Invoke\" -> app, Sequence @@ {}]\n    ]"
-    ,
+    ],
+    "FixedOrder[\n\t\"email\" | FixedOrder[\"send\", OptionalElement[\"an\"], \"email\"],\n\tOptionalElement[\"to\"],\n\tname:GrammarToken[\"Name\"],\n\tOptionalElement[\"using\"],\n\tOptionalElement[app:GrammarToken[\"EmailApp\"], Automatic]\n] :>\n\tHeldHead[ComposeEmail][\n\t\tWith[\n\t\t\t{email = GetPerson[name, \"EmailAddress\"]},\n\t\t\tIf[email =!= Missing[], \"To\" -> email, \"To\" -> name]\n\t\t],\n\t\tIf[app =!= Automatic, \"Invoke\" -> app, Sequence @@ {}]\n\t]",
     TestID -> "Indent2-20150130-1GBKP9"
 ]
-
 Test[
     WUtils`WUtils`Indent2[
         CalculateParse`GrammarSyntax`FO["fix debugger", op["window" | "windows"]] :>
@@ -102,13 +90,10 @@ Test[
                 CurrentValue[$FrontEnd, {DebuggerSettings, "StackWindowMargins"}] =
                     {{Automatic, 0}, {Automatic, 0}}
             )
-    ]
-    ,
-    "FO[\"fix debugger\", op[\"window\" | \"windows\"]] :>\n    (\n        CurrentValue[$FrontEnd, {DebuggerSettings, \"ToolsWindowMargins\"}] =\n            {{Automatic, 0}, {Automatic, 0}};\n        CurrentValue[$FrontEnd, {DebuggerSettings, \"StackWindowMargins\"}] =\n            {{Automatic, 0}, {Automatic, 0}}\n    )"
-    ,
+    ],
+    "FO[\"fix debugger\", op[\"window\" | \"windows\"]] :>\n\t(\n\t\tCurrentValue[$FrontEnd, {DebuggerSettings, \"ToolsWindowMargins\"}] =\n\t\t\t{{Automatic, 0}, {Automatic, 0}};\n\t\tCurrentValue[$FrontEnd, {DebuggerSettings, \"StackWindowMargins\"}] =\n\t\t\t{{Automatic, 0}, {Automatic, 0}}\n\t)",
     TestID -> "Indent2-20150130-5D58DK"
 ]
-
 (* Trailing semi-colon. *)
 Test[
     WUtils`WUtils`Indent2[
@@ -119,24 +104,15 @@ Test[
                 CurrentValue[$FrontEnd, {DebuggerSettings, "StackWindowMargins"}] =
                     {{Automatic, 0}, {Automatic, 0}};
             )
-    ]
-    ,
-    "FO[\"fix debugger\", op[\"window\" | \"windows\"]] :>\n    (\n        CurrentValue[$FrontEnd, {DebuggerSettings, \"ToolsWindowMargins\"}] =\n            {{Automatic, 0}, {Automatic, 0}};\n        CurrentValue[$FrontEnd, {DebuggerSettings, \"StackWindowMargins\"}] =\n            {{Automatic, 0}, {Automatic, 0}};\n    )"
-    ,
+    ],
+    "FO[\"fix debugger\", op[\"window\" | \"windows\"]] :>\n\t(\n\t\tCurrentValue[$FrontEnd, {DebuggerSettings, \"ToolsWindowMargins\"}] =\n\t\t\t{{Automatic, 0}, {Automatic, 0}};\n\t\tCurrentValue[$FrontEnd, {DebuggerSettings, \"StackWindowMargins\"}] =\n\t\t\t{{Automatic, 0}, {Automatic, 0}};\n\t)",
     TestID -> "Indent2-20150130-9N33T2"
 ]
-
 Test[
-    WUtils`WUtils`Indent2[
-        WUtils`WUtils`Private`FO["a", "b"],
-        "AlwaysIndentToLevel" -> 1
-    ]
-    ,
-    "FO[\n    \"a\",\n    \"b\"\n]"
-    ,
+    WUtils`WUtils`Indent2[WUtils`WUtils`Private`FO["a", "b"], "AlwaysIndentToLevel" -> 1],
+    "FO[\n\t\"a\",\n\t\"b\"\n]",
     TestID -> "Indent2-20150130-KT5KZ2"
 ]
-
 Test[
     WUtils`WUtils`Indent2[{"->", "\[Rule]"}]
     ,
@@ -151,24 +127,15 @@ Test[
             $grammar = GrammarDeploy2[GrammarRules[{l1:GrammarToken["IPAddress"] :> l1}]]
         ],
         "AlwaysIndentToLevel" -> 10
-    ]
-    ,
-    "HoldComplete[\n    $grammar =\n        GrammarDeploy2[\n            GrammarRules[\n                {\n                    l1:GrammarToken[\"IPAddress\"] :>\n                        l1\n                }\n            ]\n        ]\n]"
-    ,
+    ],
+    "HoldComplete[\n\t$grammar =\n\t\tGrammarDeploy2[\n\t\t\tGrammarRules[\n\t\t\t\t{\n\t\t\t\t\tl1:GrammarToken[\"IPAddress\"] :>\n\t\t\t\t\t\tl1\n\t\t\t\t}\n\t\t\t]\n\t\t]\n]",
     TestID -> "Indent2-20150206-MMUNAV"
 ]
-
 Test[
-    WUtils`WUtils`Indent2[
-        HoldComplete[Foo[1, 2]; ],
-        "AlwaysIndentToLevel" -> 10
-    ]
-    ,
-    "HoldComplete[\n    Foo[\n        1,\n        2\n    ];\n]"
-    ,
+    WUtils`WUtils`Indent2[HoldComplete[Foo[1, 2]; ], "AlwaysIndentToLevel" -> 10],
+    "HoldComplete[\n\tFoo[\n\t\t1,\n\t\t2\n\t];\n]",
     TestID -> "Indent2-20150206-UB1G7P"
 ]
-
 Test[
     WUtils`WUtils`Indent2[
         HoldComplete[Foo[1, 2]; Bar[1, 2]; ],
@@ -201,13 +168,10 @@ Test[
             )
         ],
         "AlwaysIndentToLevel" -> 10
-    ]
-    ,
-    "HoldComplete[\n    (\n        $grammarSource =\n            GrammarRules[\n                {\n                    l1:GrammarToken[\"IPAddress\"] :>\n                        l1\n                }\n            ];\n        $grammar =\n            GrammarDeploy[\n                $grammarSource\n            ];\n    )\n]"
-    ,
+    ],
+    "HoldComplete[\n\t(\n\t\t$grammarSource =\n\t\t\tGrammarRules[\n\t\t\t\t{\n\t\t\t\t\tl1:GrammarToken[\"IPAddress\"] :>\n\t\t\t\t\t\tl1\n\t\t\t\t}\n\t\t\t];\n\t\t$grammar =\n\t\t\tGrammarDeploy[\n\t\t\t\t$grammarSource\n\t\t\t];\n\t)\n]",
     TestID -> "Indent2-20150206-UKILHK"
 ]
-
 (* Tests Row-box specific functionality in Indent2. By default, RowBox would have
    been turned into an unwanted InputForm. *)
 Test[
@@ -290,6 +254,6 @@ Test[
             }
         }
     ],
-    "{\n    {<|\"SequenceSize\" -> 1, \"Counts\" -> {{} -> <|{1} -> 2, {2} -> 3, {3} -> 2, {4} -> 2|>}|>},\n    {\n        <|\n            \"SequenceSize\" -> 2,\n            \"Counts\" ->\n            {\n                {1} -> <|{2} -> 2|>,\n                {2} -> <|{3} -> 2, {4} -> 1|>,\n                {3} -> <|{1} -> 1, {4} -> 1|>,\n                {4} -> <|{2} -> 1|>\n            }\n        |>\n    }\n}",
+    "{\n\t{<|\"SequenceSize\" -> 1, \"Counts\" -> {{} -> <|{1} -> 2, {2} -> 3, {3} -> 2, {4} -> 2|>}|>},\n\t{\n\t\t<|\n\t\t\t\"SequenceSize\" -> 2,\n\t\t\t\"Counts\" ->\n\t\t\t{\n\t\t\t\t{1} -> <|{2} -> 2|>,\n\t\t\t\t{2} -> <|{3} -> 2, {4} -> 1|>,\n\t\t\t\t{3} -> <|{1} -> 1, {4} -> 1|>,\n\t\t\t\t{4} -> <|{2} -> 1|>\n\t\t\t}\n\t\t|>\n\t}\n}",
     TestID -> "Indent2-20151009-4B30NM"
 ]

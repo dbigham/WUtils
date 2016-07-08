@@ -20,9 +20,7 @@ Test[
 ]
 
 Test[
-    WUtils`WUtils`UnitTestDirectory[
-        "WUtils`WUtils`Private`"
-    ],
-    "E:\\Users\\Daniel\\WolframWorkspaces\\Base2\\AlphaSource\\CalculateParse\\Prototype\\VirtualAssistant\\Tests\\UnitTests\\VaActions\\Private",
+    WUtils`WUtils`UnitTestDirectory["WUtils`WUtils`Private`"],
+    "C:\\Users\\Daniel\\WolframWorkspaces\\Base2\\WUtils\\Tests\\Private",
     TestID -> "UnitTestDirectory-20150202-WY4M5S"
 ]

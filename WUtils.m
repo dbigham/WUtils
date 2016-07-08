@@ -426,6 +426,8 @@ TemporaryFilesBlock::usage = "TemporaryFilesBlock  "
 
 TemporaryDirectory::usage = "TemporaryDirectory  "
 
+StringToSymbol::usage = "StringToSymbol  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -666,7 +668,7 @@ doubleQuotedStringPattern[] := ("\"" ~~ RepeatedNull["\\\\" | "\\\"" | Except["\
 
 	\maintainer danielb
 *)
-commentPattern[] := RegularExpression["\\(\\*.*?\\*\\)"];
+commentPattern[] := RegularExpression["\\(\\*\\s*(.*?)\\s*\\*\\)"];
 
 (*!
 	\function FindFirstBracketNotInComment
@@ -2331,7 +2333,7 @@ GetLineNumberOfString[str_String, substring_] :=
 	
 	Examples:
 	
-	GetLineNumber["abc\ndef", 5] === 2
+	GetLineNumberOfPos["abc\ndef", 5] === 2
 
 	\maintainer danielb
 *)
@@ -2341,7 +2343,7 @@ GetLineNumberOfPos[str_String, pos_Integer] :=
 			StringTake[str, {1, pos}],
 			"\n"
 		]
-	]
+	] + 1
 
 (*!
 	\function getPathRelativeToWorkbenchProjects
@@ -6274,7 +6276,7 @@ GetNearestPrecedingSpan[span_, spans_] :=
 				dist
 			]
 		] &
-	]
+	][[1]]
 
 (*!
 	\function GetNearestTrailingSpan
@@ -6306,7 +6308,7 @@ GetNearestTrailingSpan[span_, spans_] :=
 				dist
 			]
 		] &
-	]
+	][[1]]
 
 (*!
 	\function StartsWithComment
@@ -8152,8 +8154,9 @@ functionUse
 	\maintainer danielb
 *)
 CouldBeWLSymbolQ[str_] :=
-	(* TODO: Uhhh, what? *)
-	StringQ[str]
+	(* TODO: Uhhh, what? Let's try to 'fix' this... *)
+	(*StringQ[str]*)
+	StringMatchQ[str, WLSymbolPattern[]]
 
 (*!
 	\function ExtractUsesOfFunction
@@ -12647,6 +12650,85 @@ TemporaryDirectory[dirName_:Null] :=
 			path = FileNameJoin[{path, dirName}];
 			CreateDirectory[path];
 			path
+		]
+	]
+
+(*!
+	\function CapturePrint
+	
+	\calltable
+		CapturePrint[e] '' captures and returns Print output when the given expression is evaluated. If no output is received, then Null is returned. The output is a list of items. Each item is itself a list, giving the individual args of the Print.
+		
+	This can be useful when writing unit tests for things that are expected to produce printed output which should be checked.
+
+	Examples:
+	
+	CapturePrint[
+		Print["a", "b", "c"];
+		Print["d", "e", "f"];
+	]
+	
+	===
+	
+	{{"a", "b", "c"}, {"d", "e", "f"}}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`CapturePrint]
+
+	\maintainer danielb
+*)
+Attributes[CapturePrint] = {HoldAllComplete};
+CapturePrint[e_] :=
+	Module[{res, downValueSymbol},
+		
+		With[{res = res},
+			downValueSymbol[args___] :=
+				If [res === Null,
+					res = {{args}};
+					,
+					AppendTo[res, {args}];
+				];
+		];
+		
+		res = Null;
+		
+		Block[{Print = downValueSymbol},
+			e
+		];
+		
+		res
+	]
+
+(*!
+	\function StringToSymbol
+	
+	\calltable
+		StringToSymbol[name] '' given a string, returns the corresponding symbol, or $Failed if no symbol of that name has been defined. Supports both exported and private symbols, so long as their package is on the $ContextPath.
+	
+	Examples:
+	
+	StringToSymbol["CreateIssueNotebook"] === WUtils`WUtils`CreateIssueNotebook
+	
+	StringToSymbol["toSingleLine"] === WUtils`WUtils``Private`toSingleLine
+
+	Unit tests:
+
+	RunUnitTests[StringToSymbol]
+
+	\maintainer danielb
+*)
+StringToSymbol[name_] :=
+	Module[{context},
+		If [CouldBeWLSymbolQ[name],
+			context = GetSymbolContext[name];
+			If [!MatchQ[GetSymbolContext[name], None],
+				ToExpression[context <> name]
+				,
+				$Failed
+			]
+			,
+			$Failed
 		]
 	]
 

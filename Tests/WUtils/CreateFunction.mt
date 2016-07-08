@@ -1,46 +1,38 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`CodeAssist`CreateFunction
+(* Tests for: WUtils`WUtils`CreateFunction
 
    Author: danielb
 *)
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`CodeAssist`CreateFunction[
-        "performSrMap[sr, mapping]"
-    ]
-    ,
-    "(*!\n    \\function performSrMap\n    \n    \\calltable\n        performSrMap[sr, mapping] '' comment\n\n    Examples:\n    \n    performSrMap[sr, mapping] === TODO\n    \n    \\related '\n    \n    \\maintainer danielb\n*)\nperformSrMap[sr_, mapping_] :=\n    Module[{},\n        TODO\n    ];"
-    ,
+    WUtils`WUtils`CreateFunction["performSrMap[sr, mapping]"],
+    "(*!\n\t\\function performSrMap\n\t\n\t\\calltable\n\t\tperformSrMap[sr, mapping] '' comment\n\n\tExamples:\n\t\n\tperformSrMap[sr, mapping] === TODO\n\t\n\t\\related '\n\t\n\t\\maintainer danielb\n*)\nperformSrMap[sr_, mapping_] :=\n\tBlock[{},\n\t\tTODO\n\t];",
     TestID -> "CreateFunction-20151016-KMBQ4C"
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`CodeAssist`CreateFunction[
+    WUtils`WUtils`CreateFunction[
         "DockedToolbar[content, dynamicOutputvar]",
         "Description" ->
             "returns content that can be placed in the notebook's toolbar, wrapped with an appropriate dynamic output section."
-    ]
-    ,
-    "(*!\n    \\function DockedToolbar\n    \n    \\calltable\n        DockedToolbar[content, dynamicOutputvar] '' returns content that can be placed in the notebook's toolbar, wrapped with an appropriate dynamic output section.\n\n    Examples:\n    \n    DockedToolbar[content, dynamicOutputvar] === TODO\n    \n    \\related '\n    \n    \\maintainer danielb\n*)\nDockedToolbar[content_, dynamicOutputvar_] :=\n    Module[{},\n        TODO\n    ];"
-    ,
+    ],
+    "(*!\n\t\\function DockedToolbar\n\t\n\t\\calltable\n\t\tDockedToolbar[content, dynamicOutputvar] '' returns content that can be placed in the notebook's toolbar, wrapped with an appropriate dynamic output section.\n\n\tExamples:\n\t\n\tDockedToolbar[content, dynamicOutputvar] === TODO\n\t\n\t\\related '\n\t\n\t\\maintainer danielb\n*)\nDockedToolbar[content_, dynamicOutputvar_] :=\n\tBlock[{},\n\t\tTODO\n\t];",
     TestID -> "CreateFunction-20151016-46EBU7"
 ]
 
 (* If there aren't any args, don't bother with an "Examples:" section in the Mathdoc. *)
 Test[
-    CalculateParse`Prototype`VirtualAssistant`CodeAssist`CreateFunction["myFunc[]"]
-    ,
-    "(*!\n    \\function myFunc\n    \n    \\calltable\n        myFunc[] '' comment\n    \n    \\related '\n    \n    \\maintainer danielb\n*)\nmyFunc[] :=\n    Module[{},\n        TODO\n    ];"
-    ,
+    WUtils`WUtils`CreateFunction["myFunc[]"],
+    "(*!\n\t\\function myFunc\n\t\n\t\\calltable\n\t\tmyFunc[] '' comment\n\t\n\t\\related '\n\t\n\t\\maintainer danielb\n*)\nmyFunc[] :=\n\tBlock[{},\n\t\tTODO\n\t];",
     TestID -> "CreateFunction-20151016-34F97O"
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`CodeAssist`CreateFunction[
+    WUtils`WUtils`CreateFunction[
         "myFunc[]",
         "UseTabs" -> True
     ]
     ,
-    "(*!\n\t\\function myFunc\n\t\n\t\\calltable\n\t\tmyFunc[] '' comment\n\t\n\t\\related '\n\t\n\t\\maintainer danielb\n*)\nmyFunc[] :=\n\tModule[{},\n\t\tTODO\n\t];"
+    "(*!\n\t\\function myFunc\n\t\n\t\\calltable\n\t\tmyFunc[] '' comment\n\t\n\t\\related '\n\t\n\t\\maintainer danielb\n*)\nmyFunc[] :=\n\tBlock[{},\n\t\tTODO\n\t];"
     ,
     TestID -> "CreateFunction-20160120-L2DE55"
 ]

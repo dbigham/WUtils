@@ -8,10 +8,8 @@ Test[
         1 + 1,
         ToFileName[{$TemporaryDirectory}, "MyTestFile.m"],
         "TestId" -> "TESTID"
-    ]
-    ,
-    "Test[\n    1 + 1\n    ,\n    2\n    ,\n    TestID -> \"TESTID\"\n]"
-    ,
+    ],
+    "Test[\n\t1 + 1\n\t,\n\t2\n\t,\n\tTestID -> \"TESTID\"\n]",
     TestID -> "CreateTest-20150225-VLNNAJ"
 ]
 
@@ -20,10 +18,8 @@ Test[
         Unevaluated[Sequence[]],
         ToFileName[{$TemporaryDirectory}, "MyTestFile.m"],
         "TestId" -> "TESTID"
-    ]
-    ,
-    "Test[\n    Sequence[]\n    ,\n    Null\n    ,\n    TestID -> \"TESTID\"\n]"
-    ,
+    ],
+    "Test[\n\tSequence[]\n\t,\n\tNull\n\t,\n\tTestID -> \"TESTID\"\n]",
     TestID -> "CreateTest-20150225-NB7SDR"
 ]
 
@@ -47,9 +43,7 @@ Test[
         ToFileName[{$TemporaryDirectory}, "MyTestFile.m"],
         "TestId" -> "TESTID",
         "ExpectedMessages" -> {Hold[Power::infy]}
-    ]
-    ,
-    "Test[\n    1 + 1\n    ,\n    2\n    ,\n    {Power::infy}\n    ,\n    TestID -> \"TESTID\"\n]"
-    ,
+    ],
+    "Test[\n\t1 + 1\n\t,\n\t2\n\t,\n\t{Power::infy}\n\t,\n\tTestID -> \"TESTID\"\n]",
     TestID -> "CreateTest-20160531-1GJV0B"
 ]

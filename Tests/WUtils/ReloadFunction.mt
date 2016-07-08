@@ -12,11 +12,7 @@ Test[
 ]
 
 Test[
-    WUtils`WUtils`ReloadFunction[
-        WUtils`WUtils`SymbolToFile
-    ]
-    ,
-    CalculateParse`DeveloperFunctions`ReloadParserFiles
-    ,
+    WUtils`WUtils`ReloadFunction[WUtils`WUtils`SymbolToFile],
+    WUtils`WUtils`ReloadWUtils,
     TestID -> "ReloadFunction-20150202-8OTCQD"
 ]

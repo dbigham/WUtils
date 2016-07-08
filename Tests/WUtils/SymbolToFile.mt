@@ -7,34 +7,13 @@
 *)
 
 Test[
-    WUtils`WUtils`SymbolToFile[WUtils`WUtils`SymbolToFile]
-    ,
-    ToFileName[
-        {CalculateScan`CommonSymbols`$AlphaRootDirectory, "Source", "CalculateParse"},
-        "GeneralLibrary.m"
-    ]
-    ,
+    WUtils`WUtils`SymbolToFile[WUtils`WUtils`SymbolToFile],
+    "C:\\Users\\Daniel\\WolframWorkspaces\\Base2\\WUtils\\WUtils.m",
     TestID -> "SymbolToFile-20150129-4RR5VA"
 ]
 
 Test[
-    WUtils`WUtils`SymbolToFile[WUtils`WUtils`Private`toSingleLine]
-    ,
-    ToFileName[
-        {CalculateScan`CommonSymbols`$AlphaRootDirectory, "Source", "CalculateParse"},
-        "GeneralLibrary.m"
-    ]
-    ,
+    WUtils`WUtils`SymbolToFile[WUtils`WUtils`Private`toSingleLine],
+    "C:\\Users\\Daniel\\WolframWorkspaces\\Base2\\WUtils\\WUtils.m",
     TestID -> "SymbolToFile-20150129-KVX5GJ"
-]
-
-Test[
-    WUtils`WUtils`SymbolToFile[CalculateParse`ParseAnalysis`ChartPrint]
-    ,
-    ToFileName[
-        {CalculateScan`CommonSymbols`$AlphaRootDirectory, "Source", "CalculateParse"},
-        "ParseAnalysis.m"
-    ]
-    ,
-    TestID -> "SymbolToFile-20150129-LA8E4C"
 ]
