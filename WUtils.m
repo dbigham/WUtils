@@ -402,6 +402,18 @@ Begin["`Private`"]
    longer evaluate when they are disabled so that they don't slow the code down. *)
 Attributes[XPrint] = {HoldAllComplete};
 
+(* Used by createWorkingNotebookReplacements. Need to be defined
+   prior to other functions using naked symbols below like
+   'CodeString', otherwise they'll be private when we're
+   expecting them to not be private. *)
+WUtils`WUtils`Section;
+WUtils`WUtils`Subsection;
+WUtils`WUtils`Subitem;
+WUtils`WUtils`Code;
+WUtils`WUtils`CodeString;
+WUtils`WUtils`Output;
+WUtils`WUtils`BoxesCell;
+
 (*!
 	\function GetFunctionSource
 	
