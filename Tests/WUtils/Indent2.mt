@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`Indent2
+(* Tests for: WUtils`WUtils`Indent2
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`Indent2[Hello`Hello[World`world]]
+    WUtils`WUtils`Indent2[Hello`Hello[World`world]]
     ,
     "Hello[world]"
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[Blah["a", "b"], "AlwaysIndentToLevel" -> 0]
+    WUtils`WUtils`Indent2[Blah["a", "b"], "AlwaysIndentToLevel" -> 0]
     ,
     "Blah[\n    \"a\",\n    \"b\"\n]"
     ,
@@ -35,7 +20,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         "primary kernel" :> (CurrentValue[InputNotebook[], Evaluator] = "Local"),
         "AlwaysIndentToLevel" -> 0
     ]
@@ -46,7 +31,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         "primary kernel" :> (CurrentValue[InputNotebook[], Evaluator] = "Local"),
         "AlwaysIndentToLevel" -> 1
     ]
@@ -57,7 +42,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         "primary kernel" :> (CurrentValue[InputNotebook[], Evaluator] = "Local")
     ]
     ,
@@ -67,7 +52,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         FixedOrder[
             "email" | FixedOrder["send", OptionalElement["an"], "email"],
             OptionalElement["to"],
@@ -78,7 +63,7 @@ Test[
                 Automatic
             ]
         ] :>
-            HeldHead[CalculateParse`Prototype`VirtualAssistant`VaActions`ComposeEmail][
+            HeldHead[WUtils`WUtils`ComposeEmail][
                 With[
                     {
                         CalculateParse`Prototype`VirtualAssistant`PliGrammar`Private`email =
@@ -109,7 +94,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         CalculateParse`GrammarSyntax`FO["fix debugger", op["window" | "windows"]] :>
             (
                 CurrentValue[$FrontEnd, {DebuggerSettings, "ToolsWindowMargins"}] =
@@ -126,7 +111,7 @@ Test[
 
 (* Trailing semi-colon. *)
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         CalculateParse`GrammarSyntax`FO["fix debugger", op["window" | "windows"]] :>
             (
                 CurrentValue[$FrontEnd, {DebuggerSettings, "ToolsWindowMargins"}] =
@@ -142,8 +127,8 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
-        CalculateParse`Prototype`VirtualAssistant`VaActions`Private`FO["a", "b"],
+    WUtils`WUtils`Indent2[
+        WUtils`WUtils`Private`FO["a", "b"],
         "AlwaysIndentToLevel" -> 1
     ]
     ,
@@ -153,7 +138,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[{"->", "\[Rule]"}]
+    WUtils`WUtils`Indent2[{"->", "\[Rule]"}]
     ,
     "{\"->\", \"\[Rule]\"}"
     ,
@@ -161,7 +146,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         HoldComplete[
             $grammar = GrammarDeploy2[GrammarRules[{l1:GrammarToken["IPAddress"] :> l1}]]
         ],
@@ -174,7 +159,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         HoldComplete[Foo[1, 2]; ],
         "AlwaysIndentToLevel" -> 10
     ]
@@ -185,7 +170,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         HoldComplete[Foo[1, 2]; Bar[1, 2]; ],
         "AlwaysIndentToLevel" -> 0,
         "RemoveHold" -> True
@@ -197,7 +182,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         HoldComplete[Foo[1, 2]; Bar[1, 2]; ],
         "RemoveHold" -> True
     ]
@@ -208,7 +193,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         HoldComplete[
             (
                 $grammarSource = GrammarRules[{l1:GrammarToken["IPAddress"] :> l1}];
@@ -226,7 +211,7 @@ Test[
 (* Tests Row-box specific functionality in Indent2. By default, RowBox would have
    been turned into an unwanted InputForm. *)
 Test[
-    CalculateParse`GeneralLibrary`Indent2[RowBox[{"a", "b"}]]
+    WUtils`WUtils`Indent2[RowBox[{"a", "b"}]]
     ,
     "RowBox[{\"a\", \"b\"}]"
     ,
@@ -234,7 +219,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2["<<RowBox>>"[{"a", "b"}]]
+    WUtils`WUtils`Indent2["<<RowBox>>"[{"a", "b"}]]
     ,
     "\"<<RowBox>>\"[{\"a\", \"b\"}]"
     ,
@@ -242,7 +227,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[RowBox[{RowBox[{"1", "2", "3"}]}]]
+    WUtils`WUtils`Indent2[RowBox[{RowBox[{"1", "2", "3"}]}]]
     ,
     "RowBox[{RowBox[{\"1\", \"2\", \"3\"}]}]"
     ,
@@ -252,7 +237,7 @@ Test[
 (* TODO: We don't want this to have '---' (etc) in its output. As l-kernel? *)
 (*
 Test[
-    CalculateParse`GeneralLibrary`Indent2["USDollars"/"Kilograms", "FullFormStrings" -> True]
+    WUtils`WUtils`Indent2["USDollars"/"Kilograms", "FullFormStrings" -> True]
     ,
     "\"USDollars\"/\"Kilograms\""
     ,
@@ -261,7 +246,7 @@ Test[
 *)
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[{"->", "\[Rule]"}, "FullFormStrings" -> True]
+    WUtils`WUtils`Indent2[{"->", "\[Rule]"}, "FullFormStrings" -> True]
     ,
     "{\"->\", \"\\[Rule]\"}"
     ,
@@ -270,9 +255,9 @@ Test[
 
 (* This shouldn't be handled (as a whole) by the FullFormStrings logic, because it's not a string. Regression test. *)
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         HoldComplete[
-            CalculateParse`Prototype`VirtualAssistant`VaActions`DivideHack["USDollars", "Kilograms"]
+            WUtils`WUtils`DivideHack["USDollars", "Kilograms"]
         ],
         "FullFormStrings" -> True
     ]
@@ -283,7 +268,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Indent2[
+    WUtils`WUtils`Indent2[
         {
             {
                 <|

@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`RemoveHoldFromIndentedString
+(* Tests for: WUtils`WUtils`RemoveHoldFromIndentedString
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`RemoveHoldFromIndentedString["    HoldComplete[\"here\"]", "HoldComplete"]
+    WUtils`WUtils`RemoveHoldFromIndentedString["    HoldComplete[\"here\"]", "HoldComplete"]
     ,
     "    \"here\""
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`RemoveHoldFromIndentedString["HoldComplete[\"here\"]", "HoldComplete"]
+    WUtils`WUtils`RemoveHoldFromIndentedString["HoldComplete[\"here\"]", "HoldComplete"]
     ,
     "\"here\""
     ,
@@ -35,7 +20,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`RemoveHoldFromIndentedString[
+    WUtils`WUtils`RemoveHoldFromIndentedString[
         "    HoldComplete[\n    Inner[\n        1,\n        2\n    ]\n    ]",
         "HoldComplete"
     ]
@@ -46,7 +31,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`RemoveHoldFromIndentedString[
+    WUtils`WUtils`RemoveHoldFromIndentedString[
         "HoldComplete[\n    Inner[\n        1,\n        2\n    ]\n]",
         "HoldComplete"
     ]
@@ -57,7 +42,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`RemoveHoldFromIndentedString[
+    WUtils`WUtils`RemoveHoldFromIndentedString[
         "HoldComplete[\n\tLooksLikeCallSignature[CouldBeWLSymbolQ[\"test\"]], CouldBeWLSymbolQ]\n]",
         "HoldComplete"
     ]
@@ -68,7 +53,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`RemoveHoldFromIndentedString[
+    WUtils`WUtils`RemoveHoldFromIndentedString[
         "pliChartHoldComplete$586145[\n    Inner[\n        1,\n        2\n    ]\n]",
         "pliChartHoldComplete$586145"
     ]
@@ -81,7 +66,7 @@ Test[
 (* The HoldComplete string didn't match, so nothing was done.
    Alternatively, we could perhaps return $Failed in this situation. *)
 Test[
-    CalculateParse`GeneralLibrary`RemoveHoldFromIndentedString[
+    WUtils`WUtils`RemoveHoldFromIndentedString[
         "    HoldComplete[1]",
         "HoldComplete2"
     ]

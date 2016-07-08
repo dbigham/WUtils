@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`VaActions`Private`CalculateParse`Prototype`VirtualAssistant`VaActions`Private`toWindowMargins
+(* Tests for: WUtils`WUtils`Private`toWindowMargins
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`toWindowMargins[0.5, 1920]
+    WUtils`WUtils`Private`toWindowMargins[0.5, 1920]
     ,
     {Automatic, 0.}
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`toWindowMargins[0, 1920]
+    WUtils`WUtils`Private`toWindowMargins[0, 1920]
     ,
     {0, Automatic}
     ,
@@ -35,7 +20,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`toWindowMargins[1, 1920]
+    WUtils`WUtils`Private`toWindowMargins[1, 1920]
     ,
     {1920, Automatic}
     ,
@@ -43,7 +28,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`toWindowMargins[1.5, 1920]
+    WUtils`WUtils`Private`toWindowMargins[1.5, 1920]
     ,
     {Automatic, -1920.}
     ,

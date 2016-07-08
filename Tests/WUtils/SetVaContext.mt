@@ -1,28 +1,13 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`VaActions`SetVaContext
+(* Tests for: WUtils`WUtils`SetVaContext
 
    Author: danielb
 *)
-
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
 
 Test[
     ReplaceAll[
         Block[
             {CalculateParse`Prototype`VirtualAssistant`VaSemantics`$VaContext = {}},
-            CalculateParse`Prototype`VirtualAssistant`VaActions`SetVaContext[
+            WUtils`WUtils`SetVaContext[
                 CalculateParse`Prototype`VirtualAssistant`VaSemantics`S["Notebook"][
                     "Name" -> "SetVaContext",
                     "Path" -> "..."

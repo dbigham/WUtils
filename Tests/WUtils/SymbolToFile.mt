@@ -1,4 +1,4 @@
-(* Tests for: CalculateParse`GeneralLibrary`SymbolToFile
+(* Tests for: WUtils`WUtils`SymbolToFile
 
    Ignored by QA because I don't think they have Alpha on the
    $Path, rendering FindFile useless.
@@ -6,23 +6,8 @@
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`SymbolToFile[CalculateParse`GeneralLibrary`SymbolToFile]
+    WUtils`WUtils`SymbolToFile[WUtils`WUtils`SymbolToFile]
     ,
     ToFileName[
         {CalculateScan`CommonSymbols`$AlphaRootDirectory, "Source", "CalculateParse"},
@@ -33,7 +18,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`SymbolToFile[CalculateParse`GeneralLibrary`Private`toSingleLine]
+    WUtils`WUtils`SymbolToFile[WUtils`WUtils`Private`toSingleLine]
     ,
     ToFileName[
         {CalculateScan`CommonSymbols`$AlphaRootDirectory, "Source", "CalculateParse"},
@@ -44,7 +29,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`SymbolToFile[CalculateParse`ParseAnalysis`ChartPrint]
+    WUtils`WUtils`SymbolToFile[CalculateParse`ParseAnalysis`ChartPrint]
     ,
     ToFileName[
         {CalculateScan`CommonSymbols`$AlphaRootDirectory, "Source", "CalculateParse"},

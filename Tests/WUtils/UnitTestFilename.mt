@@ -1,27 +1,11 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`UnitTestFilename
+(* Tests for: WUtils`WUtils`UnitTestFilename
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`UnitTestFilename[
-        CalculateParse`Prototype`VirtualAssistant`Utility`CouldBeWLSymbolQ
+    WUtils`WUtils`UnitTestFilename[
+        WUtils`WUtils`CouldBeWLSymbolQ
     ]
     ,
     ToFileName[
@@ -42,8 +26,8 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`UnitTestFilename[
-        CalculateParse`GeneralLibrary`SymbolToFile
+    WUtils`WUtils`UnitTestFilename[
+        WUtils`WUtils`SymbolToFile
     ]
     ,
     ToFileName[
@@ -62,7 +46,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`UnitTestFilename[
+    WUtils`WUtils`UnitTestFilename[
         CalculateParse`JavaTokenizer`JFindTokens
     ]
     ,

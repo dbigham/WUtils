@@ -1,28 +1,13 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`SetHeldVarKeyValue
+(* Tests for: WUtils`WUtils`SetHeldVarKeyValue
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
     Module[
-        {heldVar = CalculateParse`GeneralLibrary`NewHeldVar["testVar"]},
+        {heldVar = WUtils`WUtils`NewHeldVar["testVar"]},
         (
-            CalculateParse`Prototype`VirtualAssistant`Utility`SetHeldVarKeyValue[
+            WUtils`WUtils`SetHeldVarKeyValue[
                 heldVar,
                 "MyKey" -> "MyValue"
             ];
@@ -37,13 +22,13 @@ Test[
 
 Test[
     Module[
-        {heldVar = CalculateParse`GeneralLibrary`NewHeldVar["testVar"]},
+        {heldVar = WUtils`WUtils`NewHeldVar["testVar"]},
         (
-            CalculateParse`Prototype`VirtualAssistant`Utility`SetHeldVarKeyValue[
+            WUtils`WUtils`SetHeldVarKeyValue[
                 heldVar,
                 "MyKey1" -> "MyValue1"
             ];
-            CalculateParse`Prototype`VirtualAssistant`Utility`SetHeldVarKeyValue[
+            WUtils`WUtils`SetHeldVarKeyValue[
                 heldVar,
                 "MyKey2" -> "MyValue2"
             ];
@@ -58,13 +43,13 @@ Test[
 
 Test[
     Module[
-        {heldVar = CalculateParse`GeneralLibrary`NewHeldVar["testVar"]},
+        {heldVar = WUtils`WUtils`NewHeldVar["testVar"]},
         (
-            CalculateParse`Prototype`VirtualAssistant`Utility`SetHeldVarKeyValue[
+            WUtils`WUtils`SetHeldVarKeyValue[
                 heldVar,
                 "MyKey1" -> "MyValue1"
             ];
-            CalculateParse`Prototype`VirtualAssistant`Utility`SetHeldVarKeyValue[
+            WUtils`WUtils`SetHeldVarKeyValue[
                 heldVar,
                 "MyKey2" -> "MyValue2"
             ];
@@ -81,7 +66,7 @@ Test[
     Module[
         {heldVar = None},
         (
-            CalculateParse`GeneralLibrary`NewHeldVar[
+            WUtils`WUtils`NewHeldVar[
                 heldVar,
                 "MyKey" -> "MyValue"
             ];

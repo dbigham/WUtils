@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`EvaluateAndGetMessages
+(* Tests for: WUtils`WUtils`EvaluateAndGetMessages
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`EvaluateAndGetMessages[1/0]
+    WUtils`WUtils`EvaluateAndGetMessages[1/0]
     ,
     {ComplexInfinity, {Hold[Power::infy]}}
     ,
@@ -29,7 +14,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`EvaluateAndGetMessages[1 + 1]
+    WUtils`WUtils`EvaluateAndGetMessages[1 + 1]
     ,
     {2, {}}
     ,

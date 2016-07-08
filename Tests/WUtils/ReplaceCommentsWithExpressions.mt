@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`ReplaceCommentsWithExpressions
+(* Tests for: WUtils`WUtils`ReplaceCommentsWithExpressions
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`ReplaceCommentsWithExpressions[""]
+    WUtils`WUtils`ReplaceCommentsWithExpressions[""]
     ,
     ""
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`ReplaceCommentsWithExpressions["a"]
+    WUtils`WUtils`ReplaceCommentsWithExpressions["a"]
     ,
     "a"
     ,
@@ -35,7 +20,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`ReplaceCommentsWithExpressions[
+    WUtils`WUtils`ReplaceCommentsWithExpressions[
         "(* Just testing *)\n\"a\"\n\"b\""
     ]
     ,
@@ -46,7 +31,7 @@ Test[
 
 (* Leave alone comments that are within strings. *)
 Test[
-    CalculateParse`GeneralLibrary`ReplaceCommentsWithExpressions[
+    WUtils`WUtils`ReplaceCommentsWithExpressions[
         "{myFunc[\"(* my comment *)\"]}"
     ]
     ,

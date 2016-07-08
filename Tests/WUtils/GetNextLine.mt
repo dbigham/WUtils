@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`GetNextLine
+(* Tests for: WUtils`WUtils`GetNextLine
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\ndef\nghi", 1]
+    WUtils`WUtils`GetNextLine["abc\ndef\nghi", 1]
     ,
     {5, 7}
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\ndef\nghi", 3]
+    WUtils`WUtils`GetNextLine["abc\ndef\nghi", 3]
     ,
     {5, 7}
     ,
@@ -35,7 +20,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\ndef\nghi", 4]
+    WUtils`WUtils`GetNextLine["abc\ndef\nghi", 4]
     ,
     {5, 7}
     ,
@@ -43,7 +28,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\ndef\nghi", 5]
+    WUtils`WUtils`GetNextLine["abc\ndef\nghi", 5]
     ,
     {9, 11}
     ,
@@ -51,7 +36,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\ndef\nghi", 7]
+    WUtils`WUtils`GetNextLine["abc\ndef\nghi", 7]
     ,
     {9, 11}
     ,
@@ -59,7 +44,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\ndef\nghi", 8]
+    WUtils`WUtils`GetNextLine["abc\ndef\nghi", 8]
     ,
     {9, 11}
     ,
@@ -67,7 +52,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\ndef\nghi", 9]
+    WUtils`WUtils`GetNextLine["abc\ndef\nghi", 9]
     ,
     {12, 11}
     ,
@@ -75,7 +60,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\ndef\nghi", 11]
+    WUtils`WUtils`GetNextLine["abc\ndef\nghi", 11]
     ,
     {12, 11}
     ,
@@ -83,7 +68,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi", 1]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi", 1]
     ,
     {6, 8}
     ,
@@ -91,7 +76,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi", 3]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi", 3]
     ,
     {6, 8}
     ,
@@ -99,7 +84,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi", 4]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi", 4]
     ,
     {6, 8}
     ,
@@ -107,7 +92,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi", 5]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi", 5]
     ,
     {6, 8}
     ,
@@ -115,7 +100,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi", 6]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi", 6]
     ,
     {11, 13}
     ,
@@ -123,7 +108,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi", 8]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi", 8]
     ,
     {11, 13}
     ,
@@ -131,7 +116,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi", 9]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi", 9]
     ,
     {11, 13}
     ,
@@ -139,7 +124,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi", 10]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi", 10]
     ,
     {11, 13}
     ,
@@ -147,7 +132,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi", 11]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi", 11]
     ,
     {14, 13}
     ,
@@ -155,7 +140,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi", 13]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi", 13]
     ,
     {14, 13}
     ,
@@ -163,7 +148,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi\n", 14]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi\n", 14]
     ,
     {15, 14}
     ,
@@ -171,7 +156,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi\r\n", 14]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi\r\n", 14]
     ,
     {16, 15}
     ,
@@ -179,7 +164,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\r\ndef\r\nghi\r\n", 15]
+    WUtils`WUtils`GetNextLine["abc\r\ndef\r\nghi\r\n", 15]
     ,
     {16, 15}
     ,
@@ -187,7 +172,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\n \nghi", 1]
+    WUtils`WUtils`GetNextLine["abc\n \nghi", 1]
     ,
     {7, 9}
     ,
@@ -195,7 +180,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\n \nghi", 3]
+    WUtils`WUtils`GetNextLine["abc\n \nghi", 3]
     ,
     {7, 9}
     ,
@@ -203,7 +188,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\n \nghi", 4]
+    WUtils`WUtils`GetNextLine["abc\n \nghi", 4]
     ,
     {7, 9}
     ,
@@ -211,7 +196,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\n \nghi", 5]
+    WUtils`WUtils`GetNextLine["abc\n \nghi", 5]
     ,
     {7, 9}
     ,
@@ -219,7 +204,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\n \nghi", 6]
+    WUtils`WUtils`GetNextLine["abc\n \nghi", 6]
     ,
     {7, 9}
     ,
@@ -227,7 +212,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetNextLine["abc\n \nghi", 7]
+    WUtils`WUtils`GetNextLine["abc\n \nghi", 7]
     ,
     {10, 9}
     ,

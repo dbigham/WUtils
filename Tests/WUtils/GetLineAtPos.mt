@@ -1,26 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`GetLineAtPos
+(* Tests for: WUtils`WUtils`GetLineAtPos
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
-(* First character of string *)
 Test[
-    CalculateParse`GeneralLibrary`GetLineAtPos["abc\ndef\nghi", 1]
+    WUtils`WUtils`GetLineAtPos["abc\ndef\nghi", 1]
     ,
     {1, 3}
     ,
@@ -28,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetLineAtPos["abc\ndef\nghi", 6]
+    WUtils`WUtils`GetLineAtPos["abc\ndef\nghi", 6]
     ,
     {5, 7}
     ,
@@ -36,7 +20,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetLineAtPos["abc\ndef\nghi", 10]
+    WUtils`WUtils`GetLineAtPos["abc\ndef\nghi", 10]
     ,
     {9, 11}
     ,
@@ -45,7 +29,7 @@ Test[
 
 (* Last character of string *)
 Test[
-    CalculateParse`GeneralLibrary`GetLineAtPos["abc\ndef\nghi", 11]
+    WUtils`WUtils`GetLineAtPos["abc\ndef\nghi", 11]
     ,
     {9, 11}
     ,
@@ -54,7 +38,7 @@ Test[
 
 (* If the current position is a newline, returns the previous line. *)
 Test[
-    CalculateParse`GeneralLibrary`GetLineAtPos["abc\ndef\nghi", 4]
+    WUtils`WUtils`GetLineAtPos["abc\ndef\nghi", 4]
     ,
     {1, 3}
     ,
@@ -63,7 +47,7 @@ Test[
 
 (* On the trailing newline of an empty line. *)
 Test[
-    CalculateParse`GeneralLibrary`GetLineAtPos["abc\n\ndef\nghi", 5]
+    WUtils`WUtils`GetLineAtPos["abc\n\ndef\nghi", 5]
     ,
     {6, 5}
     ,

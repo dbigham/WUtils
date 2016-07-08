@@ -1,26 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`ReloadFunction
+(* Tests for: WUtils`WUtils`ReloadFunction
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
-
 Test[
-    CalculateParse`GeneralLibrary`ReloadFunction[funcSymbol]
+    WUtils`WUtils`ReloadFunction[funcSymbol]
     ,
     Missing[]
     ,
@@ -28,8 +12,8 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`ReloadFunction[
-        CalculateParse`GeneralLibrary`SymbolToFile
+    WUtils`WUtils`ReloadFunction[
+        WUtils`WUtils`SymbolToFile
     ]
     ,
     CalculateParse`DeveloperFunctions`ReloadParserFiles

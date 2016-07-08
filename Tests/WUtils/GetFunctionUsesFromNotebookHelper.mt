@@ -1,32 +1,16 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper
+(* Tests for: WUtils`WUtils`GetFunctionUsesFromNotebookHelper
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
-(* Ensure that the Indent2 is not included as part of the function use, since it was likely there for formatting purposes. *)
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper[
+    WUtils`WUtils`GetFunctionUsesFromNotebookHelper[
         myFunc,
-        {{HoldComplete[CalculateParse`GeneralLibrary`Indent2[myFunc[1, 2, 3]]], CellObject[1]}}
+        {{HoldComplete[WUtils`WUtils`Indent2[myFunc[1, 2, 3]]], CellObject[1]}}
     ]
     ,
     {
-        CalculateParse`Prototype`VirtualAssistant`Utility`FunctionUse[
+        WUtils`WUtils`FunctionUse[
             "myFunc[1, 2, 3]",
             "CellObject" -> CellObject[1]
         ]
@@ -36,13 +20,13 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper[
+    WUtils`WUtils`GetFunctionUsesFromNotebookHelper[
         myFunc,
         {{HoldComplete[myFunc[1, 2, 3]], CellObject[1]}}
     ]
     ,
     {
-        CalculateParse`Prototype`VirtualAssistant`Utility`FunctionUse[
+        WUtils`WUtils`FunctionUse[
             myFunc[1, 2, 3],
             "CellObject" -> CellObject[1]
         ]
@@ -52,7 +36,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper[
+    WUtils`WUtils`GetFunctionUsesFromNotebookHelper[
         myFunc,
         {
             {{HoldComplete["Comment"["Test comment"]], HoldComplete[myFunc[1, 2, 3]]}, CellObject[1]}
@@ -60,7 +44,7 @@ Test[
     ]
     ,
     {
-        CalculateParse`Prototype`VirtualAssistant`Utility`FunctionUse[
+        WUtils`WUtils`FunctionUse[
             HoldComplete[myFunc[1, 2, 3]],
             "CellObject" -> CellObject[1],
             "Comment" -> "Test comment"
@@ -71,8 +55,8 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper[
-        CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper,
+    WUtils`WUtils`GetFunctionUsesFromNotebookHelper[
+        WUtils`WUtils`GetFunctionUsesFromNotebookHelper,
         {
             {
                 {
@@ -82,9 +66,9 @@ Test[
                         ]
                     ],
                     HoldComplete[
-                        CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper[
+                        WUtils`WUtils`GetFunctionUsesFromNotebookHelper[
                             myFunc,
-                            {{HoldComplete[CalculateParse`GeneralLibrary`Indent2[myFunc[1, 2, 3]]]}}
+                            {{HoldComplete[WUtils`WUtils`Indent2[myFunc[1, 2, 3]]]}}
                         ]
                     ]
                 },
@@ -94,11 +78,11 @@ Test[
     ]
     ,
     {
-        CalculateParse`Prototype`VirtualAssistant`Utility`FunctionUse[
+        WUtils`WUtils`FunctionUse[
             HoldComplete[
-                CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper[
+                WUtils`WUtils`GetFunctionUsesFromNotebookHelper[
                     myFunc,
-                    {{HoldComplete[CalculateParse`GeneralLibrary`Indent2[myFunc[1, 2, 3]]]}}
+                    {{HoldComplete[WUtils`WUtils`Indent2[myFunc[1, 2, 3]]]}}
                 ]
             ],
             "CellObject" -> CellObject[1],
@@ -111,8 +95,8 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper[
-        CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper,
+    WUtils`WUtils`GetFunctionUsesFromNotebookHelper[
+        WUtils`WUtils`GetFunctionUsesFromNotebookHelper,
         {
             {
                 {
@@ -122,9 +106,9 @@ Test[
                         ]
                     ],
                     HoldComplete[
-                        CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper[
+                        WUtils`WUtils`GetFunctionUsesFromNotebookHelper[
                             myFunc,
-                            {{HoldComplete[CalculateParse`GeneralLibrary`Indent2[myFunc[1, 2, 3]]]}}
+                            {{HoldComplete[WUtils`WUtils`Indent2[myFunc[1, 2, 3]]]}}
                         ]
                     ]
                 },
@@ -134,11 +118,11 @@ Test[
     ]
     ,
     {
-        CalculateParse`Prototype`VirtualAssistant`Utility`FunctionUse[
+        WUtils`WUtils`FunctionUse[
             HoldComplete[
-                CalculateParse`Prototype`VirtualAssistant`Utility`GetFunctionUsesFromNotebookHelper[
+                WUtils`WUtils`GetFunctionUsesFromNotebookHelper[
                     myFunc,
-                    {{HoldComplete[CalculateParse`GeneralLibrary`Indent2[myFunc[1, 2, 3]]]}}
+                    {{HoldComplete[WUtils`WUtils`Indent2[myFunc[1, 2, 3]]]}}
                 ]
             ],
             "CellObject" -> CellObject[1],

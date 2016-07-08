@@ -1,30 +1,15 @@
-(* Tests for: CalculateParse`GeneralLibrary`Private`CalculateParse`GeneralLibrary`Private`addCaptureToDownValue
+(* Tests for: WUtils`WUtils`Private`addCaptureToDownValue
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`Private`addCaptureToDownValue[
+    WUtils`WUtils`Private`addCaptureToDownValue[
         HoldPattern[myFunc[myArg]] :> Print[myArg]
     ]
     ,
     HoldPattern[myFunc[myArg]] :>
-        CalculateParse`GeneralLibrary`CaptureFunctionCall[
+        WUtils`WUtils`CaptureFunctionCall[
             myFunc,
             HoldComplete[{myArg}],
             Print[myArg]
@@ -34,12 +19,12 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Private`addCaptureToDownValue[
+    WUtils`WUtils`Private`addCaptureToDownValue[
         HoldPattern[myFunc[myArg1_Integer, myArg2_String, myArg3:OptionsPattern[]]] :> 1
     ]
     ,
     HoldPattern[myFunc[myArg1_Integer, myArg2_String, myArg3:OptionsPattern[]]] :>
-        CalculateParse`GeneralLibrary`CaptureFunctionCall[
+        WUtils`WUtils`CaptureFunctionCall[
             myFunc,
             HoldComplete[{myArg1, myArg2, myArg3}],
             1
@@ -49,8 +34,8 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`ReplaceSymbolsUsingPatterns[
-        CalculateParse`GeneralLibrary`Private`addCaptureToDownValue[
+    WUtils`WUtils`ReplaceSymbolsUsingPatterns[
+        WUtils`WUtils`Private`addCaptureToDownValue[
             HoldPattern[myFunc[myArg, OptionsPattern[]]] :> Print[myArg]
         ],
         {
@@ -62,7 +47,7 @@ Test[
     HoldPattern[
         myFunc[myArg, bindingAddedDynamicallyByGetOptionsPatternBinding:OptionsPattern[]]
     ] :>
-        CalculateParse`GeneralLibrary`CaptureFunctionCall[
+        WUtils`WUtils`CaptureFunctionCall[
             myFunc,
             HoldComplete[{myArg, bindingAddedDynamicallyByGetOptionsPatternBinding}],
             Print[myArg]
@@ -72,9 +57,9 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Private`addCaptureToDownValue[
+    WUtils`WUtils`Private`addCaptureToDownValue[
         HoldPattern[myFunc[myArg1_Integer, myArg2_String, myArg3:OptionsPattern[]]] :>
-            CalculateParse`GeneralLibrary`CaptureFunctionCall[
+            WUtils`WUtils`CaptureFunctionCall[
                 myFunc,
                 HoldComplete[{myArg1, myArg2, myArg3}],
                 1
@@ -82,7 +67,7 @@ Test[
     ]
     ,
     HoldPattern[myFunc[myArg1_Integer, myArg2_String, myArg3:OptionsPattern[]]] :>
-        CalculateParse`GeneralLibrary`CaptureFunctionCall[
+        WUtils`WUtils`CaptureFunctionCall[
             myFunc,
             HoldComplete[{myArg1, myArg2, myArg3}],
             1

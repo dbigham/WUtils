@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`FunctionWithNoArgs
+(* Tests for: WUtils`WUtils`FunctionWithNoArgs
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`FunctionWithNoArgs["myFunc[]"]
+    WUtils`WUtils`FunctionWithNoArgs["myFunc[]"]
     ,
     True
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`FunctionWithNoArgs["myFunc[arg]"]
+    WUtils`WUtils`FunctionWithNoArgs["myFunc[arg]"]
     ,
     False
     ,

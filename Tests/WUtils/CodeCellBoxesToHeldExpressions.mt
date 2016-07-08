@@ -1,4 +1,4 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`CodeCellBoxesToHeldExpressions
+(* Tests for: WUtils`WUtils`CodeCellBoxesToHeldExpressions
 
    Author: danielb
 *)

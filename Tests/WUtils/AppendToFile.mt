@@ -1,28 +1,13 @@
-(* Tests for: CalculateParse`GeneralLibrary`AppendToFile
+(* Tests for: WUtils`WUtils`AppendToFile
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`WithTemporaryFiles[
+    WUtils`WUtils`WithTemporaryFiles[
         {myFile = "abc\n\n\n\n"},
         (
-            CalculateParse`GeneralLibrary`AppendToFile[myFile, "NEW"];
+            WUtils`WUtils`AppendToFile[myFile, "NEW"];
             Import[myFile, "Text"]
         )
     ]
@@ -33,10 +18,10 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`WithTemporaryFiles[
+    WUtils`WUtils`WithTemporaryFiles[
         {myFile = "abc"},
         (
-            CalculateParse`GeneralLibrary`AppendToFile[myFile, "NEW"];
+            WUtils`WUtils`AppendToFile[myFile, "NEW"];
             Import[myFile, "Text"]
         )
     ]
@@ -47,10 +32,10 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`WithTemporaryFiles[
+    WUtils`WUtils`WithTemporaryFiles[
         {myFile = ""},
         (
-            CalculateParse`GeneralLibrary`AppendToFile[myFile, "NEW"];
+            WUtils`WUtils`AppendToFile[myFile, "NEW"];
             Import[myFile, "Text"]
         )
     ]

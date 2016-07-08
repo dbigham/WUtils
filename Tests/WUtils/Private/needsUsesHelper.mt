@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`Private`CalculateParse`GeneralLibrary`Private`needsUsesHelper
+(* Tests for: WUtils`WUtils`Private`needsUsesHelper
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`Private`needsUsesHelper[{HoldComplete[Needs["MyPackage`"]]}]
+    WUtils`WUtils`Private`needsUsesHelper[{HoldComplete[Needs["MyPackage`"]]}]
     ,
     {"MyPackage`"}
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Private`needsUsesHelper[
+    WUtils`WUtils`Private`needsUsesHelper[
         {HoldComplete[Needs["MyPackage1`"]], HoldComplete[Needs["MyPackage2`"]]}
     ]
     ,
@@ -37,7 +22,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Private`needsUsesHelper[
+    WUtils`WUtils`Private`needsUsesHelper[
         {
             HoldComplete[Needs["MyPackage1`"]],
             HoldComplete[Needs["MyPackage2`"]],
@@ -51,7 +36,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`Private`needsUsesHelper[{HoldComplete[1 + 1]}]
+    WUtils`WUtils`Private`needsUsesHelper[{HoldComplete[1 + 1]}]
     ,
     {}
     ,

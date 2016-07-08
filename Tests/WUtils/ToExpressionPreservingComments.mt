@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`ToExpressionPreservingComments
+(* Tests for: WUtils`WUtils`ToExpressionPreservingComments
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`ToExpressionPreservingComments[
+    WUtils`WUtils`ToExpressionPreservingComments[
         "(* Just testing *)\n\"a\"\n\"b\""
     ]
     ,
@@ -29,7 +14,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`ToExpressionPreservingComments[
+    WUtils`WUtils`ToExpressionPreservingComments[
         "(* Just testing *)\n1 + 1\n2 + 2"
     ]
     ,
@@ -39,7 +24,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`ToExpressionPreservingComments[
+    WUtils`WUtils`ToExpressionPreservingComments[
         "(* Just testing *)\n1 + 1\n2 + 2",
         "HoldResult" -> True
     ]
@@ -50,7 +35,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`ToExpressionPreservingComments[
+    WUtils`WUtils`ToExpressionPreservingComments[
         "myFunc[\"(* my comment *)\"]",
         "HoldResult" -> True
     ]
@@ -61,7 +46,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`ToExpressionPreservingComments[
+    WUtils`WUtils`ToExpressionPreservingComments[
         "<< CalculateParse`Prototype`VirtualAssistant`\nmyFunc[1, 2, 3]",
         "HoldResult" -> True
     ]
@@ -72,7 +57,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`ToExpressionPreservingComments[
+    WUtils`WUtils`ToExpressionPreservingComments[
         "{\n(* Just testing *)\n\"a\",\n\"b\"\n}",
         "AppendCommas" -> True
     ]

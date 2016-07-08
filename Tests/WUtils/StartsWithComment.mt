@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`StartsWithComment
+(* Tests for: WUtils`WUtils`StartsWithComment
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`StartsWithComment[
+    WUtils`WUtils`StartsWithComment[
         "(* Starts with comment. *)\nMyFunc[];"
     ]
     ,
@@ -29,7 +14,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`StartsWithComment["MyFunc[];"]
+    WUtils`WUtils`StartsWithComment["MyFunc[];"]
     ,
     False
     ,

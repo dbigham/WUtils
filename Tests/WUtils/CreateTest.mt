@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`CreateTest
+(* Tests for: WUtils`WUtils`CreateTest
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`CreateTest[
+    WUtils`WUtils`CreateTest[
         1 + 1,
         ToFileName[{$TemporaryDirectory}, "MyTestFile.m"],
         "TestId" -> "TESTID"
@@ -31,7 +16,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`CreateTest[
+    WUtils`WUtils`CreateTest[
         Unevaluated[Sequence[]],
         ToFileName[{$TemporaryDirectory}, "MyTestFile.m"],
         "TestId" -> "TESTID"
@@ -43,8 +28,8 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`CapturePrint[
-        CalculateParse`Prototype`VirtualAssistant`Utility`CreateTest[
+    WUtils`WUtils`CapturePrint[
+        WUtils`WUtils`CreateTest[
             1,
             "MyFile.m",
             "TestId" -> Missing[]
@@ -57,7 +42,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`CreateTest[
+    WUtils`WUtils`CreateTest[
         1 + 1,
         ToFileName[{$TemporaryDirectory}, "MyTestFile.m"],
         "TestId" -> "TESTID",

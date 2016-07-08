@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`InsertStringAfterMatch
+(* Tests for: WUtils`WUtils`InsertStringAfterMatch
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`InsertStringAfterMatch["abc def ghi", " 123", "def"]
+    WUtils`WUtils`InsertStringAfterMatch["abc def ghi", " 123", "def"]
     ,
     "abc def 123 ghi"
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`InsertStringAfterMatch["abc def ghi", " 123", "d"~~_~~"f"]
+    WUtils`WUtils`InsertStringAfterMatch["abc def ghi", " 123", "d"~~_~~"f"]
     ,
     "abc def 123 ghi"
     ,

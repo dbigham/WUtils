@@ -1,29 +1,13 @@
-(* Tests for: CalculateParse`GeneralLibrary`KeepRuleIfNotSequence
+(* Tests for: WUtils`WUtils`KeepRuleIfNotSequence
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
-(* When the optional element is matched, it results in a "OptionalSecondElement" option in the reuslt. *)
 Test[
     ReplaceAll[
         {"a", "b"},
         {x_, Repeated[y_, {0, 1}]} :>
-            {x, CalculateParse`GeneralLibrary`KeepRuleIfNotSequence["OptionalSecondElement" -> y]}
+            {x, WUtils`WUtils`KeepRuleIfNotSequence["OptionalSecondElement" -> y]}
     ]
     ,
     {"a", "OptionalSecondElement" -> "b"}
@@ -36,7 +20,7 @@ Test[
     ReplaceAll[
         {"a"},
         {x_, Repeated[y_, {0, 1}]} :>
-            {x, CalculateParse`GeneralLibrary`KeepRuleIfNotSequence["OptionalSecondElement" -> y]}
+            {x, WUtils`WUtils`KeepRuleIfNotSequence["OptionalSecondElement" -> y]}
     ]
     ,
     {"a"}

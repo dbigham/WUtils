@@ -1,22 +1,7 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`CouldBeWLSymbolQ
+(* Tests for: WUtils`WUtils`CouldBeWLSymbolQ
 
    Author: danielb
 *)
-
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
 
 Test[
     CouldBeWLSymbolQ["1"]
@@ -43,7 +28,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`CouldBeWLSymbolQ["#"]
+    WUtils`WUtils`CouldBeWLSymbolQ["#"]
     ,
     False
     ,
@@ -51,7 +36,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`CouldBeWLSymbolQ["1"]
+    WUtils`WUtils`CouldBeWLSymbolQ["1"]
     ,
     False
     ,

@@ -1,28 +1,12 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`StringToSymbol
+(* Tests for: WUtils`WUtils`StringToSymbol
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
-
 Test[
     Block[
         {$ContextPath = {"System`"}},
-        CalculateParse`Prototype`VirtualAssistant`Utility`StringToSymbol["toSingleLine"]
+        WUtils`WUtils`StringToSymbol["toSingleLine"]
     ]
     ,
     $Failed
@@ -32,22 +16,22 @@ Test[
 
 Test[
     Block[
-        {$ContextPath = {"CalculateParse`GeneralLibrary`", "System`"}},
-        CalculateParse`Prototype`VirtualAssistant`Utility`StringToSymbol["toSingleLine"]
+        {$ContextPath = {"WUtils`WUtils`", "System`"}},
+        WUtils`WUtils`StringToSymbol["toSingleLine"]
     ]
     ,
-    CalculateParse`GeneralLibrary`Private`toSingleLine
+    WUtils`WUtils`Private`toSingleLine
     ,
     TestID -> "StringToSymbol-20150131-09D87A"
 ]
 
 Test[
     Block[
-        {$ContextPath = {"CalculateParse`Prototype`VirtualAssistant`VaActions`", "System`"}},
-        CalculateParse`Prototype`VirtualAssistant`Utility`StringToSymbol["CreateIssueNotebook"]
+        {$ContextPath = {"WUtils`WUtils`", "System`"}},
+        WUtils`WUtils`StringToSymbol["CreateIssueNotebook"]
     ]
     ,
-    CalculateParse`Prototype`VirtualAssistant`VaActions`CreateIssueNotebook
+    WUtils`WUtils`CreateIssueNotebook
     ,
     TestID -> "StringToSymbol-20150131-7VZKZT"
 ]

@@ -1,26 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`UnitTestDirectory
+(* Tests for: WUtils`WUtils`UnitTestDirectory
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
-
 Test[
-    CalculateParse`GeneralLibrary`UnitTestDirectory["CalculateParse`LexiconLookup2`"]
+    WUtils`WUtils`UnitTestDirectory["CalculateParse`LexiconLookup2`"]
     ,
     FileNameJoin[
         {
@@ -36,8 +20,8 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`UnitTestDirectory[
-        "CalculateParse`Prototype`VirtualAssistant`VaActions`Private`"
+    WUtils`WUtils`UnitTestDirectory[
+        "WUtils`WUtils`Private`"
     ],
     "E:\\Users\\Daniel\\WolframWorkspaces\\Base2\\AlphaSource\\CalculateParse\\Prototype\\VirtualAssistant\\Tests\\UnitTests\\VaActions\\Private",
     TestID -> "UnitTestDirectory-20150202-WY4M5S"

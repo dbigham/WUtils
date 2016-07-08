@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`RowBoxesToString
+(* Tests for: WUtils`WUtils`RowBoxesToString
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RowBoxesToString[
+    WUtils`WUtils`RowBoxesToString[
         RowBox[{"(*"," ",RowBox[{"Test"," ",RowBox[{"comment","."}]}]," ","*)"}]
     ]
     ,
@@ -29,7 +14,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RowBoxesToString[
+    WUtils`WUtils`RowBoxesToString[
         RowBox[{RowBox[{"ReloadVirtualAssistantFiles","[","]"}],";"}]
     ]
     ,
@@ -39,7 +24,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RowBoxesToString[
+    WUtils`WUtils`RowBoxesToString[
         \(myFunc[\(1,\ 2,\ 3\)]\)
     ]
     ,
@@ -49,7 +34,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RowBoxesToString[
+    WUtils`WUtils`RowBoxesToString[
 	    RowBox[
 	        {
 	            RowBox[{"(*"," ",RowBox[{"Test"," ",RowBox[{"comment","."}]}]," ","*)"}],

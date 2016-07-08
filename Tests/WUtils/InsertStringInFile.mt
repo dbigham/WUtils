@@ -1,29 +1,14 @@
-(* Tests for: CalculateParse`GeneralLibrary`InsertStringInFile
+(* Tests for: WUtils`WUtils`InsertStringInFile
 
    Author: danielb
 *)
-
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
 
 Test[
     With[
         {file = FileNameJoin[{$TemporaryDirectory, "InsertStringInFile.m"}]},
         (
             Export[file, "line\nINSERT AFTER\nline", "String"];
-            CalculateParse`GeneralLibrary`InsertStringInFile[
+            WUtils`WUtils`InsertStringInFile[
                 file,
                 "\ninserted string",
                 "INSERT AFTER",
@@ -43,7 +28,7 @@ Test[
         {file = FileNameJoin[{$TemporaryDirectory, "InsertStringInFile.m"}]},
         (
             Export[file, "line\nINSERT BEFORE\nline", "String"];
-            CalculateParse`GeneralLibrary`InsertStringInFile[
+            WUtils`WUtils`InsertStringInFile[
                 file,
                 "inserted string\n",
                 "INSERT BEFORE",

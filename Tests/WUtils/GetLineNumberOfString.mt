@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`GetLineNumberOfString
+(* Tests for: WUtils`WUtils`GetLineNumberOfString
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`GetLineNumberOfString["abc", "b"]
+    WUtils`WUtils`GetLineNumberOfString["abc", "b"]
     ,
     1
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetLineNumberOfString["abc", "x"]
+    WUtils`WUtils`GetLineNumberOfString["abc", "x"]
     ,
     None
     ,
@@ -35,7 +20,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`GetLineNumberOfString["abc\ndef", "e"]
+    WUtils`WUtils`GetLineNumberOfString["abc\ndef", "e"]
     ,
     2
     ,

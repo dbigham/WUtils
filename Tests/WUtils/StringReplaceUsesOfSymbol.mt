@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`StringReplaceUsesOfSymbol
+(* Tests for: WUtils`WUtils`StringReplaceUsesOfSymbol
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`StringReplaceUsesOfSymbol[
+    WUtils`WUtils`StringReplaceUsesOfSymbol[
         "MyContext`MySymbol = 1",
         "MyContext`",
         "MySymbol",
@@ -33,7 +18,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`StringReplaceUsesOfSymbol[
+    WUtils`WUtils`StringReplaceUsesOfSymbol[
         "Options[MySymbol] = {}",
         "MyContext`",
         "MySymbol",
@@ -47,7 +32,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`StringReplaceUsesOfSymbol[
+    WUtils`WUtils`StringReplaceUsesOfSymbol[
         "MySymbol::blah = \"blah\"",
         "MyContext`",
         "MySymbol",

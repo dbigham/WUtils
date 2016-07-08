@@ -1,22 +1,7 @@
-(* Tests for: CalculateParse`GeneralLibrary`Private`CalculateParse`GeneralLibrary`Private`getPathRelativeToWorkbenchProjects
+(* Tests for: WUtils`WUtils`Private`getPathRelativeToWorkbenchProjects
 
    Author: danielb
 *)
-
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
 
 Test[
     Block[
@@ -24,7 +9,7 @@ Test[
             $WorkbenchProjects = {"Users\\Daniel\\WolframWorkspaces\\Base2\\Alpha"},
             CalculateScan`CommonSymbols`$AlphaRootDirectory = "E:\\Temp"
         },
-        CalculateParse`GeneralLibrary`Private`getPathRelativeToWorkbenchProjects[
+        WUtils`WUtils`Private`getPathRelativeToWorkbenchProjects[
             "Users\\Daniel\\WolframWorkspaces\\Base2\\Alpha\\Source\\CalculateParse\\GeneralLibrary.m"
         ]
     ]
@@ -40,7 +25,7 @@ Test[
             $WorkbenchProjects = {"Users\\Daniel\\git\\NGParser"},
             CalculateScan`CommonSymbols`$AlphaRootDirectory = "E:\\Temp"
         },
-        CalculateParse`GeneralLibrary`Private`getPathRelativeToWorkbenchProjects[
+        WUtils`WUtils`Private`getPathRelativeToWorkbenchProjects[
             "Users\\Daniel\\git\\NGParser\\NGParser\\Utility.m"
         ]
     ]
@@ -53,7 +38,7 @@ Test[
 Test[
     Block[
         {$WorkbenchProjects = {"E:\\Users\\Daniel\\git\\generalutilities"}},
-        CalculateParse`GeneralLibrary`Private`getPathRelativeToWorkbenchProjects[
+        WUtils`WUtils`Private`getPathRelativeToWorkbenchProjects[
             "E:\\Users\\Daniel\\git\\generalutilities\\GeneralUtilities"
         ]
     ]
@@ -66,7 +51,7 @@ Test[
 Test[
     Block[
         {$WorkbenchProjects = {"E:\\Users\\Daniel\\git\\generalutilities"}},
-        CalculateParse`GeneralLibrary`Private`getPathRelativeToWorkbenchProjects[
+        WUtils`WUtils`Private`getPathRelativeToWorkbenchProjects[
             "E:\\Users\\Daniel\\git\\generalutilities"
         ]
     ]

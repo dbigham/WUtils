@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`VaActions`Private`CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth
+(* Tests for: WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         0,
         500,
         1000
@@ -31,7 +16,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         500,
         500,
         1000
@@ -43,7 +28,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         250,
         500,
         1000
@@ -55,7 +40,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         750,
         500,
         1000
@@ -67,7 +52,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         1000,
         500,
         1000
@@ -79,7 +64,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         1500,
         500,
         1000
@@ -91,7 +76,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         2000,
         500,
         1000
@@ -103,7 +88,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         0,
         800,
         1000
@@ -115,7 +100,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         200,
         800,
         1000
@@ -127,7 +112,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         600,
         800,
         1000
@@ -139,7 +124,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         1000,
         800,
         1000
@@ -151,7 +136,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         1200,
         800,
         1000
@@ -163,7 +148,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         2000,
         800,
         1000
@@ -176,7 +161,7 @@ Test[
 
 (* Just left of the screen's left border. *)
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         1950,
         800,
         1000
@@ -188,7 +173,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`notebookXInUnitsOfScreenWidth[
+    WUtils`WUtils`Private`notebookXInUnitsOfScreenWidth[
         2452.,
         1575,
         1920

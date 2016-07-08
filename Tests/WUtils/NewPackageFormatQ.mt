@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`NewPackageFormatQ
+(* Tests for: WUtils`WUtils`NewPackageFormatQ
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`NewPackageFormatQ[$TestingTools, "UseMemoization" -> False]
+    WUtils`WUtils`NewPackageFormatQ[$TestingTools, "UseMemoization" -> False]
     ,
     True
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`NewPackageFormatQ[
+    WUtils`WUtils`NewPackageFormatQ[
         FindFile["Daniel`Tools`"],
         "UseMemoization" -> False
     ]
@@ -39,10 +24,10 @@ Test[
 
 Test[
     {
-        CalculateParse`GeneralLibrary`NewPackageFormatQ[$TestingTools],
-        CalculateParse`GeneralLibrary`NewPackageFormatQ[$TestingTools],
+        WUtils`WUtils`NewPackageFormatQ[$TestingTools],
+        WUtils`WUtils`NewPackageFormatQ[$TestingTools],
         Less[
-            AbsoluteTiming[CalculateParse`GeneralLibrary`NewPackageFormatQ[$TestingTools]][[1]],
+            AbsoluteTiming[WUtils`WUtils`NewPackageFormatQ[$TestingTools]][[1]],
             0.001
         ]
     }

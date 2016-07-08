@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`VaActions`Private`CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper
+(* Tests for: WUtils`WUtils`Private`moveNotebookHelper
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+    WUtils`WUtils`Private`moveNotebookHelper[
         "Right",
         0,
         500,
@@ -35,7 +20,7 @@ Test[
 Test[
     Block[
         {$NumberOfDisplays = 2},
-        CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+        WUtils`WUtils`Private`moveNotebookHelper[
             "Right",
             500,
             500,
@@ -52,7 +37,7 @@ Test[
 Test[
     Block[
         {$NumberOfDisplays = 2},
-        CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+        WUtils`WUtils`Private`moveNotebookHelper[
             "Right",
             1000,
             500,
@@ -70,7 +55,7 @@ Test[
 Test[
     Block[
         {$NumberOfDisplays = 2},
-        CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+        WUtils`WUtils`Private`moveNotebookHelper[
             "Right",
             1500,
             500,
@@ -86,7 +71,7 @@ Test[
 
 (* Just off of the screen to the left. *)
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+    WUtils`WUtils`Private`moveNotebookHelper[
         "Right",
         -10,
         500,
@@ -103,7 +88,7 @@ Test[
 Test[
     Block[
         {$NumberOfDisplays = 1},
-        CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+        WUtils`WUtils`Private`moveNotebookHelper[
             "Right",
             500,
             500,
@@ -120,7 +105,7 @@ Test[
 Test[
     Block[
         {$NumberOfDisplays = 3},
-        CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+        WUtils`WUtils`Private`moveNotebookHelper[
             "Right",
             1500,
             500,
@@ -137,7 +122,7 @@ Test[
 Test[
     Block[
         {$NumberOfDisplays = 2},
-        CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+        WUtils`WUtils`Private`moveNotebookHelper[
             "Left",
             1200,
             800,
@@ -153,7 +138,7 @@ Test[
 
 (* Regression test. *)
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+    WUtils`WUtils`Private`moveNotebookHelper[
         "Left",
         2705.,
         1595,
@@ -169,7 +154,7 @@ Test[
 Test[
     Block[
         {$NumberOfDisplays = 2},
-        CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+        WUtils`WUtils`Private`moveNotebookHelper[
             "Right",
             0,
             1000,
@@ -186,7 +171,7 @@ Test[
 Test[
     Block[
         {$NumberOfDisplays = 2},
-        CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+        WUtils`WUtils`Private`moveNotebookHelper[
             "Right",
             1000,
             1000,
@@ -203,7 +188,7 @@ Test[
 Test[
     Block[
         {$NumberOfDisplays = 2},
-        CalculateParse`Prototype`VirtualAssistant`VaActions`Private`moveNotebookHelper[
+        WUtils`WUtils`Private`moveNotebookHelper[
             "Left",
             1000,
             1000,

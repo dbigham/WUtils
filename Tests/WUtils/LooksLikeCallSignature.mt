@@ -1,22 +1,7 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`VaActions`LooksLikeCallSignature
+(* Tests for: WUtils`WUtils`LooksLikeCallSignature
 
    Author: danielb
 *)
-
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
 
 Test[
     LooksLikeCallSignature[HoldComplete[CouldBeWLSymbolQ["test"]], CouldBeWLSymbolQ]
@@ -35,11 +20,11 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`VaActions`LooksLikeCallSignature[
+    WUtils`WUtils`LooksLikeCallSignature[
         HoldComplete[
-            CalculateParse`GeneralLibrary`GetVariablePossiblyFromParentPackage[context, symbolName]
+            WUtils`WUtils`GetVariablePossiblyFromParentPackage[context, symbolName]
         ],
-        CalculateParse`GeneralLibrary`GetVariablePossiblyFromParentPackage
+        WUtils`WUtils`GetVariablePossiblyFromParentPackage
     ]
     ,
     True

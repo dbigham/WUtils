@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`RemoveRelatedIfNotUsed
+(* Tests for: WUtils`WUtils`RemoveRelatedIfNotUsed
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RemoveRelatedIfNotUsed[
+    WUtils`WUtils`RemoveRelatedIfNotUsed[
         "(*!\n    \\function RemoveRelatedIfNotUsed\n    \n    \\calltable\n        RemoveRelatedIfNotUsed[mathdoc] '' removes the \"related '\" boilerplate text from the mathdoc if it didn't end up being filled out.\n    \n    \\related '\n    \n    \\maintainer danielb\n*)"
     ]
     ,
@@ -29,7 +14,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RemoveRelatedIfNotUsed[
+    WUtils`WUtils`RemoveRelatedIfNotUsed[
         "(*!\n    \\function RemoveRelatedIfNotUsed\n    \n    \\calltable\n        RemoveRelatedIfNotUsed[mathdoc] '' removes the \"related '\" boilerplate text from the mathdoc if it didn't end up being filled out.\n    \n    \\related '\n*)"
     ]
     ,
@@ -39,7 +24,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RemoveRelatedIfNotUsed[
+    WUtils`WUtils`RemoveRelatedIfNotUsed[
         "(*!\n    \\function RemoveRelatedIfNotUsed\n    \n    \\calltable\n        RemoveRelatedIfNotUsed[mathdoc] '' removes the \"related '\" boilerplate text from the mathdoc if it didn't end up being filled out.\n    \n\tExamples:\n\n\tTODO\n\n    \\related '\n    \n    \\maintainer danielb\n*)"
     ]
     ,
@@ -49,7 +34,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RemoveRelatedIfNotUsed[
+    WUtils`WUtils`RemoveRelatedIfNotUsed[
         "(*!\n    \\function RemoveRelatedIfNotUsed\n    \n    \\calltable\n        RemoveRelatedIfNotUsed[mathdoc] '' removes the \"related '\" boilerplate text from the mathdoc if it didn't end up being filled out.\n\n    \\related '\n    \\maintainer danielb\n*)"
     ]
     ,
@@ -59,7 +44,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RemoveRelatedIfNotUsed[
+    WUtils`WUtils`RemoveRelatedIfNotUsed[
         "(*!\n    \\function RemoveRelatedIfNotUsed\n    \n    \\calltable\n        RemoveRelatedIfNotUsed[mathdoc] '' removes the \"related '\" boilerplate text from the mathdoc if it didn't end up being filled out.\n\n    \\maintainer danielb\n\t\\related '\n*)"
     ]
     ,
@@ -69,7 +54,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RemoveRelatedIfNotUsed[
+    WUtils`WUtils`RemoveRelatedIfNotUsed[
         "(*!\n    \\function RemoveRelatedIfNotUsed\n    \n    \\calltable\n        RemoveRelatedIfNotUsed[mathdoc] '' removes the \"related '\" boilerplate text from the mathdoc if it didn't end up being filled out.\n\n\t\\related 'donotremove\n*)"
     ]
     ,
@@ -79,7 +64,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`Prototype`VirtualAssistant`Utility`RemoveRelatedIfNotUsed[
+    WUtils`WUtils`RemoveRelatedIfNotUsed[
         "(* my comment *)"
     ]
     ,

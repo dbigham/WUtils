@@ -1,25 +1,10 @@
-(* Tests for: CalculateParse`GeneralLibrary`DeCamelCase
+(* Tests for: WUtils`WUtils`DeCamelCase
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`DeCamelCase["JustTesting"]
+    WUtils`WUtils`DeCamelCase["JustTesting"]
     ,
     "Just Testing"
     ,
@@ -27,7 +12,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`DeCamelCase["JustTestingAgain"]
+    WUtils`WUtils`DeCamelCase["JustTestingAgain"]
     ,
     "Just Testing Again"
     ,
@@ -35,7 +20,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`DeCamelCase["justTesting"]
+    WUtils`WUtils`DeCamelCase["justTesting"]
     ,
     "Just Testing"
     ,
@@ -43,7 +28,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`DeCamelCase["notcamelcased"]
+    WUtils`WUtils`DeCamelCase["notcamelcased"]
     ,
     "notcamelcased"
     ,
@@ -51,7 +36,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`DeCamelCase["not camel cased"]
+    WUtils`WUtils`DeCamelCase["not camel cased"]
     ,
     "not camel cased"
     ,

@@ -1,26 +1,11 @@
-(* Tests for: CalculateParse`Prototype`VirtualAssistant`Utility`EnsureDefined
+(* Tests for: WUtils`WUtils`EnsureDefined
 
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`CapturePrint[
-        CalculateParse`Prototype`VirtualAssistant`Utility`EnsureDefined[
+    WUtils`WUtils`CapturePrint[
+        WUtils`WUtils`EnsureDefined[
             myUndefinedVar,
             "Description of variable goes here."
         ]
@@ -41,7 +26,7 @@ Test[
 Test[
     Block[
         {Print = Null},
-        CalculateParse`Prototype`VirtualAssistant`Utility`EnsureDefined[
+        WUtils`WUtils`EnsureDefined[
             myUndefinedVar,
             "Description of variable goes here."
         ]

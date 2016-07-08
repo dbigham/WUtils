@@ -1,4 +1,4 @@
-(* Tests for: CalculateParse`GeneralLibrary`ImmediateFunctionDependencies
+(* Tests for: WUtils`WUtils`ImmediateFunctionDependencies
 
    Author: danielb
 *)

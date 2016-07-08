@@ -1,4 +1,4 @@
-(* Tests for: CalculateParse`GeneralLibrary`ContextToFile
+(* Tests for: WUtils`WUtils`ContextToFile
 
    Ignored by QA because I don't think they have Alpha on the
    $Path, rendering FindFile useless.
@@ -6,23 +6,8 @@
    Author: danielb
 *)
 
-TestExecute[$TestAbortTime = 600]
-
-TestExecute[
-    If[TrueQ[Quiet[Get["CalculateTestEnvironment.m"]]===$Failed],
-        Get[
-        StringCases[$CurrentFile,
-        inputfile:(StartOfString~~___~~$PathnameSeparator~~"Tests"~~$PathnameSeparator)~~___
-        :> inputfile<>"Utilities"<>$PathnameSeparator<>"CalculateTestEnvironment.m"][[1]]
-        ]]
-]
-
-TestExecute[$CalculateDataPacletsInit = False;  << "CalculateLoader`"]
-
-TestExecute[$TestAbortTime = $TestAbortTimeInitial]
-
 Test[
-    CalculateParse`GeneralLibrary`ContextToFile["CalculateParse`GeneralLibrary`"]
+    WUtils`WUtils`ContextToFile["WUtils`WUtils`"]
     ,
     ToFileName[
         {CalculateScan`CommonSymbols`$AlphaRootDirectory, "Source", "CalculateParse"},
@@ -33,7 +18,7 @@ Test[
 ]
 
 Test[
-    CalculateParse`GeneralLibrary`ContextToFile["CalculateParse`GeneralLibrary`Private`"]
+    WUtils`WUtils`ContextToFile["WUtils`WUtils`Private`"]
     ,
     ToFileName[
         {CalculateScan`CommonSymbols`$AlphaRootDirectory, "Source", "CalculateParse"},
@@ -45,7 +30,7 @@ Test[
 
 (* My comment *)
 Test[
-    CalculateParse`GeneralLibrary`ContextToFile["CalculateParse`JavaTokenizer`"]
+    WUtils`WUtils`ContextToFile["CalculateParse`JavaTokenizer`"]
     ,
     FileNameJoin[
         {
