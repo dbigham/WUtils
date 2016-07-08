@@ -5070,7 +5070,7 @@ UnitTestTemplate[funcSymbol_, file_] :=
 		relativePath = MakePathRelativeToPaths[file];
 		
 		If [!StringQ[relativePath],
-			Print["UnitTestTemplate: Couldn't determine path relative to Alpha for file: " <> file];
+			Print["UnitTestTemplate: Couldn't determine relative path for file: " <> file];
 			Return[$Failed];
 		];
 
@@ -5519,9 +5519,6 @@ RemoveHoldFromIndentedString[str_, holdSymbol_String:"HoldComplete"] :=
 	
 	\calltable
 		AddTestToFile[e, file] '' given an expression to evaluate and a test file, adds a test to the file. Uses the evaluated form of the expression as the expected value. Also adds a test cell to the notebook above the code cell that corresponds to the test to provide buttons like 'Update', 'Open in Workbench', etc.
-	
-	Likes in Utility.m so that it can be used by VaActions.m without Needs'ing Testing.m, which
-	would load Examples.m, which would load Alpha. (and we don't want VaActions to load Alpha)
 	
 	\related 'CreateTest
 	
