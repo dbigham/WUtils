@@ -416,6 +416,16 @@ FilesContaining::usage = "FilesContaining  "
 
 SpacedRow::usage = "SpacedRow  "
 
+WithTemporaryFiles::usage = "WithTemporaryFiles  "
+
+TemporaryFile::usage = "TemporaryFile  "
+
+ReplaceHeldExpressions::usage = "ReplaceHeldExpressions  "
+
+TemporaryFilesBlock::usage = "TemporaryFilesBlock  "
+
+TemporaryDirectory::usage = "TemporaryDirectory  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -12324,6 +12334,321 @@ displayFileList[files_, OptionsPattern[]] :=
 	\maintainer danielb
 *)
 SpacedRow[rows_] := Row[Riffle[rows, " "]]
+
+(*!
+	\function WithTemporaryFiles
+	
+	\calltable
+		WithTemporaryFiles[{x = x0, y = y0, ...}, expr] '' for each symbol assignment, writes the assignment value to a new temporary file and assigns the temporary file name to the given symbol, then acting like 'With', replaces any uses of the given symbol in the inner expression with the file path. Once the inner expression has finished evaluating, the temporary files are cleaned up. Useful when unit testing functions that act on files.
+
+	Example:
+	
+	WithTemporaryFiles[
+		{a = "1"},
+		Wrapper[a]
+	]
+	
+	===
+	
+	Wrapper["E:\\Users\\Daniel\\AppData\\Local\\Temp\\m-bcec1816-bd2b-4cbb-9dc6-99c1583b4587"]
+	
+	Example:
+	
+	WithTemporaryFiles[
+		{a = "1"},
+		Get[a]
+	]
+	
+	===
+	
+	"1"
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`WithTemporaryFiles]
+
+	\maintainer danielb
+*)
+Clear[WithTemporaryFiles];
+Attributes[WithTemporaryFiles] = {HoldAllComplete};
+Clear[WithTemporaryFiles];
+Options[WithTemporaryFiles] =
+{
+	"Directory" -> Automatic				(*< The directory in which to create the temporary files. If Automatic, then $TemporaryDirectory is used. *)
+};
+WithTemporaryFiles[assignmentsIn_List, expr_, OptionsPattern[]] :=
+	Module[{assignments, heldExpr = HoldComplete[expr], temporaryHoldComplete,
+			temporaryFiles = {}, symbolToTemporaryFileMapping, dir},
+			
+		dir = OptionValue["Directory"];
+		If [dir === Automatic,
+			dir = $TemporaryDirectory;
+		];
+		
+		Attributes[temporaryHoldComplete] = {HoldAllComplete};
+		
+		If [!MatchQ[HoldComplete[assignmentsIn], HoldComplete[{Repeated[Set[_Symbol, _]]}]],
+			Print["WithTemporaryFiles: Invalid assignments: ", Indent2[HoldComplete[assignmentsIn], "RemoveHold" -> True]];
+			$Failed
+			,
+			assignments = HeldListToListOfHeld[HoldComplete[assignmentsIn]];
+
+			(* Create a mapping from With symbols to temporary files, and write
+			   the desired expression into the temporary files. *)
+			symbolToTemporaryFileMapping =
+				Function[{assignment},
+					With[{newTemporaryFile = TemporaryFile["Directory" -> dir]},
+
+						(* Create the list this way since Append/AppendTo are slow.
+						   Not that it matters much for small lists like this. *)
+						temporaryFiles = {temporaryFiles, newTemporaryFile};
+					   
+						assignment /. HoldComplete[Set[symbol_, value_]] :>
+							(
+							Export[newTemporaryFile, value, "Text"];
+							HoldComplete[symbol] -> newTemporaryFile
+							)
+					]
+			   ] /@ assignments;
+			   
+		   (* Replace instances of the 'With' symbols with their corresponding
+			  temporary file. *)
+		   heldExpr = ReplaceHeldExpressions[heldExpr, symbolToTemporaryFileMapping, _Symbol];
+		   
+		   (* Evaluate the expression, capture the result, cleanup the temporary
+			  files, and then returned the evaluated expression. *)
+		   With[{res = ReleaseHold[heldExpr]},
+			   DeleteFile /@ Flatten[temporaryFiles];
+			   res
+		   ]
+		]
+	]
+
+(*!
+	\function TemporaryFile
+	
+	\calltable
+		TemporaryFile[] '' returns the name of a new temporary file created in the $TemporaryDirectory.
+	
+	Examples:
+	
+	TemporaryFile[] === "E:\\Users\\Daniel\\AppData\\Local\\Temp\\m-1b608483-cdec-4a13-9fbd-0f07a03c856d"
+	
+	\related 'TemporaryDirectory
+	
+	\maintainer danielb
+*)
+Clear[TemporaryFile];
+Options[TemporaryFile] =
+{
+	"Extension" -> None,					(*< The file extension to use. *)
+	"Directory" -> Automatic				(*< The directory in which to create the temporary files. If Automatic, then $TemporaryDirectory is used. *)
+};
+TemporaryFile[OptionsPattern[]] :=
+	Module[{
+			tempFile,
+			ext =
+				If [OptionValue["Extension"] =!= None,
+					If [!StringTake[OptionValue["Extension"], 1] === ".",
+						".",
+						""
+					] <> OptionValue["Extension"]
+					,
+					""
+				]
+		   },
+		
+		tempFile = Close[OpenWrite[]];
+		
+		If [OptionValue["Directory"] =!= Automatic && OptionValue["Directory"] =!= $TemporaryDirectory,
+			With[{path = FileNameJoin[{OptionValue["Directory"], FileNameTake[tempFile, -1] <> ext}]},
+				RenameFile[
+					tempFile,
+					path
+				];
+				path
+			]
+			,
+			If [ext =!= "",
+			   With[{path = tempFile <> ext},
+				   RenameFile[tempFile, path];
+				   path
+			   ]
+			   ,
+			   tempFile
+			]
+		]
+	]
+
+(*!
+	\function ReplaceHeldExpressions
+	
+	\calltable
+		ReplaceHeldExpressions[expr, replacementRules, pattern] '' like Replace, this function replaces occurrences in expr of the given replacement rules. However, the left-hand-sides of the replacement rules are to be wrapped in HoldComplete, so that they can be things that would otherwise evaluate. The sub-expressions to consider replacing are specified via a third argument, which specifies a pattern.
+
+	Examples:
+	
+	ReplaceHeldExpressions[
+		HoldComplete[1 + 1, 2 + 2, 3 + 3],
+		{HoldComplete[1 + 1] -> "replaced"},
+		_Plus
+	]
+
+	===
+
+	HoldComplete[HoldComplete["replaced", 2 + 2, 3 + 3]]
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`ReplaceHeldExpressions]
+
+	\maintainer danielb
+*) 
+Clear[ReplaceHeldExpressions];
+ReplaceHeldExpressions[expr_, replacementRules_List, pattern_] :=
+	Module[{heldExpr = HoldComplete[expr], temporaryHoldComplete},
+		
+		Attributes[temporaryHoldComplete] = {HoldAllComplete};
+
+		(* Process replacement rules one by one. *)
+		Function[{replacementRule},
+			   
+				replacementRule /. (Rule | RuleDelayed)[HoldComplete[lhs_], rhs_] :>
+					(
+					(* Make the replacements for the current replacement rule. *)
+					heldExpr =
+						Replace[
+							heldExpr,
+							binding:pattern :>
+								(
+								With[{replaceRes =
+										(
+										If [HoldComplete[binding] === HoldComplete[lhs],
+											rhs
+											,
+											(* Whoops, this didn't match the current replacement
+											   rule. Put it back, wrapped in something that
+											   will prevent it from evaluating, and we'll
+											   remove the temporary wrapper below. *)
+											temporaryHoldComplete[binding]
+										]
+										)
+									 },
+									 
+									 replaceRes /; True
+								]
+								),
+							Infinity
+						];
+					)
+					
+		   ] /@ replacementRules;
+		   
+		(* Temove any temporary hold wrappers that we added. *)
+		ReleaseHold[
+			Replace[heldExpr, temporaryHoldComplete[inner_] :> inner, Infinity]
+		]
+	]
+
+(*!
+	\function TemporaryFilesBlock
+	
+	\calltable
+		TemporaryFilesBlock[dir, files, expr] '' given a directory and a list of rules with LHS specifying a file name and RHS specifying file contents, creates the given files, evaluates the specified expression, and then cleans up the temporary files.
+		TemporaryFilesBlock[files, expr] '' given a list of rules with LHS specifying a file name and RHS specifying file contents, creates the given files in a new temporary directory, evaluates the specified expression, and then cleans up the temporary files and temporary directory. Replace any instances of "$TemporaryDirectory$" in the expression with the temporary directory's path.
+
+	Examples:
+	
+	TemporaryFilesBlock[
+		$TemporaryDirectory,
+		{"MyFile1.m" -> "a", "MyFile2.m" -> "b"},
+		{
+			Get[FileNameJoin[{$TemporaryDirectory, "MyFile1.m"}]],
+			Get[FileNameJoin[{$TemporaryDirectory, "MyFile2.m"}]]
+		}
+	]
+
+	===
+
+	{"a", "b"}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`TemporaryFilesBlock]
+
+	\maintainer danielb
+*)
+Clear[TemporaryFilesBlock];
+Attributes[TemporaryFilesBlock] = {HoldRest};
+TemporaryFilesBlock[dir_String, files_List, expr_] :=
+	Module[{fileName, fileContents, filePath, filePaths = {}},
+		
+		If [!FileExistsQ[dir],
+			CreateDirectory[dir, CreateIntermediateDirectories -> True];
+		];
+		
+		If [!DirectoryQ[dir],
+			Print["TemporaryFilesBlock: The specified directory isn't a directory: ", InputForm[dir]];
+			Return[$Failed];
+		];
+		
+		Function[{file},
+			
+			{fileName, fileContents} = List @@ file;
+			
+			filePath = FileNameJoin[{dir, fileName}];
+			
+			filePaths = {filePaths, filePath};
+			
+			Export[filePath, fileContents, "Text"];
+			
+		] /@ files;
+		
+		With[{res = expr},
+			DeleteFile /@ Flatten[filePaths];
+			
+			res
+		]
+	]
+
+TemporaryFilesBlock[files_List, expr_, tempDirName_String:Null] :=
+	Module[{expr2 = HoldComplete[expr]},
+		With[{tempDir = TemporaryDirectory[tempDirName]},
+			
+			expr2 = Replace[expr2, "$TemporaryDirectory$" :> tempDir, Infinity];
+		
+			expr2 /. HoldComplete[inner_] :>
+				With[{res = TemporaryFilesBlock[tempDir, files, inner]},
+					DeleteDirectory[tempDir];
+					res
+				]
+		]
+	]
+
+(*!
+	\function TemporaryDirectory
+	
+	\calltable
+		TemporaryDirectory[] '' returns the path of a new temporary directory created in $TemporaryDirectory.
+		TemporaryDirectory[name] '' returns the path of a new temporary directory created in $TemporaryDirectory with directory name 'name'.
+	
+	\related 'TemporaryFile
+	
+	\maintainer danielb
+*)
+TemporaryDirectory[dirName_:Null] :=
+	Module[{path = TemporaryFile[]},
+		If [dirName === Null,
+			DeleteFile[path];
+			CreateDirectory[path];
+			path
+			,
+			DeleteFile[path];
+			path = FileNameJoin[{path, dirName}];
+			CreateDirectory[path];
+			path
+		]
+	]
 
 End[]
 
