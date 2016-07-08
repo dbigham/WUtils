@@ -114,8 +114,6 @@ CodeCellBoxesToHeldExpressions::usage = "CodeCellBoxesToHeldExpressions  "
 
 RowBoxesToString::usage = "RowBoxesToString  "
 
-Indent3::usage = "Indent3  "
-
 ToExpressionPreservingComments::usage = "ToExpressionPreservingComments  "
 
 ReplaceCommentsWithExpressions::usage = "ReplaceCommentsWithExpressions  "
