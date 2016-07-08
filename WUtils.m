@@ -413,6 +413,8 @@ Attributes[XPrint] = {HoldAllComplete};
 	  infix operator. ex. MyFunc[] := "(" | ")"
 	- That said, it would be easy to fix the case where the infix operator
 	  occurs on the same line as ':='. (TODO)
+	- If you have something like Func[1][[1]], then the [[1]] is ignored because
+	  this function is happy to have found Func[1].
 	
 	Examples:
 	
@@ -8215,7 +8217,7 @@ closingBraceLookup["("] = ")"
 	\maintainer danielb
 *)
 GetLeftWhitespace[str_, pos_] :=
-	StringCases[StringTake[str, pos - 1], RegularExpression["[ \t]*$"]]
+	StringCases[StringTake[str, pos - 1], RegularExpression["[ \t]*$"]][[1]]
 
 (*!
 	\function GetReloadLine
