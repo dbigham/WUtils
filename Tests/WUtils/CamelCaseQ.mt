@@ -34,3 +34,19 @@ Test[
     ,
     TestID -> "CamelCaseQ-20160119-E87GI1"
 ]
+
+Test[
+	WUtils`WUtils`CamelCaseQ["JustTestingABC"]
+	,
+	True
+	,
+	TestID -> "CamelCaseQ-20160926-P1O6ZA"
+]
+
+Test[
+	WUtils`WUtils`CamelCaseQ["justTestingABC"]
+	,
+	True
+	,
+	TestID -> "CamelCaseQ-20160926-205TD4"
+]

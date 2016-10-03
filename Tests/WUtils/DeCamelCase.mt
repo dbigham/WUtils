@@ -42,3 +42,19 @@ Test[
     ,
     TestID -> "DeCamelCase-20160119-M6K4TR"
 ]
+
+Test[
+	WUtils`WUtils`DeCamelCase["JustTestingABC"]
+	,
+	"Just Testing ABC"
+	,
+	TestID -> "DeCamelCase-20160926-1B4HQZ"
+]
+
+Test[
+	WUtils`WUtils`DeCamelCase["JustTesting123"]
+	,
+	"Just Testing 123"
+	,
+	TestID -> "DeCamelCase-20160926-PXJFY7"
+]

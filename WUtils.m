@@ -1,5 +1,7 @@
 BeginPackage["WUtils`WUtils`"]
 
+Needs["JLink`"];
+
 ReloadWUtils::usage = "ReloadWUtils  "
 
 GetFunctionSource::usage = "GetFunctionSource  "
@@ -427,6 +429,20 @@ TemporaryFilesBlock::usage = "TemporaryFilesBlock  "
 TemporaryDirectory::usage = "TemporaryDirectory  "
 
 StringToSymbol::usage = "StringToSymbol  "
+
+CapturePrint::usage = "CapturePrint  "
+
+TestHead::usage = "TestHead  "
+
+EditFile::usage = "EditFile  "
+
+ResolveFile::usage = "ResolveFile  "
+
+Person::usage = "Person  "
+
+SetEvaluationTarget::usage = "SetEvaluationTarget  "
+
+EvaluateEvaluationTarget::usage = "EvaluateEvaluationTarget  "
 
 Begin["`Private`"]
 
@@ -7358,7 +7374,7 @@ CreateIssueNotebook[opts:OptionsPattern[]] :=
 
 		If [dir === Automatic,
 			If [!IssuesDirectoryDefined[], Return[$Failed]];
-			dir = Global`$IssuesDirectory;
+			dir = Global`$NotebookDirectory;
 		];
 		
 		path = ToFileName[{dir}, name <> ".nb"];
@@ -7472,7 +7488,7 @@ ResolveIssueNotebook[nameIn_] :=
 	Module[{dir, dir2, name = nameIn, file, nameWithoutExtension},
 		
 		If [!IssuesDirectoryDefined[], Return[$Failed]];
-		dir = Global`$IssuesDirectory;
+		dir = Global`$NotebookDirectory;
 
 		If [!StringMatchQ[name, __ ~~ ".nb"],
 			nameWithoutExtension = name;
@@ -7559,7 +7575,7 @@ ResolveIssueNotebook[nameIn_] :=
 	\function IssuesDirectoryDefined
 	
 	\calltable
-		IssuesDirectoryDefined[] '' ensure the $IssuesDirectory is defined, exists, and is a directory.
+		IssuesDirectoryDefined[] '' ensure the $NotebookDirectory is defined, exists, and is a directory.
 	
 	This global variable defines where we should create new working notebooks.
 	(and the directories that contain them)
@@ -7567,16 +7583,16 @@ ResolveIssueNotebook[nameIn_] :=
 	\maintainer danielb
 *)
 IssuesDirectoryDefined[] :=
-	If [!StringQ[Global`$IssuesDirectory],
-		Print["$IssuesDirectory must be defined. It specifies where new notebooks/directories should be created."];
+	If [!StringQ[Global`$NotebookDirectory],
+		Print["$NotebookDirectory must be defined. It specifies where new notebooks/directories should be created."];
 		False
 		,
-		If [!FileExistsQ[Global`$IssuesDirectory],
-			Print["$IssuesDirectory does not exist. (" <> Global`$IssuesDirectory <> ")"];
+		If [!FileExistsQ[Global`$NotebookDirectory],
+			Print["$NotebookDirectory does not exist. (" <> Global`$NotebookDirectory <> ")"];
 			False
 			,
-			If [!DirectoryQ[Global`$IssuesDirectory],
-				Print["$IssuesDirectory exists but is not a directory. (" <> Global`$IssuesDirectory <> ")"];
+			If [!DirectoryQ[Global`$NotebookDirectory],
+				Print["$NotebookDirectory exists but is not a directory. (" <> Global`$NotebookDirectory <> ")"];
 				False
 				,
 				True
@@ -7806,7 +7822,8 @@ NotebookTypeToDirectory[_] := Automatic;
 Clear[OpenNotebook];
 Options[OpenNotebook] =
 {
-	"Evaluate" -> False		(*< evaluate the notebook's contents? Not compatible with non-default MathematicaVersion option. *)
+	"Evaluate" -> False,	(*< evaluate the notebook's contents? Not compatible with non-default MathematicaVersion option. *)
+	"Return" -> False		(*< return the notebook? *)
 };
 OpenNotebook[pathIn_, opts:OptionsPattern[]] :=
 	Module[{nb = Null, path},
@@ -7835,7 +7852,9 @@ OpenNotebook[pathIn_, opts:OptionsPattern[]] :=
 			SelectionEvaluate[nb];
 		];
 		
-		nb
+		If [TrueQ[OptionValue["Return"]],
+			nb
+		]
 	];
 
 PrintAndDisplayError[args___] :=
@@ -9608,7 +9627,7 @@ CreateNotebook2[name_String, opts:OptionsPattern[]] :=
 				dir = OptionValue["Directory"];
 				,
 				If [!IssuesDirectoryDefined[], Return[$Failed]];
-				dir = Global`$IssuesDirectory;
+				dir = Global`$NotebookDirectory;
 			];
 			
 			path = ToFileName[{dir}, name <> ".nb"];
@@ -9757,19 +9776,26 @@ CreateNotebook2[name_String, opts:OptionsPattern[]] :=
 	\maintainer danielb
 *)
 DeCamelCase[stringIn_] :=
-	Module[{string = stringIn, caseIndications, positions},
+	Module[{string = stringIn},
 		If [!CamelCaseQ[string],
 			string
 			,
-			caseIndications = UpperCaseQ /@ Characters[string];
-			positions = Position[caseIndications, True];
-			Function[{pos},
-				If [pos[[1]] > 1,
-					string = StringTake[string, {1, pos[[1]] - 1}] <> " " <> StringTake[string, {pos[[1]], -1}];
+			StringJoin[
+				Riffle[
+					StringCases[
+						stringIn,
+						{
+							RegularExpression["[A-Z][a-z]+"],
+							RegularExpression["[A-Z]+"],
+							lower:RegularExpression["[a-z][a-z]+"] :>
+								ToUpperCase[StringTake[lower, 1]] <>
+								StringTake[lower, {2, -1}],
+							RegularExpression["[0-9]+"]
+						}
+					],
+					" "
 				]
-			] /@ Reverse[positions];
-			
-			ToUpperCase[StringTake[string, {1}]] <> StringTake[string, {2, -1}]
+			]
 		]
 	];
 
@@ -9792,7 +9818,7 @@ DeCamelCase[stringIn_] :=
 CamelCaseQ[string_] :=
 	Module[{caseIndications, caseIndicationsGrouped},
 		
-		If [!StringMatchQ[string, LetterCharacter..],
+		If [!StringMatchQ[string, LetterCharacter ~~ (LetterCharacter | DigitCharacter)..],
 			Return[False];
 		];
 		
@@ -9801,22 +9827,15 @@ CamelCaseQ[string_] :=
 		caseIndicationsGrouped = Split[caseIndications];
 		
 		MatchQ[
-			If [#[[1]] === False, DeleteDuplicates[#], #] & /@ caseIndicationsGrouped,
+			DeleteDuplicates /@ caseIndicationsGrouped,
 			(* ex. "JustTesting" *)
 			{
+				Repeated[{False}, {0, 1}],
 				Repeated[
 					PatternSequence[{True}, {False}],
 					{1, Infinity}
-				]
-			}
-			|
-			(* ex. "justTesting" *)
-			{
-				{False},
-				Repeated[
-					PatternSequence[{True}, {False}],
-					{1, Infinity}
-				]
+				],
+				Repeated[{True}, {0, 1}]
 			}
 		]
 	];
@@ -9865,8 +9884,8 @@ CreateWorkingNotebook[contents_, title_:Null, OptionsPattern[]] :=
 					If [TrueQ[OptionValue["RightHalfOfScreen"]],
 						Sequence @@
 						{
-							WindowSize -> {screenWidth / 2 - 15, screenHeight},
-							WindowMargins -> {{screenWidth / 2, Automatic}, {0, Automatic}}
+							WindowSize -> {screenWidth / 2 - 2, screenHeight - 12},
+							WindowMargins -> {{screenWidth / 2 - 7.5, Automatic}, {0, Automatic}}
 						}
 						,
 						If [TrueQ[OptionValue["LeftHalfOfScreen"]],
@@ -9874,22 +9893,10 @@ CreateWorkingNotebook[contents_, title_:Null, OptionsPattern[]] :=
 							{
 								WindowSize ->
 									{
-										screenWidth / 2 - 15,
-										screenHeight
-										(* So that we don't obscure minimized M9 windows. *)
-										- 40
-										-
-										(* For some reason, when we specify YOffset (when creating M10
-										   notebooks), it also affects the height of the notebook.
-										   Super hacky hack to correct that so that M9 and M10 notebooks
-										   end up being the same height. *)
-										If [OptionValue["YOffset"] =!= 0,
-											OptionValue["YOffset"] / 3.5
-											,
-											0
-										]
+										screenWidth / 2 - 2,
+										screenHeight - 12
 									},
-								WindowMargins -> {{0, Automatic}, {Automatic, OptionValue["YOffset"]}}
+								WindowMargins -> {{-7, Automatic}, {Automatic, OptionValue["YOffset"]}}
 							}
 							,
 							Sequence @@
@@ -12092,21 +12099,28 @@ Options[ComposeEmail] =
 	"Subject" -> Null		(*< the email subject. *)
 };
 ComposeEmail[opts:OptionsPattern[]] :=
-	Module[{to = OptionValue["To"], tmp},
+	Module[{to = OptionValue["To"], tmp, invoke = OptionValue["Invoke"]},
 		
-		(* Lookup the person's email address if known. *)
-		(* It seems iffy that a 'ComposeEmail' function should know how to map first
-		   names to email addresses. Wouldn't it be purer to do that outside of this
-		   function? If so, what component would handle that? Presumably that would
-		   be a job for the thing that maps SR to actions. *)
-		If [StringQ[to],
+		
+		Which[
+			StringQ[to] && StringFreeQ[to, "@"],
+			(* Lookup the person's email address if known. *)
 			tmp = GetPerson[to, "EmailAddress"];
 			If [StringQ[tmp],
 				to = tmp;
 			];
+			,
+			MatchQ[to, _Person],
+			to = Gett[to, "Email"];
 		];
 		
-		Switch[OptionValue["Invoke"],
+		If [invoke === Automatic,
+			If [!StringFreeQ[to, "@gmail"],
+				invoke = "Gmail";
+			];
+		];
+		
+		Switch[invoke,
 			Automatic | SystemOpen | Missing[] | Null,
 			SystemOpen[
 				"mailto:" <> to <>
@@ -12710,6 +12724,110 @@ StringToSymbol[name_] :=
 			$Failed
 		]
 	]
+
+(* Marker to the test system that we just care about the head of the result. *)
+TestHead[e_] := e
+
+(*!
+	\function EditFile
+	
+	\calltable
+		EditFile[file] '' tries to find and then edit the given file.
+
+	Examples:
+	
+	EditFile[file] === TODO
+	
+	\related '
+	
+	\maintainer danielb
+*)
+EditFile[file_] :=
+	Block[{path},
+		path = ResolveFile[file];
+		If [!FailureQ[path],
+			OpenFileInWorkbench[path]
+			,
+			"Couldn't find file: " <> file
+		]
+	];
+
+(*!
+	\function ResolveFile
+	
+	\calltable
+		ResolveFile[file] '' tries to find the given file. Consults $SearchDirectories.
+
+	Examples:
+	
+	ResolveFile[file] === TODO
+	
+	\related '
+	
+	\maintainer danielb
+*)
+ResolveFile[file_] :=
+	Block[{files, search},
+		
+		If [FileExistsQ[file], Return[file]];
+		
+		files = FileNames[file, Global`$SearchDirectories, Infinity];
+		files = Select[files, !DirectoryQ[#] &];
+		
+		If [files === {} && StringFreeQ[file, "."],
+			files = FileNames[file <> ".*", Global`$SearchDirectories, Infinity];
+			files = Select[files, !DirectoryQ[#] &];
+		];
+		
+		If [files === {},
+			$Failed
+			,
+			First[files]
+		]
+	];
+
+(*!
+	\function SetEvaluationTarget
+	
+	\calltable
+		SetEvaluationTarget[] '' sets the currently selected cell as the cell to be evaluated when the user presses the hotkey that has been designated to rerun the cell of interest.
+	
+	\related 'EvaluateEvaluationTarget
+	
+	\maintainer danielb
+*)
+If [!ValueQ[$evaluationTarget], $evaluationTarget = Null];
+SetEvaluationTarget[] :=
+	Block[{},
+		With[{selectedCells = SelectedCells[SelectedNotebook[]]},
+			If [MatchQ[selectedCells, {__CellObject}],
+				$evaluationTarget = First[selectedCells];
+				,
+				Beep[]
+			]
+		]
+	];
+
+(*!
+	\function EvaluateEvaluationTarget
+	
+	\calltable
+		EvaluateEvaluationTarget[] '' re-evaluate the cell that has been designated as the evaluation target.
+	
+	\related 'SetEvaluationTarget
+	
+	\maintainer danielb
+*)
+EvaluateEvaluationTarget[] :=
+	Block[{},
+		If [MatchQ[$evaluationTarget, _CellObject],
+			If [FailureQ[SelectionMove[$evaluationTarget, All, Cell]],
+				Beep[]
+				,
+				SelectionEvaluate[SelectedNotebook[]];
+			]
+		]
+	];
 
 End[]
 
