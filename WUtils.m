@@ -444,6 +444,8 @@ SetEvaluationTarget::usage = "SetEvaluationTarget  "
 
 EvaluateEvaluationTarget::usage = "EvaluateEvaluationTarget  "
 
+DeleteCurrentNotebook::usage = "DeleteCurrentNotebook  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -12826,6 +12828,39 @@ EvaluateEvaluationTarget[] :=
 				SelectionEvaluate[SelectedNotebook[]];
 			]
 		]
+	];
+
+(*!
+	\function DeleteCurrentNotebook
+	
+	\calltable
+		DeleteCurrentNotebook[] '' makes a backup copy of the current notebook and then delete it.
+	
+	\related '
+	
+	\maintainer danielb
+*)
+DeleteCurrentNotebook[] :=
+	Block[{nb, file},
+		nb = SelectedNotebook[];
+		If [!MatchQ[nb, _NotebookObject], Return[$Failed]];
+		file = NotebookFileName[SelectedNotebook[]];
+		(* Make a backup copy. *)
+		CopyFile[
+			file,
+			FileNameJoin[
+				{
+					$TemporaryDirectory,
+					FileNameTake[file, -1] <> ".bak"
+				}
+			]
+		];
+		NotebookClose[nb];
+		DeleteFile[file];
+		If [FileNameTake[file, {-2}] == FileBaseName[FileNameTake[file, -1]],
+			(* Delete the directory as well. *)
+			DeleteDirectory[FileNameDrop[file, -1]];
+		];
 	];
 
 End[]
