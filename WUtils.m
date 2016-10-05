@@ -9380,13 +9380,12 @@ EnsureDefined[var_, desc_] :=
 Clear[toWindowMargins];
 toWindowMargins[xPos_, screenWidth_] :=
 	Module[{notebookOnLeftQ},
-		
 		notebookOnLeftQ = Abs[xPos - Round[xPos]] <= 0.000001;
 		
 		If [notebookOnLeftQ,
-			{xPos * screenWidth, Automatic}
+			{xPos * screenWidth - 7, Automatic}
 			,
-			{Automatic, (1 - (xPos + 0.5)) * screenWidth}
+			{Automatic, (1 - (xPos + 0.5)) * screenWidth - 7}
 		]
 	]
 
@@ -9851,12 +9850,12 @@ Options[CreateWorkingNotebook] =
 {
 	"Evaluator" -> "Local",
 	"File" -> Null,
-	"RightHalfOfScreen" -> False,	   (*< should we put the notebook on the right half of the screen? Useful if the calling notebooks expects itself to be on the left half of the screen. *)
-	"LeftHalfOfScreen" -> False,		(*< should we put the notebook on the left half of the screen? *)
-	"EvaluateImmediately" -> True,	  (*< should the notebook evaluate its contents immediately when it's created? *)
-	"YOffset" -> 0,					 (*< can be used to alter the notebook's Y position on the screen. Useful when creating M10 notebooks if you want them to be at the same Y position as M9 notebooks on the screen. *)
-	"Metadata" -> None,				 (*< metadata to associate with the notebook. (key/value pairs, where keys are strings) *)
-	"PreTitleContents" -> {}			(*< Notebook contents that should be put above the title? *)
+	"RightHalfOfScreen" -> False,	(*< should we put the notebook on the right half of the screen? Useful if the calling notebooks expects itself to be on the left half of the screen. *)
+	"LeftHalfOfScreen" -> False,	(*< should we put the notebook on the left half of the screen? *)
+	"EvaluateImmediately" -> True,	(*< should the notebook evaluate its contents immediately when it's created? *)
+	"YOffset" -> 0,					(*< can be used to alter the notebook's Y position on the screen. Useful when creating M10 notebooks if you want them to be at the same Y position as M9 notebooks on the screen. *)
+	"Metadata" -> None,				(*< metadata to associate with the notebook. (key/value pairs, where keys are strings) *)
+	"PreTitleContents" -> {}		(*< Notebook contents that should be put above the title? *)
 };
 Attributes[CreateWorkingNotebook] = {HoldFirst};
 CreateWorkingNotebook[contents_, title_:Null, OptionsPattern[]] :=
