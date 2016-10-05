@@ -446,6 +446,12 @@ EvaluateEvaluationTarget::usage = "EvaluateEvaluationTarget  "
 
 DeleteCurrentNotebook::usage = "DeleteCurrentNotebook  "
 
+CreateProject::usage = "CreateProject  "
+
+CreateSourceFile::usage = "CreateSourceFile  "
+
+MessageFail::usage = "MessageFail  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -11456,8 +11462,14 @@ Options[WorkOn] =
 {
 	"File" -> Automatic		 (*< The file that defines the function, or Automatic if this function should try and determine it. *)
 };
+WorkOn::gns = "Symbol `1` is in Global namespace."
 WorkOn["Function", funcSymbol_, OptionsPattern[]] :=
 	Module[{},
+		
+		If [Context[funcSymbol] === "Global`",
+			Message[WorkOn::gns, funcSymbol];
+			Return[$Failed];
+		];
 		
 		If [OptionValue["File"] === Automatic,
 			EditFunction[funcSymbol];
@@ -12862,6 +12874,209 @@ DeleteCurrentNotebook[] :=
 			DeleteDirectory[FileNameDrop[file, -1]];
 		];
 	];
+
+(*!
+	\function CreateProject
+	
+	\calltable
+		CreateProject[sourceCodeDirectoryInfo, name] '' creates a new directory under the base directory with the given name, and configures it as a package/project.
+
+	Examples:
+    
+	CreateProject[
+	    {
+	        "Directory" -> HoldComplete[FileNameJoin[{$PersonalCvsDir, "Daniel"}]],
+	        "ParentPackage" -> "Daniel`",
+	        "Linguistic" -> "db" | "personal"
+	    },
+	    "Entities"
+	]
+	
+	\related '
+	
+	\maintainer danielb
+*)
+CreateProject[sourceCodeDirectoryInfo_, name_] :=
+	Block[{parentDir, dir, kernelDir, initFile, parentPackage, package, mainFile, testsDir, projectFile},
+		
+		parentDir = ReleaseHold[Lookup[sourceCodeDirectoryInfo, "Directory"]];
+		If [!StringQ[parentDir] || !DirectoryQ[parentDir], Print["Invalid directory: ", parentDir]; Return[$Failed]];
+		
+		dir = FileNameJoin[{parentDir, name}];
+		
+		If [FileExistsQ[dir],
+			Print["ERROR: CreateProject: Directory already exists. Aborting."];
+			Return[$Failed];
+		];
+		
+		If [!FileExistsQ[dir], CreateDirectory[dir]];
+		If [!DirectoryQ[dir], Print["Couldn't create project directory: ", dir]; Return[$Failed]];
+		
+		kernelDir = FileNameJoin[{dir, "kernel"}];
+		If [!FileExistsQ[kernelDir], CreateDirectory[kernelDir]];
+		
+		parentPackage = Lookup[sourceCodeDirectoryInfo, "ParentPackage"];
+		package = parentPackage <> name <> "`";
+		
+		initFile = FileNameJoin[{kernelDir, "init.m"}];
+		Export[initFile, "Get[" <> ToString[package <> name <> "`", InputForm] <> "];\n\n", "Text"];
+		
+		testsDir = FileNameJoin[{dir, "Tests"}];
+		If [!FileExistsQ[testsDir], CreateDirectory[testsDir]];
+		
+		mainFile = FileNameJoin[{dir, name <> ".m"}];
+		Export[
+			mainFile,
+			"BeginPackage[" <> ToString[package <> name <> "`", InputForm] <> "]
+
+Needs[\"WUtils`WUtils`\"]; (* CreateReloadFunctionForDirectory, etc. *)
+
+Reload" <> name <> "::usage = \"Reload" <> name <> "  \"; 
+
+Begin[\"`Private`\"]
+
+With[{package = " <> ToString[package, InputForm] <> "},
+With[{dir = DirectoryName[DirectoryName[FindFile[package]]]},
+	" <> package <> "Private`$ReloadFunction = Reload" <> name <> ";
+	WUtils`WUtils`TabsOrSpaces[package] = \"Tabs\";
+	If [!ValueQ[$reload" <> name <> "],
+		$reload" <> name <> " =
+			CreateReloadFunctionForDirectory[
+				DirectoryName[DirectoryName[FindFile[package]]]
+			];
+	];
+	" <> package <> "$UnitTestDir = FileNameJoin[{DirectoryName[DirectoryName[FindFile[package]]], \"Tests\"}];
+	WUtils`WUtils`NotebookTypeToDirectory[package] = FileNameJoin[{dir, \"Notebooks\"}];
+	If [!MemberQ[Global`$WorkbenchProjects, dir],
+		AppendTo[Global`$WorkbenchProjects, dir];
+	];
+];
+];
+
+(* Reloads .m files in this directory if they've changed. *)
+Reload" <> name <> "[] := $reload" <> name <> "[]
+If [ListQ[Global`$ReloadFunctions],
+	Global`$ReloadFunctions =
+		DeleteDuplicates[
+			Append[Global`$ReloadFunctions, Reload" <> name <> "]
+		]
+	];
+
+End[]
+
+EndPackage[]
+",
+			"Text"
+		];
+		
+		Get[initFile];
+		
+		projectFile = FileNameJoin[{dir, ".project"}];
+		Export[
+			projectFile,
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<projectDescription>
+	<name>" <> name <> "</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+	</natures>
+</projectDescription>",
+			"Text"
+		];
+		
+		(* Tries to open the file in Workbench, but fails because the project doesn't exist *)
+		(*OpenFileInWorkbench[mainFile, "Substring" -> "\nEnd[]"];*)
+		
+		Lui`Actions`DefineLinguistic[
+			"Symbol" -> "sourceCodeDirectory",
+			"Linguistic" -> ToLowerCase[DeCamelCase[name]],
+			"Expression" ->
+				<|
+					"Directory" -> dir,
+					"Package" -> package,
+					"Linguistic" -> "TODO"
+				|>
+		]
+	];
+
+(*!
+	\function CreateSourceFile
+	
+	\calltable
+		CreateSourceFile[name, parentInfo] '' creates a new .m file.
+
+	Examples:
+	
+	CreateSourceFile[name, dir] === TODO
+	
+	\related '
+	
+	\maintainer danielb
+*)
+CreateSourceFile::fae = "File already exists: `1`"
+CreateSourceFile::dde = "Directory doesn't exist: `1`"
+CreateSourceFile[name_, parentInfo_] :=
+	Block[{file, package},
+		If [!FileExistsQ[parentInfo["Directory"]],
+			MessageFail[CreateSourceFile::dde, parentInfo["Directory"]];
+		];
+		file = FileNameJoin[{parentInfo["Directory"], name <> ".m"}];
+		If [FileExistsQ[file],
+			MessageFail[CreateSourceFile::fae, file];
+		];
+		
+		package = parentInfo["Package"] <> name <> "`";
+		
+		Export[
+			file,
+			"BeginPackage[\"" <> package <> "\"]
+
+Needs[\"WUtils`WUtils`\"];
+
+Begin[\"`Private`\"]
+
+End[]
+
+EndPackage[]",
+			"Text"
+		];
+		
+		OpenFileInWorkbench[file, "Substring" -> "\nEnd[]"];
+		
+		Lui`Actions`DefineLinguistic[
+			"Symbol" -> "sourceFile",
+			"Linguistic" -> ToLowerCase[DeCamelCase[name]],
+			"Expression" -> package
+		]
+	];
+
+(*!
+	\function MessageFail
+	
+	\calltable
+		MessageFail[args] '' like the Message function but also does Return[$Failed, Block].
+
+	Examples:
+	
+	Block[{}, Blah::abc = "Just testing: `1`"; MessageFail[Blah::abc, "123"]] === $Failed
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`MessageFail]
+
+	\maintainer danielb
+*)
+Clear[MessageFail];
+Attributes[MessageFail] = {HoldFirst};
+MessageFail[name_, args___] :=
+	(
+		Message[name, args];
+		Return[$Failed, Block];
+	)
 
 End[]
 
