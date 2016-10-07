@@ -474,6 +474,10 @@ FirstIndex::usage = "FirstIndex  "
 
 ToCamelCase::usage = "ToCamelCase  "
 
+CreateInputField::usage = "CreateInputField  "
+
+SimpleReap::usage = "SimpleReap  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -13453,6 +13457,87 @@ ToCamelCase[str_] :=
 					ToUpperCase[StringTake[word, 1]] <> StringDrop[word, 1]
 			],
 			WhitespaceCharacter.. :> ""
+		]
+	];
+
+(*!
+	\function CreateInputField
+	
+	\calltable
+		CreateInputField[] '' creates an InputField.
+	
+	\related '
+	
+	\maintainer danielb
+*)
+Clear[CreateInputField];
+Options[CreateInputField] =
+{
+	"EnterFunction" -> None,	(*< The function to call with the input when ENTER is pressed. *)
+	"InputReturn" -> None,		(*< A held variable can be passed in as a return for the input var. *)
+	"BoxIDReturn" -> None		(*< A held variable can be passed in as a return for the Box ID var. *)
+};
+CreateInputField[OptionsPattern[]] :=
+	DynamicModule[{input},
+		
+		With[{heldInput = OptionValue["InputReturn"]},
+			With[{input = input},
+				If [heldInput =!= None, SetHeldVar[heldInput, HoldComplete[input]]];
+			];
+		];
+		
+		input = Null;
+		
+		With[{boxId = ToString[Unique["BoxId"]]},
+			With[{heldBoxId = OptionValue["BoxIDReturn"]},
+				If [heldBoxId =!= None, SetHeldVar[heldBoxId, boxId]];
+			];
+			FocusInputFieldDelayed[boxId];
+			EventHandler[
+				#,
+				{
+					"ReturnKeyDown" :>
+					(
+						OptionValue["EnterFunction"][input]
+					)
+				}
+			] & @
+			InputField[
+				Dynamic[input],
+				String,
+				ImageSize -> {500, Automatic},
+				FrameMargins -> Medium,
+				BoxID -> boxId
+			]
+		]
+	]
+
+(*!
+	\function SimpleReap
+	
+	\calltable
+		SimpleReap[tag, expr] '' evaluates the given expression, reaping the given tag and returning the matching items.
+
+	Examples:
+	
+	SimpleReap["Tag", Sow[1, "Tag"]; Sow[2, "Tag"]] === {1, 2}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`SimpleReap]
+
+	\maintainer danielb
+*)
+Clear[SimpleReap];
+Attributes[SimpleReap] = {HoldRest};
+SimpleReap[tag_, expr_] :=
+	Block[{},
+		Flatten[
+			Reap[
+				expr,
+				tag
+			][[2]],
+			1
 		]
 	];
 
