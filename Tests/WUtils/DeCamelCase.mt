@@ -58,3 +58,11 @@ Test[
 	,
 	TestID -> "DeCamelCase-20160926-PXJFY7"
 ]
+
+Test[
+	WUtils`WUtils`DeCamelCase["NLTools"]
+	,
+	"NL Tools"
+	,
+	TestID -> "DeCamelCase-20161005-1DLTDE"
+]

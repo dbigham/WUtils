@@ -452,6 +452,26 @@ CreateSourceFile::usage = "CreateSourceFile  "
 
 MessageFail::usage = "MessageFail  "
 
+CreateDirectoryIfDoesntExist::usage = "CreateDirectoryIfDoesntExist  "
+
+WriteFileIndented::usage = "WriteFileIndented  "
+
+EnsureFileLoaded::usage = "EnsureFileLoaded  "
+
+Second::usage = "Second  "
+
+WriteFile::usage = "WriteFile  "
+
+FocusInputFieldDelayed::usage = "FocusInputFieldDelayed  "
+
+NotEmpty::usage = "NotEmpty  "
+
+EmptyQ::usage = "EmptyQ  "
+
+LoadFile::usage = "LoadFile  "
+
+FirstIndex::usage = "FirstIndex  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -9793,8 +9813,8 @@ DeCamelCase[stringIn_] :=
 						stringIn,
 						{
 							RegularExpression["[A-Z][a-z]+"],
-							RegularExpression["[A-Z]+"],
-							lower:RegularExpression["[a-z][a-z]+"] :>
+							RegularExpression["[A-Z]+(?![a-z])"],
+							lower:RegularExpression["(?<![A-Z])[a-z][a-z]+"] :>
 								ToUpperCase[StringTake[lower, 1]] <>
 								StringTake[lower, {2, -1}],
 							RegularExpression["[0-9]+"]
@@ -12755,11 +12775,16 @@ TestHead[e_] := e
 	
 	\maintainer danielb
 *)
-EditFile[file_] :=
+Clear[EditFile];
+Options[EditFile] =
+{
+	"Substring" -> None			(*< The substring to go to within the file. *)
+};
+EditFile[file_, OptionsPattern[]] :=
 	Block[{path},
 		path = ResolveFile[file];
 		If [!FailureQ[path],
-			OpenFileInWorkbench[path]
+			OpenFileInWorkbench[path, "Substring" -> OptionValue["Substring"]]
 			,
 			"Couldn't find file: " <> file
 		]
@@ -13077,6 +13102,329 @@ MessageFail[name_, args___] :=
 		Message[name, args];
 		Return[$Failed, Block];
 	)
+
+(*!
+	\function CreateDirectoryIfDoesntExist
+	
+	\calltable
+		CreateDirectoryIfDoesntExist[dir] '' creates the directory if it doesn't already exist.
+	
+	Returns True if the directory was created, Null if it already exists, $Failed upon failure.
+
+	Examples:
+	
+	Block[
+		{res, dir},
+		(
+			dir = TemporaryDirectory[];
+			res = {CreateDirectoryIfDoesntExist[dir], FileExistsQ[dir]};
+			DeleteDirectory[dir];
+			res
+		)
+	]
+
+	===
+
+	{Null, True}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`CreateDirectoryIfDoesntExist]
+
+	\maintainer danielb
+*)
+CreateDirectoryIfDoesntExist::exnd = "The file `1` already exists and is not a directory.";
+CreateDirectoryIfDoesntExist[dir_] :=
+	Block[{},
+		If [!FileExistsQ[dir],
+			With[{res = CreateDirectory[dir, CreateIntermediateDirectories -> True]},
+				If[!StringQ[res] || !FileExistsQ[res],
+					$Failed
+					,
+					True
+				]
+			]
+			,
+			If [!DirectoryQ[dir],
+				MessageFail[CreateDirectoryIfDoesntExist::exnd, dir]
+			]
+		]
+	];
+
+(*!
+	\function WriteFileIndented
+	
+	\calltable
+		WriteFileIndented[expr, file] '' write the given expression to the given file, indenting the expression.
+
+	Examples:
+	
+	WithTemporaryFiles[
+		{file = ""},
+		(
+			WriteFileIndented[Table[i, {i, 1, 80}], file];
+			Import[file, "Text"]
+		)
+	]
+
+	===
+
+	{
+		1,
+		2,
+		...
+	}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`WriteFileIndented]
+
+	\maintainer danielb
+*)
+WriteFileIndented[expr_, file_] :=
+	Block[{},
+		Export[
+			file,
+			Indent2[expr],
+			"Text"
+		]
+	];
+
+(*!
+	\function EnsureFileLoaded
+	
+	\calltable
+		EnsureFileLoaded[fileAssoc] '' given an association that provides a file's path, a held variable to store its contents when loaded, etc, ensures the file has been loaded.
+
+	Examples:
+	
+	WithTemporaryFiles[
+		{file = "{1, 2, 3}"},
+		(
+			EnsureFileLoaded[
+				Association["Path" -> file, "Variable" -> HoldComplete[var]]
+			];
+			var
+		)
+	]
+
+	===
+
+	{1, 2, 3}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`EnsureFileLoaded]
+	
+	\related 'LoadFile
+
+	\maintainer danielb
+*)
+EnsureFileLoaded[fileAssoc_] :=
+	Block[{res},
+		fileAssoc["Variable"] /. HoldComplete[var_] :>
+			If [!ValueQ[var] || FailureQ[var],
+				res = var = Get[fileAssoc["Path"]]
+				,
+				res = var
+			];
+			
+		res
+	];
+
+(*!
+	\function LoadFile
+	
+	\calltable
+		LoadFile[fileAssoc] '' given an association that provides a file's path, a held variable to store its contents when loaded, etc, load the file.
+
+	Examples:
+	
+	WithTemporaryFiles[
+		{file = "{1, 2, 3}"},
+		(
+			LoadFile[Association["Path" -> file, "Variable" -> HoldComplete[var]]];
+			var
+		)
+	]
+
+	===
+
+	{1, 2, 3}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`LoadFile]
+
+	\related 'EnsureFileLoaded
+	
+	\maintainer danielb
+*)
+LoadFile[fileAssoc_] :=
+	Block[{res},
+		fileAssoc["Variable"] /. HoldComplete[var_] :>
+			(
+			res = var = Get[fileAssoc["Path"]];
+			);
+			
+		res
+	];
+
+(*!
+	\function Second
+	
+	\calltable
+		Second[list] '' returns the second item in a list.
+
+	Examples:
+	
+	Second[{1, 2, 3}] === 2
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`Second]
+
+	\maintainer danielb
+*)
+Second[list_] := list[[2]]
+
+(*!
+	\function WriteFile
+	
+	\calltable
+		WriteFile[fileInfo] '' given an association that specifies the path of the file, the variable holding its contents, and the function to use when writing the file, write the data to disk.
+
+	The "Writer" key/value is optional. If not specified, Put is used.
+
+	Examples:
+	
+	WithTemporaryFiles[
+		{file = ""},
+		(
+			var = Table[i, {i, 1, 60}];
+			WriteFile[
+				<|
+					"Path" -> file,
+					"Variable" -> HoldComplete[var],
+					"Writer" -> WriteFileIndented
+				|>
+			];
+			Import[file, "Text"]
+		)
+	]
+
+	===
+
+	{
+		1,
+		2,
+		...
+	}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`WriteFile]
+
+	\maintainer danielb
+*)
+WriteFile[fileInfo_] :=
+	Block[{writer},
+		writer = fileInfo["Writer"];
+		If [MissingQ[writer], writer = Put];
+		writer[
+			ReleaseHold[fileInfo["Variable"]],
+			fileInfo["Path"]
+		]
+	];
+
+(*!
+	\function FocusInputFieldDelayed
+	
+	\calltable
+		FocusInputFieldDelayed[boxId] '' set the focus to the InputField with the given BoxID, but wait a moment before doing so. (ie. the box has yet to actually be created)
+
+	Examples:
+	
+	With[{boxId = ToString[Unique["MyInputBox"]]},
+		FocusInputFieldDelayed[boxId];
+		InputField[Dynamic[input], String, BoxID -> boxId]
+	]
+	
+	\maintainer danielb
+*)
+FocusInputFieldDelayed[boxId_] :=
+	StartScheduledTask[
+		CreateScheduledTask[
+			FrontEnd`MoveCursorToInputField[
+				InputNotebook[],
+				boxId
+			],
+			{0.3}
+		]
+	];
+
+(*!
+	\function NotEmpty
+	
+	\calltable
+		NotEmpty[list] '' returns True if the given list isn't empty.
+
+	Examples:
+	
+	NotEmpty[{}] === False
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`NotEmpty]
+
+	\maintainer danielb
+*)
+NotEmpty[list_List] := list =!= {}
+
+(*!
+	\function EmptyQ
+	
+	\calltable
+		EmptyQ[list] '' returns True if the given list is empty.
+
+	Examples:
+	
+	EmptyQ[{}] === True
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`EmptyQ]
+
+	\maintainer danielb
+*)
+EmptyQ[list_List] := list === {}
+
+(*!
+	\function FirstIndex
+	
+	\calltable
+		FirstIndex[list, func] '' returns the index of the first item in the list for which the function returns True. Otherwise, returns None.
+
+	Examples:
+	
+	FirstIndex[{1, 2, 3}, EvenQ] === 2
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`FirstIndex]
+
+	\maintainer danielb
+*)
+FirstIndex[list_, func_] :=
+	Block[{index = 0},
+		Function[{item},
+			++index;
+			If [TrueQ[func[item]],
+				Return[index, Block];
+			];
+		] /@ list;
+		None
+	];
 
 End[]
 
