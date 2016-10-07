@@ -472,6 +472,8 @@ LoadFile::usage = "LoadFile  "
 
 FirstIndex::usage = "FirstIndex  "
 
+ToCamelCase::usage = "ToCamelCase  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -13424,6 +13426,34 @@ FirstIndex[list_, func_] :=
 			];
 		] /@ list;
 		None
+	];
+
+(*!
+	\function ToCamelCase
+	
+	\calltable
+		ToCamelCase[str] '' converts a string to camel case.
+
+	Examples:
+	
+	ToCamelCase["just testing"] === "Just Testing"
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`ToCamelCase]
+
+	\maintainer danielb
+*)
+ToCamelCase[str_] :=
+	Block[{},
+		StringReplace[
+			StringReplace[
+				str,
+				word:RegularExpression["(?<![A-Za-z])[a-z][a-z]+"] :>
+					ToUpperCase[StringTake[word, 1]] <> StringDrop[word, 1]
+			],
+			WhitespaceCharacter.. :> ""
+		]
 	];
 
 End[]
