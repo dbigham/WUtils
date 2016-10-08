@@ -478,6 +478,18 @@ CreateInputField::usage = "CreateInputField  "
 
 SimpleReap::usage = "SimpleReap  "
 
+ReplaceRange::usage = "ReplaceRange  "
+
+AddOptions::usage = "AddOptions  "
+
+LastStringPosition::usage = "LastStringPosition  "
+
+InsertString::usage = "InsertString  "
+
+AddOptionsHelper::usage = "AddOptionsHelper  "
+
+Gettt::usage = "Gettt  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -7474,21 +7486,19 @@ CreateIssueNotebook[opts:OptionsPattern[]] :=
 
 (* NOTE: I think I've observed an issue whereby this can seeminly hang sometimes. (if the clipboard doesn't contain simple text, perhaps?) *)
 GetClipboard[] :=
-	With[{clipboard = PrototypeMisc`getClipboard[]},
-		If [True,
-			Print["TODO: Implement GetClipboard"];
-			,
-			(* For now we'll strip double quotes if they are present, such 
-			   as copying an M string into the clipboard and wanting the
-			   contents of the string to be used, not the literal string. *)
-			LoadJavaClass["com.danielbigham.util.GetClipboard"];
+	(
+		(* For now we'll strip double quotes if they are present, such 
+		   as copying an M string into the clipboard and wanting the
+		   contents of the string to be used, not the literal string. *)
+		LoadJavaClass["com.danielbigham.Util"];
+		With[{clipboard = Util`getClipboard[]},
 			If [StringMatchQ[clipboard, "\"" ~~ ___ ~~ "\""],
 				ToExpression[clipboard]
 				,
 				clipboard
 			]
 		]
-	]
+	)
 
 (*!
 	\function toCamelCase
@@ -10896,7 +10906,7 @@ SetCellMetadata[cellObjectOrNotebook_, key_ -> value_] :=
 	
 	\maintainer danielb
 *)
-KeyValueGet[keyValues_, key_, defaultValue_:Missing[]] :=
+KeyValueGet[keyValues_List, key_, defaultValue_:Missing[]] :=
 	With[{res = key /. List@@Cases[keyValues, _Rule]},
 		If [res === key,
 			defaultValue
@@ -10904,8 +10914,11 @@ KeyValueGet[keyValues_, key_, defaultValue_:Missing[]] :=
 			res
 		]
 	]
-	
-KeyValueGet[keyValues_, keyList_List, defaultValue_:Missing[]] :=
+
+KeyValueGet[keyValues_Association, key_, defaultValue_:Missing[]] :=
+	Lookup[keyValues, key, defaultValue]
+
+KeyValueGet[keyValues_List, keyList_List, defaultValue_:Missing[]] :=
 	Module[{val},
 		val = keyValues;
 		Function[{key},
@@ -10928,7 +10941,7 @@ KeyValueGet[keyValues_, keyList_List, defaultValue_:Missing[]] :=
 	
 	\maintainer danielb
 *)
-KeyValueGet[keyValues_, key_, defaultValue_:Missing[]] :=
+KeyValueGet[keyValues_List, key_, defaultValue_:Missing[]] :=
 	With[{res = key /. List@@Cases[keyValues, _Rule]},
 		If [res === key,
 			defaultValue
@@ -10937,7 +10950,7 @@ KeyValueGet[keyValues_, key_, defaultValue_:Missing[]] :=
 		]
 	]
 
-KeyValueGet[keyValues_, keyList_List, defaultValue_:Missing[]] :=
+KeyValueGet[keyValues_List, keyList_List, defaultValue_:Missing[]] :=
 	Module[{val},
 		val = keyValues;
 		Function[{key},
@@ -13540,6 +13553,158 @@ SimpleReap[tag_, expr_] :=
 			1
 		]
 	];
+
+(*!
+	\function ReplaceRange
+	
+	\calltable
+		ReplaceRange[list, start, end, replacementItems] '' replace the given range within the list with the new item(s).
+		ReplaceRange[list, start ;; end, replacementItems] '' ...
+
+	Examples:
+	
+	ReplaceRange[{1, 2, 3, 4, 5, 6}, 2, 3, {888, 999}] === {1, 888, 999, 4, 5, 6}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`ReplaceRange]
+
+	\maintainer danielb
+*)
+ReplaceRange[list_, start_, end_, replacementItems_] :=
+	Join[
+		list[[1;;start-1]],
+		If [ListQ[replacementItems],
+			replacementItems
+			,
+			{replacementItems}
+		],
+		list[[end+1;;-1]]
+	];
+
+ReplaceRange[list_, start_ ;; end_, replacementItems_] :=
+	ReplaceRange[list, start, end, replacementItems]
+
+(*!
+	\function AddOptions
+	
+	\calltable
+		AddOptions[str] '' given the line of code declaring a function, return the lines of code to replace it with that support options being passed to the function.
+	
+	\maintainer danielb
+*)
+AddOptions[strIn_] :=
+	Block[{str},
+		str = AddOptionsHelper[strIn];
+		CopyToClipboard[str]
+	];
+
+(*!
+	\function AddOptionsHelper
+	
+	\calltable
+		AddOptionsHelper[str] '' helper for AddOptions.
+
+	Example:
+
+	AddOptionsHelper["AddOptions[str_] :="]
+
+	===
+
+	"Options[AddOptions]\n{\n\t\"TODO\" -> TODO\t\t(*< TODO *)\n};\nAddOptions[str_, OptionsPattern[]] :="
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`AddOptionsHelper]
+
+	\maintainer danielb
+*)
+AddOptionsHelper[strIn_] :=
+	Block[{str = strIn, closingBracketPos, funcName = Null},
+		closingBracketPos = LastStringPosition[str, "]"];
+		If [closingBracketPos === None, Return[$Failed]];
+		
+		StringCases[
+			str,
+			name:(LetterCharacter ~~ (LetterCharacter | DigitCharacter)...) ~~ "[" :>
+				(funcName = name)
+		];
+		If [funcName === Null, Return[$Failed]];
+		
+		"Options[" <> funcName <> "] =
+{
+	TODO
+};
+" <>
+		InsertString[str, closingBracketPos, ", OptionsPattern[]"]
+	];
+
+(*!
+	\function LastStringPosition
+	
+	\calltable
+		LastStringPosition[str, substr] '' returns the last string position matching the given substring.
+
+	Examples:
+	
+	LastStringPosition["Just testing", "t"] === 9
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`LastStringPosition]
+
+	\maintainer danielb
+*)
+LastStringPosition[str_, substr_] :=
+	With[{positions = StringPosition[str, substr]},
+		If [positions === {},
+			None
+			,
+			Last[positions][[1]]
+		]
+	]
+
+(*!
+	\function InsertString
+	
+	\calltable
+		InsertString[str, pos, substr] '' inserts the given substring at the given position.
+
+	Examples:
+	
+	InsertString["just testing", 6, "X "] === "just X testing"
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`InsertString]
+
+	\maintainer danielb
+*)
+InsertString[str_, pos_, substr_] :=
+	Block[{},
+		StringTake[str, pos - 1] <> substr <> StringTake[str, {pos, -1}]
+	];
+
+
+(*!
+	\function Gettt
+	
+	\calltable
+		Gettt[items, key] '' returns the given key for every tiem in the list.
+
+	Examples:
+	
+	Gettt[{Association["A" -> 1, "B" -> 2], Association["A" -> 3]}, "A"] === {1, 3}
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`Gettt]
+
+	\maintainer danielb
+*)
+Clear[Gettt];
+Gettt[items_List, key_String, defaultValue_:Missing[]] :=
+	Gett[#, key, defaultValue] & /@ items
 
 End[]
 
