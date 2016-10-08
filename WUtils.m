@@ -10901,12 +10901,16 @@ SetCellMetadata[cellObjectOrNotebook_, key_ -> value_] :=
 	Example:
 	
 	KeyValueGet[{"a" -> "b", "c" -> "d"}, "a"] = "b"
-	
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`KeyValueGet]
+
 	\related 'KeyValueSet
 	
 	\maintainer danielb
 *)
-KeyValueGet[keyValues_List, key_, defaultValue_:Missing[]] :=
+KeyValueGet[keyValues_, key_, defaultValue_:Missing[]] :=
 	With[{res = key /. List@@Cases[keyValues, _Rule]},
 		If [res === key,
 			defaultValue
@@ -10918,7 +10922,7 @@ KeyValueGet[keyValues_List, key_, defaultValue_:Missing[]] :=
 KeyValueGet[keyValues_Association, key_, defaultValue_:Missing[]] :=
 	Lookup[keyValues, key, defaultValue]
 
-KeyValueGet[keyValues_List, keyList_List, defaultValue_:Missing[]] :=
+KeyValueGet[keyValues_, keyList_List, defaultValue_:Missing[]] :=
 	Module[{val},
 		val = keyValues;
 		Function[{key},
@@ -10936,12 +10940,16 @@ KeyValueGet[keyValues_List, keyList_List, defaultValue_:Missing[]] :=
 	Example:
 	
 	KeyValueGet[{"a" -> "b", "c" -> "d"}, "a"] = "b"
-	
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`KeyValueGet]
+
 	\related 'KeyValueSet
 	
 	\maintainer danielb
 *)
-KeyValueGet[keyValues_List, key_, defaultValue_:Missing[]] :=
+KeyValueGet[keyValues_, key_, defaultValue_:Missing[]] :=
 	With[{res = key /. List@@Cases[keyValues, _Rule]},
 		If [res === key,
 			defaultValue
@@ -10950,7 +10958,7 @@ KeyValueGet[keyValues_List, key_, defaultValue_:Missing[]] :=
 		]
 	]
 
-KeyValueGet[keyValues_List, keyList_List, defaultValue_:Missing[]] :=
+KeyValueGet[keyValues_, keyList_List, defaultValue_:Missing[]] :=
 	Module[{val},
 		val = keyValues;
 		Function[{key},
