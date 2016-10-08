@@ -490,6 +490,14 @@ AddOptionsHelper::usage = "AddOptionsHelper  "
 
 Gettt::usage = "Gettt  "
 
+START::usage = "START  "
+
+END::usage = "END  "
+
+UNK::usage = "UNK  "
+
+StringReplaceInDir::usage = "StringReplaceInDir  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -6734,7 +6742,7 @@ EditFunctionMathdoc[funcSymbol_Symbol, testExpression_, testExpectedExpression_,
 			file,
 			"ErrorIfNotFound" -> True,
 			(* Necessary so that we don't have \r\n vs \n confusion. *)
-			"ImportAsTest" -> True
+			"ImportAsText" -> True
 		]
 	]
 
@@ -7198,10 +7206,9 @@ RemoveRelatedIfNotUsed[mathdoc_] :=
 Clear[StringReplaceInFiles];
 Options[StringReplaceInFiles] =
 {
-	"FilePattern" -> "*.*",			 (*< the types of files to search. *)
-	"ErrorIfNotFound" -> False,		 (*< display an error if the text wasn't found? *)
-	"NonGreedyStartOfMatch" -> False,   (*< avoid matching the first thing possible. Rather, match the latest thing possible. This is helpful when the pattern contains a __ or ___ and the earliest possible match would end up doing the wrong thing. *)
-	"ImportAsTest" -> False				(*< Import[..., "Text"]? Otherwise we use Import[..., "String"] so that we don't loose newlinese from the end of a file. *)
+	"ErrorIfNotFound" -> False,			(*< display an error if the text wasn't found? *)
+	"NonGreedyStartOfMatch" -> False,	(*< avoid matching the first thing possible. Rather, match the latest thing possible. This is helpful when the pattern contains a __ or ___ and the earliest possible match would end up doing the wrong thing. *)
+	"ImportAsText" -> False				(*< Import[..., "Text"]? Otherwise we use Import[..., "String"] so that we don't loose newlinese from the end of a file. *)
 };
 StringReplaceInFiles[from_, to_String, files_, OptionsPattern[]] :=
 	Module[{contents, check, pos, doReplacement},
@@ -7220,7 +7227,7 @@ StringReplaceInFiles[from_, to_String, files_, OptionsPattern[]] :=
 		] /@ Flatten[{files}];
 		
 		Function[{file},
-			check = Check[contents = Import[file, If [TrueQ[OptionValue["ImportAsTest"]], "Text", "String"]], $Failed];
+			check = Check[contents = Import[file, If [TrueQ[OptionValue["ImportAsText"]], "Text", "String"]], $Failed];
 			If [check === $Failed,
 				Print["StringReplaceInFiles: Messages while reading: ", file, ". Replacement not performed on that file."];
 				,
@@ -7246,12 +7253,38 @@ StringReplaceInFiles[from_, to_String, files_, OptionsPattern[]] :=
 					If [check === $Failed,
 						Print["StringReplaceInFiles: Messages while performing string replacement: ", file, ". Replacement not performed on that file."];
 						,
-						Export[file, contents, If [TrueQ[OptionValue["ImportAsTest"]], "Text", "String"]];
+						Export[file, contents, If [TrueQ[OptionValue["ImportAsText"]], "Text", "String"]];
 					];
 				]; 
 			];
 		] /@ Flatten[{files}];
 	]
+
+
+(*!
+	\function StringReplaceInDir
+	
+	\calltable
+		StringReplaceInDir[dir, from, to] '' replaces all instances of the string 'from' with 'to' in the given directory. Only includes files with an extension in our whitelist.
+
+	Examples:
+	
+	StringReplaceInDir[dir, from, to] === TODO
+	
+	\related '
+	
+	\maintainer danielb
+*)
+StringReplaceInDir::dde = "Directory doesn't exist: `1`";
+StringReplaceInDir[dir_, from_, to_] :=
+	Block[{},
+		If [!DirectoryQ[dir], MessageFail[StringReplaceInDir::dde, dir]];
+		StringReplaceInFiles[
+			FileNames["*.m" | "*.mt" | "*.java" | "*.txt" | "*.md" | "*.g4" | "*.grammar", dir, Infinity],
+			from,
+			to
+		]
+	];
 
 (*!
 	\function RunUnitTestsInNotebook
