@@ -7280,9 +7280,9 @@ StringReplaceInDir[dir_, from_, to_] :=
 	Block[{},
 		If [!DirectoryQ[dir], MessageFail[StringReplaceInDir::dde, dir]];
 		StringReplaceInFiles[
-			FileNames["*.m" | "*.mt" | "*.java" | "*.txt" | "*.md" | "*.g4" | "*.grammar", dir, Infinity],
 			from,
-			to
+			to,
+			FileNames["*.m" | "*.mt" | "*.java" | "*.txt" | "*.md" | "*.g4" | "*.grammar", dir, Infinity]
 		]
 	];
 
