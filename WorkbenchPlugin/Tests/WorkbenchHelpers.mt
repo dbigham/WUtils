@@ -63,15 +63,3 @@ Test[
     ,
     "OK"
 ]
-
-Test[
-    Import["http://127.0.0.1:8193/go?command=test7&file=/Alpha/Source/CalculateParse/JavaTokenizer.m", "String"]
-    ,
-    "OK"
-]
-
-Test[
-    Import["http://127.0.0.1:8193/go?command=open&file=/Alpha/Source/CalculateParse/JavaTokenizer.m", "String"]
-    ,
-    "OK"
-]

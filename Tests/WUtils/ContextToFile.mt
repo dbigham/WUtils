@@ -7,13 +7,9 @@
 *)
 
 Test[
-    WUtils`WUtils`ContextToFile["WUtils`WUtils`"],
-    "C:\\Users\\Daniel\\WolframWorkspaces\\Base2\\WUtils\\WUtils.m",
-    TestID -> "ContextToFile-20150126-QUFW1C"
-]
-
-Test[
-    WUtils`WUtils`ContextToFile["WUtils`WUtils`Private`"],
-    "C:\\Users\\Daniel\\WolframWorkspaces\\Base2\\WUtils\\WUtils.m",
-    TestID -> "ContextToFile-20150126-42UYIP"
+	WUtils`WUtils`ContextToFile["WUtils`WUtils`"]
+	,
+	"E:\\Users\\Daniel\\Dropbox\\Projects\\WUtils\\WUtils.m"
+	,
+	TestID -> "ContextToFile-20161014-7HIZR1"
 ]

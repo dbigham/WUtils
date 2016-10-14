@@ -4,14 +4,6 @@
 *)
 
 Test[
-    WUtils`WUtils`GetSymbolContext["runRegexes"]
-    ,
-    "CalculateParse`Parser1`Private`"
-    ,
-    TestID -> "GetSymbolContext-20151223-J5HAHD"
-]
-
-Test[
     WUtils`WUtils`GetSymbolContext["GetSymbolContext"]
     ,
     "WUtils`WUtils`"

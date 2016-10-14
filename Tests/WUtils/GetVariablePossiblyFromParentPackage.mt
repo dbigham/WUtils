@@ -5,6 +5,6 @@
 
 Test[
     WUtils`WUtils`GetVariablePossiblyFromParentPackage["WUtils`WUtils`", "$UnitTestDir"],
-    {"WUtils`WUtils`", "C:\\Users\\Daniel\\WolframWorkspaces\\Base2\\WUtils\\Tests"},
+    {"WUtils`", "E:\\Users\\Daniel\\Dropbox\\Projects\\WUtils\\Tests"},
     TestID -> "GetVariablePossiblyFromParentPackage-20150202-QTOU4E"
 ]

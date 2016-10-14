@@ -4,7 +4,7 @@
 *)
 
 Test[
-	WUtils`WUtils`GetClipboard[]
+	Block[{}, CopyToClipboard["abc"]; WUtils`WUtils`GetClipboard[]]
 	,
 	"abc"
 	,

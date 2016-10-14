@@ -498,6 +498,10 @@ UNK::usage = "UNK  "
 
 StringReplaceInDir::usage = "StringReplaceInDir  "
 
+MonitorBox::usage = "MonitorBox  "
+
+FunctionUse::usage = "FunctionUse  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -2506,7 +2510,7 @@ CreateReloadFunctionForDirectory[dir_, OptionsPattern[]] :=
 			If [ListQ[prevFiles] && files =!= prevFiles,
 
 				(* New filese detected. *)
-				Print["New files detected. Recomputing dependencies..."];
+				PrintTemporary["New files detected. Recomputing dependencies..."];
 				
 				memoizationFunc = CreateMemoizationFunction[];
 				
@@ -13746,6 +13750,37 @@ InsertString[str_, pos_, substr_] :=
 Clear[Gettt];
 Gettt[items_List, key_String, defaultValue_:Missing[]] :=
 	Gett[#, key, defaultValue] & /@ items
+
+(*!
+	\function MonitorBox
+	
+	\calltable
+		MonitorBox[expr, message] '' Display a blue box with a message while evaluating an expression.
+
+	Examples:
+	
+	MonitorBox[expr, message] === TODO
+	
+	\related '
+	
+	\maintainer danielb
+*)
+Clear[MonitorBox];
+Attributes[MonitorBox] = {HoldFirst};
+MonitorBox[expr_, message_String] :=
+	Monitor[			
+		expr
+		,
+		Framed[
+			Style[
+				message,
+				FontFamily -> "Arial"
+			],
+			Background -> RGBColor[247/255, 247/255, 251/255],
+			FrameMargins -> 15,
+			FrameStyle -> Directive[GrayLevel[0.7]]
+		]
+	]
 
 End[]
 

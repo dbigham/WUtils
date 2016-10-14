@@ -12,7 +12,7 @@ Test[
         1
     ]
     ,
-    {Automatic, 0.}
+    {Automatic, -7.}
     ,
     TestID -> "moveNotebookHelper-20150226-PWS59W"
 ]
@@ -29,7 +29,7 @@ Test[
         ]
     ]
     ,
-    {1000., Automatic}
+    {993., Automatic}
     ,
     TestID -> "moveNotebookHelper-20150226-PHSKQ4"
 ]
@@ -46,7 +46,7 @@ Test[
         ]
     ]
     ,
-    {Automatic, -1000.}
+    {Automatic, -1007.}
     ,
     TestID -> "moveNotebookHelper-20150226-J50CCW"
 ]
@@ -64,7 +64,7 @@ Test[
         ]
     ]
     ,
-    {Automatic, -1000.}
+    {Automatic, -1007.}
     ,
     TestID -> "moveNotebookHelper-20150226-MP67Y2"
 ]
@@ -79,7 +79,7 @@ Test[
         1
     ]
     ,
-    {Automatic, 0.}
+    {Automatic, -7.}
     ,
     TestID -> "moveNotebookHelper-20150226-WQY3GU"
 ]
@@ -97,7 +97,7 @@ Test[
         ]
     ]
     ,
-    {Automatic, 0.}
+    {Automatic, -7.}
     ,
     TestID -> "moveNotebookHelper-20150226-BZYMPL"
 ]
@@ -114,7 +114,7 @@ Test[
         ]
     ]
     ,
-    {2000., Automatic}
+    {1993., Automatic}
     ,
     TestID -> "moveNotebookHelper-20150226-LJE0G1"
 ]
@@ -131,7 +131,7 @@ Test[
         ]
     ]
     ,
-    {1000., Automatic}
+    {993., Automatic}
     ,
     TestID -> "moveNotebookHelper-20150226-05B769"
 ]
@@ -146,7 +146,7 @@ Test[
         2
     ]
     ,
-    {1920., Automatic}
+    {1913., Automatic}
     ,
     TestID -> "moveNotebookHelper-20150226-7V7BR4"
 ]
@@ -163,7 +163,7 @@ Test[
         ]
     ]
     ,
-    {1000., Automatic}
+    {993., Automatic}
     ,
     TestID -> "moveNotebookHelper-20150226-9UUO3C"
 ]
@@ -180,7 +180,7 @@ Test[
         ]
     ]
     ,
-    {1000., Automatic}
+    {993., Automatic}
     ,
     TestID -> "moveNotebookHelper-20150226-RJ913K"
 ]
@@ -197,7 +197,7 @@ Test[
         ]
     ]
     ,
-    {0., Automatic}
+    {-7., Automatic}
     ,
     TestID -> "moveNotebookHelper-20150226-KNOOT7"
 ]
