@@ -502,6 +502,10 @@ MonitorBox::usage = "MonitorBox  "
 
 FunctionUse::usage = "FunctionUse  "
 
+CreateMultiLineJavaString::usage = "CreateMultiLineJavaString  "
+
+EscapeString::usage = "EscapeString  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -12192,7 +12196,7 @@ RenameSymbolInNotebook[notebookFile_, oldContext_, oldSymbolName_, newContext_, 
 Options[ComposeEmail] =
 {
 	"To" -> None,			(*< to who? *)
-	"Invoke" -> Automatic,	(*< how should the compose be triggered? SystemOpen? Gmail? *)
+	"Invoke" -> "Gmail",	(*< how should the compose be triggered? SystemOpen? Gmail? *)
 	"Subject" -> Null		(*< the email subject. *)
 };
 ComposeEmail[opts:OptionsPattern[]] :=
@@ -13781,6 +13785,56 @@ MonitorBox[expr_, message_String] :=
 			FrameStyle -> Directive[GrayLevel[0.7]]
 		]
 	]
+
+(*!
+	\function CreateMultiLineJavaString
+	
+	\calltable
+		CreateMultiLineJavaString[str] '' given a multi-line string, produce Java code to produce it.
+
+	Examples:
+	
+	CreateMultiLineJavaString["just testing\n\n123"] === "\"just testing\\n\" + \n\"\\n\" + \n\"123\\n\""
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`CreateMultiLineJavaString]
+
+	\maintainer danielb
+*)
+CreateMultiLineJavaString[str_] :=
+	Block[{lines},
+		lines = StringSplit[str, "\n"];
+		StringJoin[
+			Riffle[
+				Function[{line},
+					ToString[line <> "\n", InputForm]
+				] /@ lines,
+				" + \n"
+			]
+		]
+	];
+
+(*!
+	\function EscapeString
+	
+	\calltable
+		EscapeString[str] '' escape double quotes.
+
+	Examples:
+	
+	EscapeString["this is a \"test\""] === "this is a \\\"test\\\""
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`EscapeString]
+
+	\maintainer danielb
+*)
+EscapeString[str_] :=
+	Block[{},
+		StringReplace[str, "\"" -> "\\\""]
+	];
 
 End[]
 
