@@ -66,3 +66,11 @@ Test[
 	,
 	TestID -> "DeCamelCase-20161005-1DLTDE"
 ]
+
+Test[
+	WUtils`WUtils`DeCamelCase["just testing"]
+	,
+	"just testing"
+	,
+	TestID -> "DeCamelCase-20170411-IEN3IL"
+]

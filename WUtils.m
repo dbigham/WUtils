@@ -506,6 +506,8 @@ CreateMultiLineJavaString::usage = "CreateMultiLineJavaString  "
 
 EscapeString::usage = "EscapeString  "
 
+GetLastLines::usage = "GetLastLines  "
+
 Begin["`Private`"]
 
 (* Handy for disabling Print statements. Ensures that their arguments will no
@@ -1872,7 +1874,7 @@ CopyFunctionUI[func_, destContext_, OptionsPattern[]] :=
 									destContext2 = destContext;
 									If [StringMatchQ[Context[sym], __ ~~ "`Private`" ~~ EndOfString], destContext2 = destContext2 <> "Private`"];
 									CopyFunction[dependency["Symbol"], dependency["File"], destFile2, "DestContext" -> destContext];
-									OpenFileInWorkbench[destFile2, "Substring" -> SymbolName[sym] ~~ "[" ~~ Except[{"\n", "\r"}].. ~~ ":="];
+									(*OpenFileInWorkbench[destFile2, "Substring" -> SymbolName[sym] ~~ "[" ~~ Except[{"\n", "\r"}].. ~~ ":="];*)
 								],
 								ImageSize -> {100, 34}
 							],
@@ -1887,7 +1889,7 @@ CopyFunctionUI[func_, destContext_, OptionsPattern[]] :=
 							}
 						],
 						"",
-						GetFunctionSource[dependency["Symbol"], "File" -> dependency["File"]]
+						GetFunctionSourceX[dependency["Symbol"], "File" -> dependency["File"]]
 						}
 					]
 				]
@@ -2472,7 +2474,7 @@ Clear[CreateReloadFunctionForDirectory];
 Options[CreateReloadFunctionForDirectory] =
 {
 	"MaxDepth" -> 1,								(*< how many directories deep to look for .m files? *)
-	"LoadFileFunction" -> Get,					  (*< the function used to load a .m file. For the new package format, GeneralUtilities`GetFragment would be used here. *)
+	"LoadFileFunction" -> Get,						(*< the function used to load a .m file. For the new package format, GeneralUtilities`GetFragment would be used here. *)
 	"AutoExportDirectoryReloadFunction" -> None,	(*< the MachineLearning package doesn't yet support adding new exported or packaged scoped symbols and then calling GetFragment, so we support calling a reload function that is a bigger hammer in those cases. *)
 	"AdditionalDependencies" -> {}					(*< in addition to scanning the directory for dependencies, a list of custom dependencies can be passed in. *)
 };
@@ -3568,8 +3570,8 @@ Clear[computeDependencyGraphForPackageHelper];
 Options[computeDependencyGraphForPackageHelper] =
 {
 	"FilesAlreadyProcessed" -> Null,		(*< a held variable can be passed in to keep track of which files have been visited already. *)
-	"Directories" -> All,				   (*< a list can be specified that means that only packages that are within one of the directories should be considered. (subdirectories are allowed) *)
-	"Memoization" -> None				   (*< can be set to a symbol to turn on memoization. Used in combination with the listable down value of ComputeDependencyGraph to avoid duplicate processing of files. *)
+	"Directories" -> All,					(*< a list can be specified that means that only packages that are within one of the directories should be considered. (subdirectories are allowed) *)
+	"Memoization" -> None					(*< can be set to a symbol to turn on memoization. Used in combination with the listable down value of ComputeDependencyGraph to avoid duplicate processing of files. *)
 };
 computeDependencyGraphForPackageHelper[package_, opts:OptionsPattern[]] :=
 	Module[{file},
@@ -7290,7 +7292,7 @@ StringReplaceInDir[dir_, from_, to_] :=
 		StringReplaceInFiles[
 			from,
 			to,
-			FileNames["*.m" | "*.mt" | "*.java" | "*.txt" | "*.md" | "*.g4" | "*.grammar", dir, Infinity]
+			FileNames["*.m" | "*.mt" | "*.java" | "*.txt" | "*.md" | "*.g4" | "*.grammar" | "*.js", dir, Infinity]
 		]
 	];
 
@@ -9264,7 +9266,7 @@ GetScreenDimensions[screenNum_] :=
 	{#[[1,1]], #[[2,1]]} & @ Map[Differences, "ScreenArea" /. SystemInformation["Devices", "ScreenInformation"][[screenNum]]]
 	
 (* Returns {notebookWidth, notebookHeight} *)
-notebookWidthHeight[] = Gett[Options[InputNotebook[]], WindowSize]
+notebookWidthHeight[] := Gett[Options[InputNotebook[]], WindowSize]
 
 (*!
 	\function getWindowWidth
@@ -12196,7 +12198,7 @@ RenameSymbolInNotebook[notebookFile_, oldContext_, oldSymbolName_, newContext_, 
 Options[ComposeEmail] =
 {
 	"To" -> None,			(*< to who? *)
-	"Invoke" -> "Gmail",	(*< how should the compose be triggered? SystemOpen? Gmail? *)
+	"Invoke" -> Automatic,	(*< how should the compose be triggered? SystemOpen? Gmail? *)
 	"Subject" -> Null		(*< the email subject. *)
 };
 ComposeEmail[opts:OptionsPattern[]] :=
@@ -13053,7 +13055,7 @@ If [ListQ[Global`$ReloadFunctions],
 		DeleteDuplicates[
 			Append[Global`$ReloadFunctions, Reload" <> name <> "]
 		]
-	];
+];
 
 End[]
 
@@ -13834,6 +13836,35 @@ CreateMultiLineJavaString[str_] :=
 EscapeString[str_] :=
 	Block[{},
 		StringReplace[str, "\"" -> "\\\""]
+	];
+
+(*!
+	\function GetLastLines
+	
+	\calltable
+		GetLastLines[str, n] '' returns at most N last lines of the string.
+
+	Examples:
+	
+	GetLastLines["a\nb\nc", 2] === "b\nc"
+
+	Unit tests:
+
+	RunUnitTests[WUtils`WUtils`GetLastLines]
+
+	\maintainer danielb
+*)
+GetLastLines[str_, n_] :=
+	Block[{lines, numLinesToTake, numLines},
+		lines = StringSplit[str, "\n"];
+		numLines = Length[lines];
+		numLinesToTake = Min[numLines, n];
+		StringJoin[
+			Riffle[
+				Take[lines, {-numLinesToTake, -1}],
+				"\n"
+			]
+		]
 	];
 
 End[]
