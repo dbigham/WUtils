@@ -2748,6 +2748,7 @@ computeDependencyGraphHelper[file_, opts:OptionsPattern[]] :=
 		(* If a list of directories was given that we want to limit
 		   our search to be within, then make sure we have't wandered
 		   outside. *)
+		
 		If [OptionValue["Directories"] =!= All &&
 			!StringStartsWith[file, OptionValue["Directories"]],
 			Return[{}];
@@ -2759,7 +2760,6 @@ computeDependencyGraphHelper[file_, opts:OptionsPattern[]] :=
 		   ie. A dependency tree can have duplicate nodes
 		   which are in different branches. *)
 		filesAlreadyProcessed = CreateHeldVarIfNull[OptionValue["FilesAlreadyProcessed"], {}];
-		
 		(* If we've already processed this file, don't recurse. *)
 		If [MemberQ[ReleaseHold[filesAlreadyProcessed], file],
 			Return[{}];
@@ -2848,7 +2848,7 @@ StringStartsWith[str_, stringList_] :=
 		Function[{item},
 			If [strLen >= StringLength[item] &&
 				StringTake[str, StringLength[item]] === item,
-				Return[True, Module]
+				Return[True, Module];
 			]
 		] /@ stringList;
 		
@@ -10784,34 +10784,6 @@ SmartButton[text_, func_, OptionsPattern[]] :=
 		   silently killed. *)
 		Method -> "Queued"
 	]
-	
-(*!
-	\function ReplaceCommentsWithExpressions
-	
-	\calltable
-		ReplaceCommentsWithExpressions[str] '' performs a replacement on a string, replacing any (* comments *) with WL expressions that will survive ToExpression.
-	
-	Examples:
-	
-	ReplaceCommentsWithExpressions[
-	"(* Just testing *)
-	\"a\""
-	]
-	
-	===
-	
-	"\"Comment\" -> Comment[\"Just testing\"]
-	\"a\""
-
-	Unit tests:
-
-	RunUnitTests[WUtils`WUtils`ReplaceCommentsWithExpressions]
-
-	\maintainer danielb
-*)
-
-(* Given a HoldComplete[_Symbol], returns the symbol name as a string. *)
-HeldSymbolName[s_] := StringReplace[HeldExpressionToString[s], __ ~~ "`" ~~ rest:__ :> rest]
 
 (*!
 	\function RenderHeldListOfCodeLines
@@ -11187,32 +11159,6 @@ ReloadFiles[] :=
 	If [ListQ[Global`$ReloadFunctions],
 		#[] & /@ Global`$ReloadFunctions
 	]
-
-(* Note: This code needs to come after the function definitions in this file, since
-   otherwise things like CreateReloadFunctionForDirectory won't yet be defined. *)
-With[{package = "WUtils`"},
-With[{dir = DirectoryName[DirectoryName[FindFile[package]]]},
-	WUtils`WUtils`Private`$ReloadFunction = ReloadWUtils;
-	WUtils`TabsOrSpaces[package] = "Tabs";
-	If [!ValueQ[$reloadWUtils],
-		$reloadWUtils =
-			CreateReloadFunctionForDirectory[
-				DirectoryName[DirectoryName[FindFile[package]]]
-			];
-	];
-	WUtils`$UnitTestDir = FileNameJoin[{DirectoryName[DirectoryName[FindFile[package]]], "Tests"}];
-	Lui`NotebookTypeToDirectory[package] = FileNameJoin[{dir, "Notebooks"}];
-];
-];
-
-(* Reloads .m files in this directory if they've changed. *)
-ReloadWUtils[] := $reloadWUtils[]
-If [ListQ[Global`$ReloadFunctions],
-	Global`$ReloadFunctions =
-		DeleteDuplicates[
-			Append[Global`$ReloadFunctions, ReloadWUtils]
-		]
-	];
 
 (*!
 	\function CreateFunction
@@ -12943,8 +12889,6 @@ EvaluateEvaluationTarget[] :=
 	\calltable
 		DeleteCurrentNotebook[] '' makes a backup copy of the current notebook and then delete it.
 	
-	\related '
-	
 	\maintainer danielb
 *)
 DeleteCurrentNotebook[] :=
@@ -12965,7 +12909,7 @@ DeleteCurrentNotebook[] :=
 		NotebookClose[nb];
 		DeleteFile[file];
 		If [FileNameTake[file, {-2}] == FileBaseName[FileNameTake[file, -1]],
-			(* Delete the directory as well. *)
+			(* Delete the directory as well if it's named the same as the notebook. *)
 			DeleteDirectory[FileNameDrop[file, -1]];
 		];
 	];
@@ -13866,6 +13810,32 @@ GetLastLines[str_, n_] :=
 			]
 		]
 	];
+
+(* Note: This code needs to come after the function definitions in this file, since
+   otherwise things like CreateReloadFunctionForDirectory won't yet be defined. *)
+With[{package = "WUtils`"},
+With[{dir = DirectoryName[DirectoryName[FindFile[package]]]},
+    WUtils`WUtils`Private`$ReloadFunction = ReloadWUtils;
+    WUtils`TabsOrSpaces[package] = "Tabs";
+    If [!ValueQ[$reloadWUtils],
+        $reloadWUtils =
+            CreateReloadFunctionForDirectory[
+                DirectoryName[DirectoryName[FindFile[package]]]
+            ];
+    ];
+    WUtils`$UnitTestDir = FileNameJoin[{DirectoryName[DirectoryName[FindFile[package]]], "Tests"}];
+    Lui`NotebookTypeToDirectory[package] = FileNameJoin[{dir, "Notebooks"}];
+];
+];
+
+(* Reloads .m files in this directory if they've changed. *)
+ReloadWUtils[] := $reloadWUtils[]
+If [ListQ[Global`$ReloadFunctions],
+    Global`$ReloadFunctions =
+        DeleteDuplicates[
+            Append[Global`$ReloadFunctions, ReloadWUtils]
+        ]
+    ];
 
 End[]
 

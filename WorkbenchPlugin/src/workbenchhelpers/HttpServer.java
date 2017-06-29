@@ -71,7 +71,7 @@ public class HttpServer extends NanoHTTPD
 		            }
 		            else if (command.equals("version"))
 		            {
-		            	response = "1.0.0.6";
+		            	response = "1.0.0.11";
 		            }
 		            else if (command.equals("selectFile"))
 		            {
