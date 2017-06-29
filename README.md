@@ -1,6 +1,6 @@
 # WUtils
 
-WUtils is a Wolfram Language package containing a variety of functions that I written over the years.
+WUtils is a Wolfram Language package containing a variety of functions that I have written over the years.
 
 Assuming you have the `WUtils` directory on your `$Path`, you can do:
 
