@@ -9632,10 +9632,11 @@ InsertCodeCell[] :=
 	\maintainer danielb
 *)
 CreateNotebookItem[] :=
-	Module[{},
-		NotebookWrite[InputNotebook[], Cell["replaceme", "Item"]];
-		NotebookFind[InputNotebook[], "replaceme", AutoScroll -> False];
-	]
+    (
+        NotebookWrite[InputNotebook[], Cell["  ", "Item"]];
+        SelectionMove[InputNotebook[], Before, CellContents];
+        NotebookFind[InputNotebook[], "  ", AutoScroll -> False];
+    )
 
 (*!
 	\function ExtractedDockedContents
@@ -13813,31 +13814,33 @@ GetLastLines[str_, n_] :=
 		]
 	];
 
-(* Note: This code needs to come after the function definitions in this file, since
-   otherwise things like CreateReloadFunctionForDirectory won't yet be defined. *)
-With[{package = "WUtils`"},
-With[{dir = DirectoryName[DirectoryName[FindFile[package]]]},
-    WUtils`WUtils`Private`$ReloadFunction = ReloadWUtils;
-    WUtils`TabsOrSpaces[package] = "Tabs";
-    If [!ValueQ[$reloadWUtils],
-        $reloadWUtils =
-            CreateReloadFunctionForDirectory[
-                DirectoryName[DirectoryName[FindFile[package]]]
-            ];
+If [False,
+    (* Note: This code needs to come after the function definitions in this file, since
+       otherwise things like CreateReloadFunctionForDirectory won't yet be defined. *)
+    With[{package = "WUtils`"},
+    With[{dir = DirectoryName[DirectoryName[FindFile[package]]]},
+        WUtils`WUtils`Private`$ReloadFunction = ReloadWUtils;
+        WUtils`TabsOrSpaces[package] = "Tabs";
+        If [!ValueQ[$reloadWUtils],
+            $reloadWUtils =
+                CreateReloadFunctionForDirectory[
+                    DirectoryName[DirectoryName[FindFile[package]]]
+                ];
+        ];
+        WUtils`$UnitTestDir = FileNameJoin[{DirectoryName[DirectoryName[FindFile[package]]], "Tests"}];
+        Lui`NotebookTypeToDirectory[package] = FileNameJoin[{dir, "Notebooks"}];
     ];
-    WUtils`$UnitTestDir = FileNameJoin[{DirectoryName[DirectoryName[FindFile[package]]], "Tests"}];
-    Lui`NotebookTypeToDirectory[package] = FileNameJoin[{dir, "Notebooks"}];
-];
-];
-
-(* Reloads .m files in this directory if they've changed. *)
-ReloadWUtils[] := $reloadWUtils[]
-If [ListQ[Global`$ReloadFunctions],
-    Global`$ReloadFunctions =
-        DeleteDuplicates[
-            Append[Global`$ReloadFunctions, ReloadWUtils]
-        ]
     ];
+    
+    (* Reloads .m files in this directory if they've changed. *)
+    ReloadWUtils[] := $reloadWUtils[]
+    If [ListQ[Global`$ReloadFunctions],
+        Global`$ReloadFunctions =
+            DeleteDuplicates[
+                Append[Global`$ReloadFunctions, ReloadWUtils]
+            ]
+    ];
+];
 
 End[]
 
