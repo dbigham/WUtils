@@ -2770,6 +2770,7 @@ computeDependencyGraphHelper[file_, opts:OptionsPattern[]] :=
 		(* Get the package name of this .m file, because we want to skip .m files
 		   that aren't actually packages. *)
 		package = GetPackageName[file, "DataString" -> dataStr];
+		
 		If [package === None, Return[$Failed]];
 		
 		(* Read the .m file. *)
@@ -3053,7 +3054,7 @@ ReadListFileHeld[fileOrStream_, expr_, listOfHeldExpressionsSymbol_, OptionsPatt
 		
 		Block[{$Context =
 					If [OptionValue["Package"] =!= Null,
-						OptionValue["Package"] <> "`ReadListFileHeld`Private`"
+						OptionValue["Package"] <> "ReadListFileHeld`Private`"
 						,
 						$Context
 					]
@@ -3090,7 +3091,7 @@ ReadListFileHeld[fileOrStream_, expr_, listOfHeldExpressionsSymbol_, OptionsPatt
 			];
 			 
 			Quiet[
-				Remove & /@ newSymbols,
+				Remove /@ newSymbols,
 				(* I'm seeing some cases where symbols are reported as created,
 				   but when we remove them, M complains they don't exist. *)
 				Remove::rmnsm
@@ -4712,6 +4713,7 @@ GetFunctionUsesFromNotebookHelper[funcSymbol_, codeCellExpressions_, OptionsPatt
 					,
 					HoldPattern[funcSymbol][___]
 				]},
+				
 			positions =
 				Position[
 					codeCellExpressions,
