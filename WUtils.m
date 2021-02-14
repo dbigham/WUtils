@@ -32,7 +32,7 @@ ExpandSpansToIncludeTrailingSemiColons::usage = "ExpandSpansToIncludeTrailingSem
 
 DeleteNesetedSpans::usage = "DeleteNesetedSpans  "
 
-CopyFunction::usage = "CopyFunction  "
+CopyFunction2::usage = "CopyFunction2  "
 
 InsertStringAfterMatch::usage = "InsertStringAfterMatch  "
 
@@ -1173,36 +1173,36 @@ DeleteNesetedSpans[spansIn_] :=
 	];
 
 (*!
-	\function CopyFunction
+	\function CopyFunction2
 	
 	\calltable
-		CopyFunction[func, sourceFile, destFile] '' copy the source code of a function from one file to another.
+		CopyFunction2[func, sourceFile, destFile] '' copy the source code of a function from one file to another.
 
 	Examples:
 	
-	CopyFunction[func, sourceFile, destFile] === TODO
+	CopyFunction2[func, sourceFile, destFile] === TODO
 	
 	\related '
 	
 	\maintainer danielb
 *)
-CopyFunction::cgs = "Couldn't get the source code for function `1` from `2`";
-Clear[CopyFunction];
-Options[CopyFunction] =
+CopyFunction2::cgs = "Couldn't get the source code for function `1` from `2`";
+Clear[CopyFunction2];
+Options[CopyFunction2] =
 {
-	"DestContext" -> Null			(*< The destination context. Probabably would have been better to make CopyFunction take this as its argument rather than 'destFile'. *)
+	"DestContext" -> Null			(*< The destination context. Probabably would have been better to make CopyFunction2 take this as its argument rather than 'destFile'. *)
 };
-CopyFunction[func_, sourceFile_, destFile_, OptionsPattern[]] :=
+CopyFunction2[func_, sourceFile_, destFile_, OptionsPattern[]] :=
 	Block[{funcSourceCode, fileSource, exportedFunctionQ},
 		
-		If [!FileExistsQ[sourceFile], Message[CopyFunction::noopen, sourceFile]; Return[$Failed]];
-		If [!FileExistsQ[destFile], Message[CopyFunction::noopen, destFile]; Return[$Failed]];
+		If [!FileExistsQ[sourceFile], Message[CopyFunction2::noopen, sourceFile]; Return[$Failed]];
+		If [!FileExistsQ[destFile], Message[CopyFunction2::noopen, destFile]; Return[$Failed]];
 		
 		fileSource = Import[sourceFile, "Text"];
 		
 		funcSourceCode = GetFunctionSource[func, fileSource];
 		If [!StringQ[funcSourceCode],
-			Message[CopyFunction::cgs, func, sourceFile];
+			Message[CopyFunction2::cgs, func, sourceFile];
 			Return[$Failed];
 		];
 		
@@ -1873,7 +1873,7 @@ CopyFunctionUI[func_, destContext_, OptionsPattern[]] :=
 								With[{sym = dependency["Symbol"]},
 									destContext2 = destContext;
 									If [StringMatchQ[Context[sym], __ ~~ "`Private`" ~~ EndOfString], destContext2 = destContext2 <> "Private`"];
-									CopyFunction[dependency["Symbol"], dependency["File"], destFile2, "DestContext" -> destContext];
+									CopyFunction2[dependency["Symbol"], dependency["File"], destFile2, "DestContext" -> destContext];
 									(*OpenFileInWorkbench[destFile2, "Substring" -> SymbolName[sym] ~~ "[" ~~ Except[{"\n", "\r"}].. ~~ ":="];*)
 								],
 								ImageSize -> {100, 34}
