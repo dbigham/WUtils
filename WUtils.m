@@ -13631,10 +13631,10 @@ AddOptionsHelper[strIn_] :=
 		
 		"Options[" <> funcName <> "] =
 {
-	TODO
+    TODO
 };
 " <>
-		InsertString[str, closingBracketPos, ", OptionsPattern[]"]
+		InsertString[str, closingBracketPos, If [StringEndsQ[str, "[]"], "", ", "] <> "OptionsPattern[]"]
 	];
 
 (*!
